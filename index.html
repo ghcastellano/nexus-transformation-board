@@ -657,6 +657,7 @@ function renderLibrary() {
   const q = searchQuery.toLowerCase();
   allItems.filter(item => {
     if (currentFilter!=='all' && item.type!==currentFilter) return false;
+    if (activeDomain && item.domain!==activeDomain) return false;
     if (q) return item.name.toLowerCase().includes(q)||item.signal.toLowerCase().includes(q)||item.domain.toLowerCase().includes(q);
     return true;
   }).forEach(item => {
