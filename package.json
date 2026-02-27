@@ -1,0 +1,16 @@
+{
+  "name": "nexus-transformation-board",
+  "version": "1.0.0",
+  "description": "Interactive virtual board game for organizational transformation — NTT DATA Codex",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "migrate": "node server/migrate.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "pg": "^8.13.0"
+  }
+}
