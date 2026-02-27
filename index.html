@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Transformation Board — The Game</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --cyan: #39d2c0;
+    --pattern-bg: #0d2818;
+    --pattern-border: #238636;
+    --antipattern-bg: #2d1117;
+    --antipattern-border: #da3633;
+    --transition-bg: #1c1d2e;
+    --transition-border: #8957e5;
+    --driver-bg: #1a1e2e;
+    --driver-border: #58a6ff;
+    --hex-size: 60px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: linear-gradient(135deg, #161b22 0%, #1c2333 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .app-header .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+  }
+  .app-header h1 {
+    font-size: 18px; font-weight: 600;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .app-header .subtitle { font-size: 11px; color: var(--text-muted); }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: var(--accent); background: #1c2333; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #4090e0; }
+  .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-green:hover { opacity: .9; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Main Layout ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    height: calc(100vh - 57px);
+  }
+
+  /* ── Panels ── */
+  .panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .panel:last-child { border-right: none; border-left: 1px solid var(--border); }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-section { margin-bottom: 20px; }
+  .panel-section h3 {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  /* ── Hexagons ── */
+  .hex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 0;
+  }
+  .hex-card {
+    position: relative;
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: grab;
+    transition: all .2s;
+    font-size: 12px;
+  }
+  .hex-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+  .hex-card:active { cursor: grabbing; }
+  .hex-card.pattern { background: var(--pattern-bg); border-color: var(--pattern-border); }
+  .hex-card.antipattern { background: var(--antipattern-bg); border-color: var(--antipattern-border); }
+  .hex-card.transition { background: var(--transition-bg); border-color: var(--transition-border); }
+  .hex-card .hex-type {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .hex-card.pattern .hex-type { color: var(--green); }
+  .hex-card.antipattern .hex-type { color: var(--red); }
+  .hex-card.transition .hex-type { color: var(--purple); }
+  .hex-card .hex-name { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+  .hex-card .hex-signal { color: var(--text-muted); font-size: 11px; }
+  .hex-card .hex-domain-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(88,166,255,.15);
+    color: var(--accent);
+    border-radius: 4px;
+    font-size: 9px;
+    margin-top: 4px;
+  }
+
+  .hex-card.on-board { opacity: .4; pointer-events: none; }
+
+  /* ── Board Center ── */
+  .board-area {
+    position: relative;
+    overflow: auto;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(88,166,255,.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(188,140,255,.03) 0%, transparent 50%),
+      var(--bg);
+  }
+
+  /* ── Board Grid ── */
+  .board-wrapper {
+    min-width: 1000px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .board-domains {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .board-domains .domain-label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--cyan);
+    border-right: 1px solid var(--border);
+  }
+  .board-domains .domain-label:last-child { border-right: none; }
+
+  .board-columns-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .col-header {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-right: 1px solid var(--border);
+  }
+  .col-header:last-child { border-right: none; }
+  .col-header.current { color: var(--red); }
+  .col-header.path { color: var(--orange); }
+  .col-header.desired { color: var(--green); }
+
+  .board-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    flex: 1;
+  }
+
+  .board-zone {
+    min-height: 300px;
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    position: relative;
+    transition: background .2s;
+  }
+  .board-zone:last-child { border-right: none; }
+  .board-zone.drag-over {
+    background: rgba(88,166,255,.06);
+  }
+  .board-zone .zone-label {
+    position: absolute;
+    top: 8px; left: 12px;
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: .5;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .board-zone .zone-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+    padding-top: 24px;
+  }
+
+  .board-hex {
+    position: relative;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 11px;
+    width: calc(50% - 4px);
+    min-width: 130px;
+    cursor: grab;
+    transition: all .2s;
+  }
+  .board-hex:hover { box-shadow: 0 4px 16px rgba(0,0,0,.4); transform: translateY(-1px); }
+  .board-hex.pattern { background: var(--pattern-bg); border-color: var(--pattern-border); }
+  .board-hex.antipattern { background: var(--antipattern-bg); border-color: var(--antipattern-border); }
+  .board-hex.transition { background: var(--transition-bg); border-color: var(--transition-border); }
+  .board-hex .hex-type { font-size: 8px; text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
+  .board-hex.pattern .hex-type { color: var(--green); }
+  .board-hex.antipattern .hex-type { color: var(--red); }
+  .board-hex.transition .hex-type { color: var(--purple); }
+  .board-hex .hex-name { font-weight: 600; font-size: 12px; }
+  .board-hex .hex-signal { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+  .board-hex .hex-agents {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .agent-badge {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .agent-badge:hover { transform: scale(1.15); }
+  .agent-badge.human { background: rgba(63,185,80,.2); border: 1px solid var(--green); }
+  .agent-badge.systemic { background: rgba(210,153,34,.2); border: 1px solid var(--orange); }
+  .agent-badge.ai { background: rgba(188,140,255,.2); border: 1px solid var(--purple); }
+  .board-hex .remove-hex {
+    position: absolute;
+    top: 4px; right: 6px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .board-hex:hover .remove-hex { opacity: 1; }
+
+  /* ── Drivers Bar ── */
+  .board-drivers {
+    display: flex;
+    border-top: 2px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    min-height: 60px;
+    align-items: center;
+    padding: 8px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .driver-chip {
+    padding: 6px 14px;
+    background: var(--driver-bg);
+    border: 1px solid var(--driver-border);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .driver-chip:hover { background: rgba(88,166,255,.15); }
+  .driver-chip.active { background: var(--accent); color: #fff; }
+  .driver-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-right: 8px;
+  }
+
+  /* ── Right Panel ── */
+  .fitness-gauge {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background: var(--surface2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .fitness-gauge-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width .5s ease;
+    background: linear-gradient(90deg, var(--red), var(--orange), var(--green));
+  }
+  .fitness-score {
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    margin: 8px 0;
+  }
+  .fitness-label {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .cycle-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .cycle-step:hover { border-color: var(--accent); }
+  .cycle-step.active { border-color: var(--accent); background: rgba(88,166,255,.08); }
+  .cycle-step.completed { border-color: var(--green); background: rgba(63,185,80,.06); }
+  .cycle-step .step-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .cycle-step.active .step-icon { border-color: var(--accent); background: rgba(88,166,255,.15); }
+  .cycle-step.completed .step-icon { border-color: var(--green); background: rgba(63,185,80,.15); }
+  .cycle-step .step-name { font-size: 13px; font-weight: 600; }
+  .cycle-step .step-desc { font-size: 10px; color: var(--text-muted); }
+
+  /* ── Stats ── */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+  .stat-card.patterns .stat-value { color: var(--green); }
+  .stat-card.antipatterns .stat-value { color: var(--red); }
+  .stat-card.transitions .stat-value { color: var(--purple); }
+  .stat-card.agents .stat-value { color: var(--orange); }
+
+  /* ── Log ── */
+  .log-entry {
+    padding: 6px 8px;
+    border-left: 2px solid var(--border);
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .log-entry.action { border-left-color: var(--accent); }
+  .log-entry.success { border-left-color: var(--green); }
+  .log-entry.warning { border-left-color: var(--orange); }
+  .log-entry .log-time { font-size: 9px; opacity: .6; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 560px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 20px; margin-bottom: 16px; }
+  .modal p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+  .modal .form-group { margin-bottom: 16px; }
+  .modal label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .modal input, .modal select {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .modal input:focus, .modal select:focus { outline: none; border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Search ── */
+  .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Filter tabs ── */
+  .filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .filter-tab {
+    flex: 1;
+    padding: 6px;
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all .15s;
+  }
+  .filter-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
+
+  /* ── Agent Palette ── */
+  .agent-palette {
+    display: flex; gap: 8px; margin: 8px 0; justify-content: center;
+  }
+  .agent-palette-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: grab;
+    transition: all .15s;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .agent-palette-item:hover { border-color: var(--accent); }
+  .agent-palette-item .agent-icon { font-size: 20px; }
+
+  /* ── Intro Screen ── */
+  .intro-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    transition: opacity .5s;
+  }
+  .intro-screen.hidden { opacity: 0; pointer-events: none; }
+  .intro-logo {
+    width: 120px; height: 120px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 30px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 56px;
+    box-shadow: 0 20px 60px rgba(88,166,255,.2);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .intro-title {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--purple), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+  .intro-sub { color: var(--text-muted); font-size: 16px; text-align: center; max-width: 500px; line-height: 1.6; }
+  .intro-credit { color: var(--text-muted); font-size: 12px; text-align: center; opacity: .6; }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    max-width: 280px;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    display: none;
+  }
+  .tooltip.show { display: block; }
+
+  /* ── Connection lines ── */
+  .connection-line {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<!-- Intro -->
+<div class="intro-screen" id="introScreen">
+  <div class="intro-logo">⬡</div>
+  <div class="intro-title">Nexus Transformation Board</div>
+  <div class="intro-sub">
+    A strategic game for organizational transformation.<br>
+    Map patterns, replace anti-patterns, assign agents, and navigate your organization toward adaptive fitness.
+  </div>
+  <div style="display:flex; gap:12px; margin-top:8px;">
+    <button class="btn btn-primary" onclick="startNewSession()" style="padding:12px 32px; font-size:15px;">
+      Start New Session
+    </button>
+    <button class="btn" onclick="showHowToPlay()" style="padding:12px 32px; font-size:15px;">
+      How to Play
+    </button>
+  </div>
+  <div class="intro-credit">Based on the Enterprise Transformation Codex — NTT DATA DS&A USA</div>
+</div>
+
+<!-- How To Play Modal -->
+<div class="modal-overlay" id="howToPlayModal">
+  <div class="modal" style="max-width:640px;">
+    <h2>How to Play the Nexus Game</h2>
+    <p>The Nexus Transformation Board is a <strong>strategic sensemaking game</strong> where participants navigate organizational transformation by working with patterns, anti-patterns, and agents of change.</p>
+
+    <h3 style="color:var(--cyan); margin:16px 0 8px; font-size:14px;">The Board</h3>
+    <p>The board is divided into three zones from left to right:</p>
+    <p><strong style="color:var(--red);">Current Reality</strong> — Where the organization is now. Dominated by anti-patterns, constraints, and inertia.</p>
+    <p><strong style="color:var(--orange);">Transformation Path</strong> — The transitional space. Where experiments, learning, and behavioral shifts happen.</p>
+    <p><strong style="color:var(--green);">Improved Fitness</strong> — The desired direction. Dominated by enabling patterns and adaptive capacity.</p>
+
+    <h3 style="color:var(--cyan); margin:16px 0 8px; font-size:14px;">The Hexagons</h3>
+    <p><span style="color:var(--green);">Patterns</span> — Enabling behaviors that increase adaptive capacity.</p>
+    <p><span style="color:var(--red);">Anti-Patterns</span> — Self-reinforcing behaviors that block transformation.</p>
+    <p><span style="color:var(--purple);">Transition Patterns</span> — Safe bridges between current and desired states.</p>
+
+    <h3 style="color:var(--cyan); margin:16px 0 8px; font-size:14px;">The Mobius Cycle</h3>
+    <p>Follow the 5-phase cycle: <strong>Sense → Focus → Experiment → Stabilize → Diffuse</strong>. Each phase guides your actions on the board.</p>
+
+    <h3 style="color:var(--cyan); margin:16px 0 8px; font-size:14px;">Agents of Change</h3>
+    <p>Assign agents to patterns to activate movement:</p>
+    <p>🧑 <strong>Human Agents</strong> — Leaders, coaches, champions who legitimize change.</p>
+    <p>🏛 <strong>Systemic Agents</strong> — Governance, KPIs, incentives that reinforce behavior.</p>
+    <p>🤖 <strong>AI Agents</strong> — Automation, analytics, accelerators.</p>
+
+    <h3 style="color:var(--cyan); margin:16px 0 8px; font-size:14px;">Winning</h3>
+    <p>There is no "end state." Success is measured by <strong>pattern migration</strong> — moving anti-patterns out and enabling patterns in — while improving organizational fitness score.</p>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeModal('howToPlayModal')">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Custom Pattern Modal -->
+<div class="modal-overlay" id="addPatternModal">
+  <div class="modal">
+    <h2>Add Custom Pattern</h2>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="newPatternType">
+        <option value="pattern">Pattern (Enabling)</option>
+        <option value="antipattern">Anti-Pattern (Constraining)</option>
+        <option value="transition">Transition Pattern (Bridge)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="newPatternName" placeholder="e.g., Decentralized Decisions">
+    </div>
+    <div class="form-group">
+      <label>Signal (How you recognize it)</label>
+      <input type="text" id="newPatternSignal" placeholder="e.g., Local ownership, fast decisions">
+    </div>
+    <div class="form-group">
+      <label>Impact</label>
+      <input type="text" id="newPatternImpact" placeholder="e.g., Faster learning cycles">
+    </div>
+    <div class="form-group">
+      <label>Domain</label>
+      <select id="newPatternDomain">
+        <option value="Strategy & Portfolio">Strategy & Portfolio</option>
+        <option value="Product & Delivery">Product & Delivery</option>
+        <option value="Technology & Architecture">Technology & Architecture</option>
+        <option value="People, Culture & Governance">People, Culture & Governance</option>
+        <option value="Operations">Operations</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('addPatternModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addCustomPattern()">Add to Library</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" style="display:none;">
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <div>
+        <h1>Nexus Transformation Board</h1>
+        <div class="subtitle">Enterprise Transformation Codex — NTT DATA</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" onclick="showHowToPlay()">? Help</button>
+      <button class="btn btn-sm" onclick="showModal('addPatternModal')">+ Pattern</button>
+      <button class="btn btn-sm" onclick="resetBoard()">Reset Board</button>
+      <button class="btn btn-sm" onclick="exportSession()">Export</button>
+      <button class="btn btn-sm btn-green" id="cycleBtn" onclick="advanceCycle()">Next Phase →</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Left Panel: Library -->
+    <div class="panel" id="leftPanel">
+      <div class="panel-title">⬡ Pattern Library</div>
+
+      <input type="text" class="search-input" placeholder="Search patterns..." oninput="filterLibrary(this.value)" id="searchInput">
+
+      <div class="filter-tabs">
+        <div class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All</div>
+        <div class="filter-tab" data-filter="pattern" onclick="setFilter('pattern', this)">Patterns</div>
+        <div class="filter-tab" data-filter="antipattern" onclick="setFilter('antipattern', this)">Anti</div>
+        <div class="filter-tab" data-filter="transition" onclick="setFilter('transition', this)">Trans.</div>
+      </div>
+
+      <div id="libraryList" class="hex-container"></div>
+    </div>
+
+    <!-- Center: Board -->
+    <div class="board-area" id="boardArea">
+      <div class="board-wrapper">
+        <!-- Domains Top -->
+        <div class="board-domains" id="boardDomains"></div>
+
+        <!-- Column Headers -->
+        <div class="board-columns-header">
+          <div class="col-header current">◀ Current Reality</div>
+          <div class="col-header path">⟷ Transformation Path</div>
+          <div class="col-header desired">Improved Fitness ▶</div>
+        </div>
+
+        <!-- Board Grid -->
+        <div class="board-grid" id="boardGrid">
+          <div class="board-zone" id="zone-current" data-zone="current"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'current')">
+            <div class="zone-label">Constraints · Inertia · Anti-Patterns</div>
+            <div class="zone-items" id="zone-current-items"></div>
+          </div>
+          <div class="board-zone" id="zone-path" data-zone="path"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'path')">
+            <div class="zone-label">Experiments · Learning · Shifts</div>
+            <div class="zone-items" id="zone-path-items"></div>
+          </div>
+          <div class="board-zone" id="zone-desired" data-zone="desired"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'desired')">
+            <div class="zone-label">Enabling Patterns · Adaptive Capacity</div>
+            <div class="zone-items" id="zone-desired-items"></div>
+          </div>
+        </div>
+
+        <!-- Drivers Bottom -->
+        <div class="board-drivers" id="boardDrivers">
+          <span class="driver-label">Drivers:</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Dashboard -->
+    <div class="panel" id="rightPanel">
+      <div class="panel-title">📊 Transformation Dashboard</div>
+
+      <!-- Fitness -->
+      <div class="panel-section">
+        <h3>Organizational Fitness</h3>
+        <div class="fitness-score" id="fitnessScore">0</div>
+        <div class="fitness-gauge">
+          <div class="fitness-gauge-fill" id="fitnessGauge" style="width:0%"></div>
+        </div>
+        <div class="fitness-label" id="fitnessLabel">Fragile</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="panel-section">
+        <h3>Board Statistics</h3>
+        <div class="stat-grid">
+          <div class="stat-card patterns">
+            <div class="stat-value" id="statPatterns">0</div>
+            <div class="stat-label">Patterns</div>
+          </div>
+          <div class="stat-card antipatterns">
+            <div class="stat-value" id="statAntipatterns">0</div>
+            <div class="stat-label">Anti-Patterns</div>
+          </div>
+          <div class="stat-card transitions">
+            <div class="stat-value" id="statTransitions">0</div>
+            <div class="stat-label">Transitions</div>
+          </div>
+          <div class="stat-card agents">
+            <div class="stat-value" id="statAgents">0</div>
+            <div class="stat-label">Agents</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobius Cycle -->
+      <div class="panel-section">
+        <h3>Mobius Cycle — <span id="cycleCount">Cycle 1</span></h3>
+        <div id="cycleSteps"></div>
+      </div>
+
+      <!-- Agent Palette -->
+      <div class="panel-section">
+        <h3>Agents of Change</h3>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Click an agent, then click a hex on the board to assign.</p>
+        <div class="agent-palette">
+          <div class="agent-palette-item" onclick="selectAgent('human')" id="agentHuman">
+            <span class="agent-icon">🧑</span>
+            Human
+          </div>
+          <div class="agent-palette-item" onclick="selectAgent('systemic')" id="agentSystemic">
+            <span class="agent-icon">🏛</span>
+            Systemic
+          </div>
+          <div class="agent-palette-item" onclick="selectAgent('ai')" id="agentAI">
+            <span class="agent-icon">🤖</span>
+            AI
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="panel-section">
+        <h3>Activity Log</h3>
+        <div id="activityLog" style="max-height:200px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA: Pattern & Anti-Pattern Library from Codex
+// ══════════════════════════════════════════════
+const PATTERNS = [
+  // ── Strategy & Portfolio Patterns ──
+  { id: 'p1', type: 'pattern', name: 'Focus on User Needs', signal: 'Decisions start from user outcomes', impact: 'Aligns investment with real value', domain: 'Strategy & Portfolio' },
+  { id: 'p2', type: 'pattern', name: 'Strategy is Iterative', signal: 'Strategy reviews happen in short cycles', impact: 'Faster course correction', domain: 'Strategy & Portfolio' },
+  { id: 'p3', type: 'pattern', name: 'Use Common Language', signal: 'Shared vocabulary across teams', impact: 'Reduces misalignment', domain: 'Strategy & Portfolio' },
+  { id: 'p4', type: 'pattern', name: 'Challenge Assumptions', signal: 'Safe space to question decisions', impact: 'Prevents blind spots', domain: 'Strategy & Portfolio' },
+  { id: 'p5', type: 'pattern', name: 'Context Determines Pattern', signal: 'No universal best practice applied', impact: 'Right-fit solutions', domain: 'Strategy & Portfolio' },
+  { id: 'p6', type: 'pattern', name: 'Portfolio as Value Flow', signal: 'Work prioritized by value, not project', impact: 'Better capital allocation', domain: 'Strategy & Portfolio' },
+
+  // ── Product & Delivery Patterns ──
+  { id: 'p7', type: 'pattern', name: 'Think Small', signal: 'Small batches, fast iterations', impact: 'Reduces risk and waste', domain: 'Product & Delivery' },
+  { id: 'p8', type: 'pattern', name: 'Optimize Flow', signal: 'WIP limits, queue management', impact: 'Faster delivery', domain: 'Product & Delivery' },
+  { id: 'p9', type: 'pattern', name: 'Move Fast', signal: 'Short cycle times, quick decisions', impact: 'Competitive responsiveness', domain: 'Product & Delivery' },
+  { id: 'p10', type: 'pattern', name: 'Effectiveness over Efficiency', signal: 'Focus on outcomes, not output', impact: 'Real value delivered', domain: 'Product & Delivery' },
+  { id: 'p11', type: 'pattern', name: 'Manage Failure', signal: 'Failures treated as learning', impact: 'Psychological safety', domain: 'Product & Delivery' },
+  { id: 'p12', type: 'pattern', name: 'Stable Teams', signal: 'Teams persist across initiatives', impact: 'Trust and deep expertise', domain: 'Product & Delivery' },
+  { id: 'p13', type: 'pattern', name: 'Feedback Loops', signal: 'Regular retrospectives with action', impact: 'Continuous improvement', domain: 'Product & Delivery' },
+
+  // ── Technology & Architecture Patterns ──
+  { id: 'p14', type: 'pattern', name: 'Use Appropriate Methods', signal: 'Tools match problem complexity', impact: 'Less over-engineering', domain: 'Technology & Architecture' },
+  { id: 'p15', type: 'pattern', name: 'Design for Evolution', signal: 'Architecture supports change', impact: 'Long-term adaptability', domain: 'Technology & Architecture' },
+  { id: 'p16', type: 'pattern', name: 'Set Exceptional Standards', signal: 'Quality gates exist and are enforced', impact: 'Reliability and trust', domain: 'Technology & Architecture' },
+  { id: 'p17', type: 'pattern', name: 'A Bias Towards Action', signal: 'Experiment over analysis paralysis', impact: 'Faster learning', domain: 'Technology & Architecture' },
+
+  // ── People, Culture & Governance Patterns ──
+  { id: 'p18', type: 'pattern', name: 'Distribute Power', signal: 'Local decision authority', impact: 'Speed and ownership', domain: 'People, Culture & Governance' },
+  { id: 'p19', type: 'pattern', name: 'Provide Purpose & Autonomy', signal: 'Teams understand the "why"', impact: 'Intrinsic motivation', domain: 'People, Culture & Governance' },
+  { id: 'p20', type: 'pattern', name: 'Be Transparent', signal: 'Open information flow', impact: 'Trust and alignment', domain: 'People, Culture & Governance' },
+  { id: 'p21', type: 'pattern', name: 'There is No One Culture', signal: 'Diverse subcultures accepted', impact: 'Contextual adaptation', domain: 'People, Culture & Governance' },
+  { id: 'p22', type: 'pattern', name: 'Be Humble', signal: 'Leaders admit uncertainty', impact: 'Psychological safety', domain: 'People, Culture & Governance' },
+  { id: 'p23', type: 'pattern', name: 'Learning as a Habit', signal: 'Continuous learning embedded', impact: 'Organizational intelligence', domain: 'People, Culture & Governance' },
+  { id: 'p24', type: 'pattern', name: 'Meaning Drives Adoption', signal: 'Change connected to purpose', impact: 'Genuine commitment', domain: 'People, Culture & Governance' },
+
+  // ── Transformation Doctrine Patterns ──
+  { id: 'p25', type: 'pattern', name: 'Transformation is Habit Change', signal: 'Focus on behavior, not structure', impact: 'Sustainable change', domain: 'People, Culture & Governance' },
+  { id: 'p26', type: 'pattern', name: 'Stability Enables Change', signal: 'Safe zones preserved', impact: 'Immune system respected', domain: 'Strategy & Portfolio' },
+  { id: 'p27', type: 'pattern', name: 'Intensity > Speed', signal: 'Few changes at a time', impact: 'No overload', domain: 'Strategy & Portfolio' },
+  { id: 'p28', type: 'pattern', name: 'There is No End State', signal: 'No fixed target declared', impact: 'Continuous adaptation', domain: 'Strategy & Portfolio' },
+  { id: 'p29', type: 'pattern', name: 'Safe-to-Fail Experiments', signal: 'Protected pilots running', impact: 'Learning without risk', domain: 'Product & Delivery' },
+  { id: 'p30', type: 'pattern', name: 'Course Correction', signal: 'Regular pivots based on evidence', impact: 'Avoids sunk cost traps', domain: 'Strategy & Portfolio' },
+];
+
+const ANTIPATTERNS = [
+  { id: 'a1', type: 'antipattern', name: 'Big Bang Change', signal: 'Massive restructuring at once', impact: 'Immune system overreaction', domain: 'Strategy & Portfolio' },
+  { id: 'a2', type: 'antipattern', name: 'Ritualistic Agility', signal: 'Ceremonies without learning', impact: 'Agile theater, no value', domain: 'Product & Delivery' },
+  { id: 'a3', type: 'antipattern', name: 'Hero Leadership', signal: 'Single leader drives all change', impact: 'Single point of failure', domain: 'People, Culture & Governance' },
+  { id: 'a4', type: 'antipattern', name: 'Governance Theater', signal: 'Approval gates without value', impact: 'Slow decisions, false safety', domain: 'People, Culture & Governance' },
+  { id: 'a5', type: 'antipattern', name: 'Copy-Paste Transformation', signal: 'Importing another company\'s model', impact: 'Context mismatch', domain: 'Strategy & Portfolio' },
+  { id: 'a6', type: 'antipattern', name: 'Scaling Before Learning', signal: 'Rolling out before validating', impact: 'Amplified mistakes', domain: 'Product & Delivery' },
+  { id: 'a7', type: 'antipattern', name: 'Universal Change Mandate', signal: 'Everyone must change at once', impact: 'Resistance and fatigue', domain: 'People, Culture & Governance' },
+  { id: 'a8', type: 'antipattern', name: 'Treating Orgs as Machines', signal: 'Mechanical restructuring', impact: 'Ignores human dynamics', domain: 'People, Culture & Governance' },
+  { id: 'a9', type: 'antipattern', name: 'Feedback Without Action', signal: 'Retros happen, nothing changes', impact: 'Cynicism and disengagement', domain: 'Product & Delivery' },
+  { id: 'a10', type: 'antipattern', name: 'Priority Inflation', signal: 'Everything is P1', impact: 'Nothing gets focus', domain: 'Strategy & Portfolio' },
+  { id: 'a11', type: 'antipattern', name: 'Expert Dependency', signal: 'Change requires external experts', impact: 'No internal capability', domain: 'People, Culture & Governance' },
+  { id: 'a12', type: 'antipattern', name: 'Ignoring Power Dynamics', signal: 'Informal power not addressed', impact: 'Hidden blockers', domain: 'People, Culture & Governance' },
+  { id: 'a13', type: 'antipattern', name: 'Speed Over Intensity Blindness', signal: 'Measuring speed not absorption', impact: 'Change overload', domain: 'Strategy & Portfolio' },
+  { id: 'a14', type: 'antipattern', name: 'Local Optimization', signal: 'Teams optimize in silos', impact: 'System-level dysfunction', domain: 'Product & Delivery' },
+  { id: 'a15', type: 'antipattern', name: 'Declaring an End State', signal: 'Fixed target announced', impact: 'Rigidity, disillusionment', domain: 'Strategy & Portfolio' },
+  { id: 'a16', type: 'antipattern', name: 'Blame-Driven Accountability', signal: 'Failures punished, not studied', impact: 'Fear-based culture', domain: 'People, Culture & Governance' },
+  { id: 'a17', type: 'antipattern', name: 'Cosmetic Empowerment', signal: 'Authority given without support', impact: 'Burnout and confusion', domain: 'People, Culture & Governance' },
+  { id: 'a18', type: 'antipattern', name: 'Change Without Meaning', signal: 'No narrative for why', impact: 'Cynicism and resistance', domain: 'People, Culture & Governance' },
+  { id: 'a19', type: 'antipattern', name: 'Portfolio as Project Inventory', signal: 'Projects listed, not governed', impact: 'No strategic alignment', domain: 'Strategy & Portfolio' },
+  { id: 'a20', type: 'antipattern', name: 'Change Without Anchors', signal: 'No stability zones preserved', impact: 'Total disorientation', domain: 'Strategy & Portfolio' },
+  { id: 'a21', type: 'antipattern', name: 'Unstable Teams', signal: 'Frequent team reshuffling', impact: 'No trust, no deep knowledge', domain: 'Product & Delivery' },
+  { id: 'a22', type: 'antipattern', name: 'Ignoring Immune System', signal: 'Resistance labeled as dysfunction', impact: 'Escalating conflict', domain: 'People, Culture & Governance' },
+  { id: 'a23', type: 'antipattern', name: 'Over-Standardized Teams', signal: 'Same structure forced everywhere', impact: 'Context ignored', domain: 'People, Culture & Governance' },
+  { id: 'a24', type: 'antipattern', name: 'Change Without Arch. Readiness', signal: 'Process change without tech support', impact: 'Friction and workarounds', domain: 'Technology & Architecture' },
+  { id: 'a25', type: 'antipattern', name: 'Safety Sacrificed for Speed', signal: 'Cutting corners for velocity', impact: 'Technical and cultural debt', domain: 'Technology & Architecture' },
+];
+
+const TRANSITIONS = [
+  { id: 't1', type: 'transition', name: 'Opt-In Participation', signal: 'Voluntary involvement', impact: 'Reduces resistance', domain: 'People, Culture & Governance' },
+  { id: 't2', type: 'transition', name: 'Protected Sandbox', signal: 'Isolated safe environment', impact: 'Low-risk experimentation', domain: 'Product & Delivery' },
+  { id: 't3', type: 'transition', name: 'Visible Wins Broadcasting', signal: 'Successes shared widely', impact: 'Builds momentum', domain: 'People, Culture & Governance' },
+  { id: 't4', type: 'transition', name: 'Hypothesis-Driven Change', signal: 'Explicit hypotheses tested', impact: 'Evidence-based decisions', domain: 'Strategy & Portfolio' },
+  { id: 't5', type: 'transition', name: 'Community of Practice', signal: 'Cross-team learning groups', impact: 'Organic knowledge spread', domain: 'People, Culture & Governance' },
+  { id: 't6', type: 'transition', name: 'Pull-Based Scaling', signal: 'Teams request, not imposed', impact: 'Demand-driven growth', domain: 'Strategy & Portfolio' },
+  { id: 't7', type: 'transition', name: 'Evidence Walls', signal: 'Data visible to all', impact: 'Transparent progress', domain: 'Product & Delivery' },
+  { id: 't8', type: 'transition', name: 'Parallel Run', signal: 'Old and new systems coexist', impact: 'Safe migration', domain: 'Technology & Architecture' },
+  { id: 't9', type: 'transition', name: 'Shadow Decision Mapping', signal: 'Decisions traced back to authority', impact: 'Power dynamics revealed', domain: 'People, Culture & Governance' },
+  { id: 't10', type: 'transition', name: 'Influencer Seeding', signal: 'Key people engaged first', impact: 'Social legitimacy', domain: 'People, Culture & Governance' },
+  { id: 't11', type: 'transition', name: 'Reframing Without Renaming', signal: 'Same terms, new meaning', impact: 'Less identity threat', domain: 'People, Culture & Governance' },
+  { id: 't12', type: 'transition', name: 'Pattern Sampling', signal: 'Try before committing', impact: 'Lower adoption barrier', domain: 'Product & Delivery' },
+  { id: 't13', type: 'transition', name: 'Minimum Viable Governance', signal: 'Lightest governance that works', impact: 'Speed with control', domain: 'People, Culture & Governance' },
+  { id: 't14', type: 'transition', name: 'Legacy Respect Mapping', signal: 'Old system value recognized', impact: 'Less defensive reaction', domain: 'Strategy & Portfolio' },
+  { id: 't15', type: 'transition', name: 'Story Before Structure', signal: 'Narrative leads, not org chart', impact: 'Meaningful change', domain: 'People, Culture & Governance' },
+  { id: 't16', type: 'transition', name: 'Time-Boxed Exception', signal: 'Temporary relaxation of rules', impact: 'Safe experimentation window', domain: 'People, Culture & Governance' },
+  { id: 't17', type: 'transition', name: 'Capability Seeding', signal: 'Small capability investments', impact: 'Foundation for future patterns', domain: 'Strategy & Portfolio' },
+  { id: 't18', type: 'transition', name: 'Learning Probes', signal: 'Small investigative experiments', impact: 'Data before commitment', domain: 'Product & Delivery' },
+  { id: 't19', type: 'transition', name: 'Role-Based Authority Trials', signal: 'Temporary authority shifts', impact: 'Test new decision models', domain: 'People, Culture & Governance' },
+  { id: 't20', type: 'transition', name: 'Identity Continuity Narrative', signal: 'Change framed as evolution', impact: 'Identity preserved', domain: 'People, Culture & Governance' },
+];
+
+const DOMAINS = [
+  'Strategy & Portfolio',
+  'Product & Delivery',
+  'Technology & Architecture',
+  'People, Culture & Governance',
+  'Operations'
+];
+
+const DEFAULT_DRIVERS = [
+  'Cost Efficiency', 'Time-to-Market', 'Innovation Stagnation',
+  'Customer Experience', 'Decision Latency', 'Talent Attrition',
+  'Regulatory Pressure', 'Change Fatigue'
+];
+
+const CYCLE_PHASES = [
+  { name: 'Sense', icon: '👁', desc: 'Observe signals, friction, bottlenecks' },
+  { name: 'Focus', icon: '🎯', desc: 'Pick few habit shifts, limit scope' },
+  { name: 'Experiment', icon: '🧪', desc: 'Small change blocks, safe-to-fail' },
+  { name: 'Stabilize', icon: '🔒', desc: 'Lock gains, codify minimally' },
+  { name: 'Diffuse', icon: '🌊', desc: 'Storytelling, peer adoption, pull' },
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let allItems = [...PATTERNS, ...ANTIPATTERNS, ...TRANSITIONS];
+let boardState = { current: [], path: [], desired: [] };
+let activeDrivers = new Set(['Cost Efficiency', 'Time-to-Market', 'Innovation Stagnation']);
+let currentFilter = 'all';
+let searchQuery = '';
+let cyclePhase = 0;
+let cycleNumber = 1;
+let completedPhases = new Set();
+let selectedAgent = null;
+let agentAssignments = {}; // hexId -> [{ type: 'human'|'systemic'|'ai' }]
+let logEntries = [];
+let draggedItemId = null;
+let dragSourceZone = null;
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function startNewSession() {
+  document.getElementById('introScreen').classList.add('hidden');
+  document.getElementById('mainApp').style.display = '';
+  setTimeout(() => {
+    renderDomains();
+    renderDrivers();
+    renderLibrary();
+    renderCycleSteps();
+    updateStats();
+    addLog('Session started. Begin with the Sense phase.', 'action');
+    addLog('Drag patterns from the library onto the board.', 'action');
+  }, 100);
+}
+
+function showHowToPlay() {
+  showModal('howToPlayModal');
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Library
+// ══════════════════════════════════════════════
+function renderLibrary() {
+  const list = document.getElementById('libraryList');
+  list.innerHTML = '';
+
+  const filtered = allItems.filter(item => {
+    if (currentFilter !== 'all' && item.type !== currentFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return item.name.toLowerCase().includes(q) || item.signal.toLowerCase().includes(q) || item.domain.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  filtered.forEach(item => {
+    const onBoard = isOnBoard(item.id);
+    const card = document.createElement('div');
+    card.className = `hex-card ${item.type}${onBoard ? ' on-board' : ''}`;
+    card.draggable = !onBoard;
+    card.dataset.id = item.id;
+    card.innerHTML = `
+      <div class="hex-type">${item.type === 'antipattern' ? '⬡ Anti-Pattern' : item.type === 'transition' ? '⬡ Transition' : '⬡ Pattern'}</div>
+      <div class="hex-name">${item.name}</div>
+      <div class="hex-signal">${item.signal}</div>
+      <div class="hex-domain-tag">${item.domain}</div>
+    `;
+    card.addEventListener('dragstart', (e) => {
+      draggedItemId = item.id;
+      dragSourceZone = null;
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    list.appendChild(card);
+  });
+}
+
+function filterLibrary(query) {
+  searchQuery = query;
+  renderLibrary();
+}
+
+function setFilter(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderLibrary();
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Board
+// ══════════════════════════════════════════════
+function renderBoardZone(zone) {
+  const container = document.getElementById(`zone-${zone}-items`);
+  container.innerHTML = '';
+  boardState[zone].forEach(itemId => {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return;
+    const el = document.createElement('div');
+    el.className = `board-hex ${item.type}`;
+    el.dataset.id = item.id;
+    el.draggable = true;
+
+    const agents = agentAssignments[item.id] || [];
+    const agentHtml = agents.map(a =>
+      `<div class="agent-badge ${a.type}" title="${a.type} agent">${a.type === 'human' ? '🧑' : a.type === 'systemic' ? '🏛' : '🤖'}</div>`
+    ).join('');
+
+    el.innerHTML = `
+      <button class="remove-hex" onclick="removeFromBoard('${item.id}', '${zone}')" title="Remove">×</button>
+      <div class="hex-type">${item.type === 'antipattern' ? '⬡ Anti-Pattern' : item.type === 'transition' ? '⬡ Transition' : '⬡ Pattern'}</div>
+      <div class="hex-name">${item.name}</div>
+      <div class="hex-signal">${item.signal}</div>
+      <div class="hex-agents">${agentHtml}</div>
+    `;
+
+    el.addEventListener('click', () => {
+      if (selectedAgent) {
+        assignAgent(item.id, selectedAgent);
+        selectedAgent = null;
+        document.querySelectorAll('.agent-palette-item').forEach(a => a.style.borderColor = '');
+      }
+    });
+
+    el.addEventListener('dragstart', (e) => {
+      draggedItemId = item.id;
+      dragSourceZone = zone;
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    container.appendChild(el);
+  });
+}
+
+function renderAllZones() {
+  ['current', 'path', 'desired'].forEach(renderBoardZone);
+  renderLibrary();
+  updateStats();
+}
+
+// ══════════════════════════════════════════════
+// DRAG & DROP
+// ══════════════════════════════════════════════
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(e, zone) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+
+  if (!draggedItemId) return;
+
+  // Remove from source zone if moving between zones
+  if (dragSourceZone) {
+    boardState[dragSourceZone] = boardState[dragSourceZone].filter(id => id !== draggedItemId);
+  }
+
+  // Add to target zone if not already there
+  if (!boardState[zone].includes(draggedItemId)) {
+    boardState[zone].push(draggedItemId);
+    const item = allItems.find(i => i.id === draggedItemId);
+    if (item) {
+      const zoneName = zone === 'current' ? 'Current Reality' : zone === 'path' ? 'Transformation Path' : 'Improved Fitness';
+      if (dragSourceZone) {
+        const srcName = dragSourceZone === 'current' ? 'Current Reality' : dragSourceZone === 'path' ? 'Transformation Path' : 'Improved Fitness';
+        addLog(`Moved "${item.name}" from ${srcName} to ${zoneName}`, 'action');
+      } else {
+        addLog(`Placed "${item.name}" in ${zoneName}`, 'action');
+      }
+    }
+  }
+
+  draggedItemId = null;
+  dragSourceZone = null;
+  renderAllZones();
+}
+
+function removeFromBoard(itemId, zone) {
+  boardState[zone] = boardState[zone].filter(id => id !== itemId);
+  delete agentAssignments[itemId];
+  const item = allItems.find(i => i.id === itemId);
+  if (item) addLog(`Removed "${item.name}" from board`, 'warning');
+  renderAllZones();
+}
+
+function isOnBoard(itemId) {
+  return boardState.current.includes(itemId) || boardState.path.includes(itemId) || boardState.desired.includes(itemId);
+}
+
+// ══════════════════════════════════════════════
+// AGENTS
+// ══════════════════════════════════════════════
+function selectAgent(type) {
+  if (selectedAgent === type) {
+    selectedAgent = null;
+    document.querySelectorAll('.agent-palette-item').forEach(a => a.style.borderColor = '');
+    return;
+  }
+  selectedAgent = type;
+  document.querySelectorAll('.agent-palette-item').forEach(a => a.style.borderColor = '');
+  const colors = { human: 'var(--green)', systemic: 'var(--orange)', ai: 'var(--purple)' };
+  document.getElementById(`agent${type.charAt(0).toUpperCase() + type.slice(1)}`).style.borderColor = colors[type];
+  addLog(`Selected ${type} agent. Click a hex on the board to assign.`, 'action');
+}
+
+function assignAgent(hexId, agentType) {
+  if (!agentAssignments[hexId]) agentAssignments[hexId] = [];
+  // Check if already assigned
+  if (agentAssignments[hexId].some(a => a.type === agentType)) {
+    // Remove it
+    agentAssignments[hexId] = agentAssignments[hexId].filter(a => a.type !== agentType);
+    const item = allItems.find(i => i.id === hexId);
+    addLog(`Removed ${agentType} agent from "${item?.name}"`, 'warning');
+  } else {
+    agentAssignments[hexId].push({ type: agentType });
+    const item = allItems.find(i => i.id === hexId);
+    addLog(`Assigned ${agentType} agent to "${item?.name}"`, 'success');
+  }
+  renderAllZones();
+}
+
+// ══════════════════════════════════════════════
+// DOMAINS & DRIVERS
+// ══════════════════════════════════════════════
+function renderDomains() {
+  const container = document.getElementById('boardDomains');
+  container.innerHTML = DOMAINS.map(d => `<div class="domain-label">${d}</div>`).join('');
+}
+
+function renderDrivers() {
+  const container = document.getElementById('boardDrivers');
+  container.innerHTML = '<span class="driver-label">Drivers:</span>';
+  DEFAULT_DRIVERS.forEach(d => {
+    const chip = document.createElement('div');
+    chip.className = `driver-chip${activeDrivers.has(d) ? ' active' : ''}`;
+    chip.textContent = d;
+    chip.onclick = () => {
+      if (activeDrivers.has(d)) activeDrivers.delete(d);
+      else activeDrivers.add(d);
+      renderDrivers();
+      updateStats();
+    };
+    container.appendChild(chip);
+  });
+}
+
+// ══════════════════════════════════════════════
+// MOBIUS CYCLE
+// ══════════════════════════════════════════════
+function renderCycleSteps() {
+  const container = document.getElementById('cycleSteps');
+  document.getElementById('cycleCount').textContent = `Cycle ${cycleNumber}`;
+  container.innerHTML = CYCLE_PHASES.map((phase, i) => {
+    let cls = 'cycle-step';
+    if (i === cyclePhase) cls += ' active';
+    if (completedPhases.has(i)) cls += ' completed';
+    return `
+      <div class="${cls}" onclick="setCyclePhase(${i})">
+        <div class="step-icon">${phase.icon}</div>
+        <div>
+          <div class="step-name">${phase.name}</div>
+          <div class="step-desc">${phase.desc}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setCyclePhase(index) {
+  cyclePhase = index;
+  renderCycleSteps();
+  addLog(`Entered ${CYCLE_PHASES[index].name} phase`, 'action');
+}
+
+function advanceCycle() {
+  completedPhases.add(cyclePhase);
+  if (cyclePhase < CYCLE_PHASES.length - 1) {
+    cyclePhase++;
+    addLog(`Completed ${CYCLE_PHASES[cyclePhase - 1].name}. Now entering ${CYCLE_PHASES[cyclePhase].name} phase.`, 'success');
+  } else {
+    // Complete cycle
+    cycleNumber++;
+    cyclePhase = 0;
+    completedPhases.clear();
+    addLog(`Cycle ${cycleNumber - 1} complete! Starting Cycle ${cycleNumber}.`, 'success');
+  }
+  renderCycleSteps();
+  updateStats();
+}
+
+// ══════════════════════════════════════════════
+// STATS & FITNESS
+// ══════════════════════════════════════════════
+function updateStats() {
+  const allOnBoard = [...boardState.current, ...boardState.path, ...boardState.desired];
+  const patterns = allOnBoard.filter(id => allItems.find(i => i.id === id)?.type === 'pattern').length;
+  const antipatterns = allOnBoard.filter(id => allItems.find(i => i.id === id)?.type === 'antipattern').length;
+  const transitions = allOnBoard.filter(id => allItems.find(i => i.id === id)?.type === 'transition').length;
+  const agents = Object.values(agentAssignments).reduce((sum, arr) => sum + arr.length, 0);
+
+  document.getElementById('statPatterns').textContent = patterns;
+  document.getElementById('statAntipatterns').textContent = antipatterns;
+  document.getElementById('statTransitions').textContent = transitions;
+  document.getElementById('statAgents').textContent = agents;
+
+  // Fitness Score Calculation
+  // Patterns in desired = +3, patterns in path = +1
+  // Anti-patterns in current = +1 (awareness), anti-patterns in desired = -3
+  // Transitions in path = +2
+  // Agents = +0.5 each
+  // Drivers active = +0.3 each
+  let fitness = 0;
+  boardState.desired.forEach(id => {
+    const item = allItems.find(i => i.id === id);
+    if (item?.type === 'pattern') fitness += 3;
+    if (item?.type === 'transition') fitness += 1;
+    if (item?.type === 'antipattern') fitness -= 3;
+  });
+  boardState.path.forEach(id => {
+    const item = allItems.find(i => i.id === id);
+    if (item?.type === 'pattern') fitness += 1;
+    if (item?.type === 'transition') fitness += 2;
+    if (item?.type === 'antipattern') fitness -= 1;
+  });
+  boardState.current.forEach(id => {
+    const item = allItems.find(i => i.id === id);
+    if (item?.type === 'antipattern') fitness += 0.5; // awareness points
+    if (item?.type === 'pattern') fitness += 0.5;
+  });
+  fitness += agents * 0.5;
+  fitness += activeDrivers.size * 0.3;
+  fitness += (cycleNumber - 1) * 2;
+  fitness = Math.max(0, Math.min(100, Math.round(fitness)));
+
+  document.getElementById('fitnessScore').textContent = fitness;
+  document.getElementById('fitnessGauge').style.width = fitness + '%';
+
+  let label = 'Fragile';
+  let color = 'var(--red)';
+  if (fitness >= 80) { label = 'Antifragile'; color = 'var(--cyan)'; }
+  else if (fitness >= 60) { label = 'Resilient'; color = 'var(--green)'; }
+  else if (fitness >= 40) { label = 'Stable'; color = 'var(--orange)'; }
+  else if (fitness >= 20) { label = 'Emerging'; color = 'var(--orange)'; }
+  document.getElementById('fitnessLabel').textContent = label;
+  document.getElementById('fitnessScore').style.color = color;
+}
+
+// ══════════════════════════════════════════════
+// LOG
+// ══════════════════════════════════════════════
+function addLog(message, type = 'action') {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  logEntries.unshift({ message, type, time });
+  if (logEntries.length > 50) logEntries.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const container = document.getElementById('activityLog');
+  container.innerHTML = logEntries.slice(0, 15).map(e =>
+    `<div class="log-entry ${e.type}"><span class="log-time">${e.time}</span> ${e.message}</div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════
+// CUSTOM PATTERNS
+// ══════════════════════════════════════════════
+function addCustomPattern() {
+  const type = document.getElementById('newPatternType').value;
+  const name = document.getElementById('newPatternName').value.trim();
+  const signal = document.getElementById('newPatternSignal').value.trim();
+  const impact = document.getElementById('newPatternImpact').value.trim();
+  const domain = document.getElementById('newPatternDomain').value;
+
+  if (!name) return;
+
+  const id = 'custom_' + Date.now();
+  allItems.push({ id, type, name, signal: signal || 'Custom signal', impact: impact || 'Custom impact', domain });
+  addLog(`Created custom ${type}: "${name}"`, 'success');
+  renderLibrary();
+  closeModal('addPatternModal');
+
+  // Clear form
+  document.getElementById('newPatternName').value = '';
+  document.getElementById('newPatternSignal').value = '';
+  document.getElementById('newPatternImpact').value = '';
+}
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ══════════════════════════════════════════════
+// RESET & EXPORT
+// ══════════════════════════════════════════════
+function resetBoard() {
+  if (!confirm('Reset the entire board? This cannot be undone.')) return;
+  boardState = { current: [], path: [], desired: [] };
+  agentAssignments = {};
+  cyclePhase = 0;
+  cycleNumber = 1;
+  completedPhases.clear();
+  logEntries = [];
+  renderAllZones();
+  renderCycleSteps();
+  addLog('Board reset. Starting fresh.', 'warning');
+}
+
+function exportSession() {
+  const data = {
+    timestamp: new Date().toISOString(),
+    boardState,
+    agentAssignments,
+    cycleNumber,
+    cyclePhase,
+    activeDrivers: [...activeDrivers],
+    fitness: document.getElementById('fitnessScore').textContent,
+    log: logEntries.slice(0, 30),
+    items: allItems.filter(i => i.id.startsWith('custom_'))
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nexus-session-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  addLog('Session exported as JSON', 'success');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>
