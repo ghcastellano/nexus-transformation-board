@@ -212,8 +212,14 @@
     letter-spacing: .5px;
     color: var(--cyan);
     border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+    opacity: .6;
   }
   .board-domains .domain-label:last-child { border-right: none; }
+  .board-domains .domain-label:hover { opacity: .85; background: rgba(57,210,192,.05); }
+  .board-domains .domain-label.active { opacity: 1; background: rgba(57,210,192,.1); border-bottom: 2px solid var(--cyan); }
+  .board-hex.domain-dimmed { opacity: .2; transform: scale(.97); }
 
   .board-columns-header {
     display: grid;
@@ -810,15 +816,15 @@
         <h3>Agents of Change</h3>
         <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Click an agent, then click a hex on the board to assign.</p>
         <div class="agent-palette">
-          <div class="agent-palette-item" onclick="selectAgent('human')" id="agentHuman">
+          <div class="agent-palette-item" onclick="selectAgent('human')" data-agent="human">
             <span class="agent-icon">🧑</span>
             Human
           </div>
-          <div class="agent-palette-item" onclick="selectAgent('systemic')" id="agentSystemic">
+          <div class="agent-palette-item" onclick="selectAgent('systemic')" data-agent="systemic">
             <span class="agent-icon">🏛</span>
             Systemic
           </div>
-          <div class="agent-palette-item" onclick="selectAgent('ai')" id="agentAI">
+          <div class="agent-palette-item" onclick="selectAgent('ai')" data-agent="ai">
             <span class="agent-icon">🤖</span>
             AI
           </div>
@@ -972,6 +978,7 @@ let agentAssignments = {}; // hexId -> [{ type: 'human'|'systemic'|'ai' }]
 let logEntries = [];
 let draggedItemId = null;
 let dragSourceZone = null;
+let activeDomain = null;
 
 // ══════════════════════════════════════════════
 // INIT
@@ -1053,7 +1060,8 @@ function renderBoardZone(zone) {
     const item = allItems.find(i => i.id === itemId);
     if (!item) return;
     const el = document.createElement('div');
-    el.className = `board-hex ${item.type}`;
+    const dimmed = activeDomain && item.domain !== activeDomain ? ' domain-dimmed' : '';
+    el.className = `board-hex ${item.type}${dimmed}`;
     el.dataset.id = item.id;
     el.draggable = true;
 
@@ -1162,7 +1170,7 @@ function selectAgent(type) {
   selectedAgent = type;
   document.querySelectorAll('.agent-palette-item').forEach(a => a.style.borderColor = '');
   const colors = { human: 'var(--green)', systemic: 'var(--orange)', ai: 'var(--purple)' };
-  document.getElementById(`agent${type.charAt(0).toUpperCase() + type.slice(1)}`).style.borderColor = colors[type];
+  document.querySelector(`.agent-palette-item[data-agent="${type}"]`).style.borderColor = colors[type];
   addLog(`Selected ${type} agent. Click a hex on the board to assign.`, 'action');
 }
 
@@ -1187,7 +1195,20 @@ function assignAgent(hexId, agentType) {
 // ══════════════════════════════════════════════
 function renderDomains() {
   const container = document.getElementById('boardDomains');
-  container.innerHTML = DOMAINS.map(d => `<div class="domain-label">${d}</div>`).join('');
+  container.innerHTML = '';
+  DOMAINS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = `domain-label${activeDomain === d ? ' active' : ''}`;
+    el.textContent = d;
+    el.onclick = () => {
+      activeDomain = activeDomain === d ? null : d;
+      renderDomains();
+      renderAllZones();
+      if (activeDomain) addLog(`Filtering board by domain: ${d}`, 'action');
+      else addLog('Domain filter cleared', 'action');
+    };
+    container.appendChild(el);
+  });
 }
 
 function renderDrivers() {
