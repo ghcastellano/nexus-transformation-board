@@ -1,4 +1,4 @@
-require('dotenv').config();
+if (!process.env.VERCEL) require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -129,6 +129,10 @@ app.delete('/api/games/:gameId', async (req, res) => {
   }
 });
 
-// ── Start ──
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Nexus server running on http://localhost:${PORT}`));
+// ── Start (local dev) or export for Vercel ──
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Nexus server running on http://localhost:${PORT}`));
+}
