@@ -260,14 +260,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
 /* SVG overlay for connections */
-.connections-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; }
-.connections-svg line, .connections-svg path, .connections-svg polyline { pointer-events:stroke; cursor:pointer; }
-.connections-svg .conn-path { stroke:var(--text-muted); stroke-width:2; stroke-dasharray:6,4; fill:none; }
-.connections-svg .conn-nexus { stroke:var(--cyan); stroke-width:2.5; fill:none; }
-.connections-svg .conn-arrow { fill:var(--text-muted); }
+.connections-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; overflow:visible; }
+.connections-svg path { pointer-events:stroke; cursor:pointer; stroke-linecap:round; stroke-linejoin:round; }
+.connections-svg .conn-path { stroke:rgba(200,200,220,.6); stroke-width:2; stroke-dasharray:8,5; fill:none; transition:stroke .15s; }
+.connections-svg g:hover .conn-path { stroke:rgba(200,200,220,.9); stroke-width:2.5; }
+.connections-svg .conn-nexus { stroke:var(--cyan); stroke-width:2.5; fill:none; opacity:.7; transition:opacity .15s; }
+.connections-svg g:hover .conn-nexus { opacity:1; stroke-width:3; }
+.connections-svg .conn-arrow { fill:rgba(200,200,220,.6); }
 .connections-svg .conn-arrow-nexus { fill:var(--cyan); }
-.connections-svg .conn-delete { fill:var(--red); opacity:0; cursor:pointer; pointer-events:all; transition:opacity .15s; }
+.connections-svg .conn-delete { fill:var(--red); opacity:0; cursor:pointer; pointer-events:all; transition:opacity .2s; }
 .connections-svg g:hover .conn-delete { opacity:1; }
+/* Invisible wider hit area for easier hovering */
+.connections-svg .conn-hit { stroke:transparent; stroke-width:16; fill:none; pointer-events:stroke; cursor:pointer; }
 
 /* Hex highlight in connect mode */
 .board-hex.connect-source { outline:2px solid var(--accent); outline-offset:2px; }
@@ -939,56 +943,133 @@ function deleteConnection(connId) {
   renderConnections();
   scheduleAutoSave();
 }
-function getHexCenter(hexId) {
+// Get hex rect relative to board-map
+function getHexRect(hexId) {
   const el = document.querySelector(`[data-hex-id="${hexId}"]`);
   const map = document.getElementById('boardMap');
   if (!el || !map) return null;
-  const eRect = el.getBoundingClientRect();
-  const mRect = map.getBoundingClientRect();
-  return { x: eRect.left - mRect.left + eRect.width/2 + map.scrollLeft, y: eRect.top - mRect.top + eRect.height/2 + map.scrollTop };
+  const eR = el.getBoundingClientRect();
+  const mR = map.getBoundingClientRect();
+  const sx = map.scrollLeft, sy = map.scrollTop;
+  return { x: eR.left - mR.left + sx, y: eR.top - mR.top + sy, w: eR.width, h: eR.height, cx: eR.left - mR.left + sx + eR.width/2, cy: eR.top - mR.top + sy + eR.height/2 };
+}
+// Compute anchor point on the edge of a hex, facing toward a target point
+function getEdgeAnchor(rect, targetX, targetY) {
+  const dx = targetX - rect.cx, dy = targetY - rect.cy;
+  const angle = Math.atan2(dy, dx);
+  // Simplified hex edge: use ellipse approximation
+  const rx = rect.w/2 + 4, ry = rect.h/2 + 4;
+  return { x: rect.cx + rx * Math.cos(angle), y: rect.cy + ry * Math.sin(angle) };
+}
+// Get all hex rects on board (for obstacle avoidance)
+function getAllHexRects(excludeIds) {
+  const rects = [];
+  document.querySelectorAll('[data-hex-id]').forEach(el => {
+    const id = el.getAttribute('data-hex-id');
+    if (excludeIds.includes(id)) return;
+    const r = getHexRect(id);
+    if (r) rects.push(r);
+  });
+  return rects;
+}
+// Check if a line segment from (ax,ay) to (bx,by) intersects a rect (with padding)
+function segIntersectsRect(ax,ay,bx,by,r,pad=6) {
+  const left=r.x-pad, right=r.x+r.w+pad, top=r.y-pad, bot=r.y+r.h+pad;
+  // Simple: check if midpoints or quarter-points hit the rect
+  const pts = [[.25],[.5],[.75]];
+  for (const [t] of pts) {
+    const px=ax+(bx-ax)*t, py=ay+(by-ay)*t;
+    if (px>=left && px<=right && py>=top && py<=bot) return true;
+  }
+  return false;
+}
+// Build a curved path that avoids obstacles
+function buildSmartPath(from, to, obstacles, type) {
+  const fromR = from, toR = to;
+  // Compute edge anchors (start exits toward target, end enters from source)
+  const startPt = getEdgeAnchor(fromR, toR.cx, toR.cy);
+  const endPt = getEdgeAnchor(toR, fromR.cx, fromR.cy);
+  // Check if direct line hits any obstacle
+  const blocked = obstacles.some(r => segIntersectsRect(startPt.x,startPt.y,endPt.x,endPt.y,r));
+  if (type === 'nexus') {
+    // L-shaped: exit right from source, then vertical to target left
+    const exitX = fromR.x + fromR.w + 14;
+    const enterX = toR.x - 14;
+    const startY = fromR.cy;
+    const endY = toR.cy;
+    // Choose offset to route around cards
+    const midX = Math.max(exitX, enterX) + 20;
+    return {
+      d: `M${fromR.x+fromR.w+2},${startY} L${midX},${startY} L${midX},${endY} L${toR.x-2},${endY}`,
+      midPt: {x:midX, y:(startY+endY)/2}
+    };
+  }
+  // Transition Path (dashed)
+  if (!blocked) {
+    // Direct line with slight curve for aesthetics
+    const mx = (startPt.x+endPt.x)/2, my = (startPt.y+endPt.y)/2;
+    const perpX = -(endPt.y-startPt.y)*0.08, perpY = (endPt.x-startPt.x)*0.08;
+    return {
+      d: `M${startPt.x},${startPt.y} Q${mx+perpX},${my+perpY} ${endPt.x},${endPt.y}`,
+      midPt: {x:mx+perpX/2, y:my+perpY/2}
+    };
+  }
+  // Blocked: route around by going above or below
+  const avgY = (startPt.y + endPt.y) / 2;
+  // Find which obstacle is in the way and go around it
+  let detourY;
+  const blockingRects = obstacles.filter(r => segIntersectsRect(startPt.x,startPt.y,endPt.x,endPt.y,r));
+  if (blockingRects.length > 0) {
+    // Go above or below the blocking rect, whichever is shorter
+    const br = blockingRects[0];
+    const aboveDist = Math.abs(avgY - (br.y - 30));
+    const belowDist = Math.abs(avgY - (br.y + br.h + 30));
+    detourY = aboveDist < belowDist ? br.y - 30 : br.y + br.h + 30;
+  } else {
+    detourY = avgY - 40;
+  }
+  const mx1 = startPt.x + (endPt.x - startPt.x)*0.3;
+  const mx2 = startPt.x + (endPt.x - startPt.x)*0.7;
+  return {
+    d: `M${startPt.x},${startPt.y} C${mx1},${detourY} ${mx2},${detourY} ${endPt.x},${endPt.y}`,
+    midPt: {x:(mx1+mx2)/2, y:detourY}
+  };
 }
 function renderConnections() {
   const svg = document.getElementById('connectionsSvg');
-  // Keep defs
   const defs = svg.querySelector('defs');
   svg.innerHTML = '';
   svg.appendChild(defs);
-  // Set SVG size to match board-map scroll area
   const map = document.getElementById('boardMap');
   const inner = document.querySelector('.board-map-inner');
   if (inner) { svg.setAttribute('width', inner.scrollWidth); svg.setAttribute('height', inner.scrollHeight); svg.style.width=inner.scrollWidth+'px'; svg.style.height=inner.scrollHeight+'px'; }
   connections.forEach(conn => {
-    const from = getHexCenter(conn.from);
-    const to = getHexCenter(conn.to);
-    if (!from || !to) return;
+    const fromR = getHexRect(conn.from);
+    const toR = getHexRect(conn.to);
+    if (!fromR || !toR) return;
+    const obstacles = getAllHexRects([conn.from, conn.to]);
+    const route = buildSmartPath(fromR, toR, obstacles, conn.type);
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    if (conn.type === 'path') {
-      // Dashed straight arrow
-      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-      line.setAttribute('x1',from.x); line.setAttribute('y1',from.y);
-      line.setAttribute('x2',to.x); line.setAttribute('y2',to.y);
-      line.setAttribute('class','conn-path');
-      line.setAttribute('marker-end','url(#arrowPath)');
-      g.appendChild(line);
-    } else {
-      // L-shaped connector (nexus) — go right then up/down
-      const midX = to.x;
-      const pts = `${from.x},${from.y} ${midX},${from.y} ${to.x},${to.y}`;
-      const pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
-      pl.setAttribute('points', pts);
-      pl.setAttribute('class','conn-nexus');
-      pl.setAttribute('marker-end','url(#arrowNexus)');
-      g.appendChild(pl);
-    }
-    // Delete button (circle with X)
-    const midPt = conn.type==='path' ? {x:(from.x+to.x)/2, y:(from.y+to.y)/2} : {x:to.x, y:(from.y+to.y)/2};
+    // Invisible wider hit area for easy hovering
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','path');
+    hit.setAttribute('d', route.d);
+    hit.setAttribute('class','conn-hit');
+    g.appendChild(hit);
+    // Visible path
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d', route.d);
+    p.setAttribute('class', conn.type==='path'?'conn-path':'conn-nexus');
+    p.setAttribute('marker-end', conn.type==='path'?'url(#arrowPath)':'url(#arrowNexus)');
+    g.appendChild(p);
+    // Delete button at midpoint
+    const mp = route.midPt;
     const del = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    del.setAttribute('cx',midPt.x); del.setAttribute('cy',midPt.y);
+    del.setAttribute('cx',mp.x); del.setAttribute('cy',mp.y);
     del.setAttribute('r','8'); del.setAttribute('class','conn-delete');
     del.addEventListener('click',()=>deleteConnection(conn.id));
     g.appendChild(del);
     const delX = document.createElementNS('http://www.w3.org/2000/svg','text');
-    delX.setAttribute('x',midPt.x); delX.setAttribute('y',midPt.y+3.5);
+    delX.setAttribute('x',mp.x); delX.setAttribute('y',mp.y+3.5);
     delX.setAttribute('text-anchor','middle'); delX.setAttribute('font-size','10');
     delX.setAttribute('fill','#fff'); delX.setAttribute('class','conn-delete');
     delX.setAttribute('style','pointer-events:none');
