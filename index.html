@@ -37,29 +37,65 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .btn-danger { background:var(--red); color:#fff; border-color:var(--red); }
 
 /* ══ INTRO SCREEN ══ */
-.intro-screen { position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px; transition:opacity .5s; }
+.intro-screen { position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; overflow:hidden; transition:opacity .6s ease; }
 .intro-screen.hidden { opacity:0; pointer-events:none; }
-.intro-hex { width:120px; height:104px; background:linear-gradient(135deg, var(--blue-light), var(--purple)); clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:flex; align-items:center; justify-content:center; font-size:42px; color:#fff; font-weight:700; animation:float 3s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-.intro-title { font-size:32px; font-weight:700; background:linear-gradient(90deg,var(--accent),var(--purple),var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center; }
-.intro-sub { color:var(--text-muted); font-size:15px; text-align:center; max-width:480px; line-height:1.6; }
+.intro-bg-canvas { position:absolute; inset:0; z-index:0; }
+.intro-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; animation:introFadeIn 1.2s ease-out; }
+@keyframes introFadeIn { 0%{opacity:0;transform:translateY(30px)} 100%{opacity:1;transform:translateY(0)} }
+.intro-hex-logo { width:100px; height:87px; background:linear-gradient(135deg, var(--blue-light), var(--purple), var(--cyan)); clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:flex; align-items:center; justify-content:center; font-size:38px; color:#fff; font-weight:800; letter-spacing:-2px; animation:logoFloat 4s ease-in-out infinite; box-shadow:0 0 40px rgba(74,144,217,.3); position:relative; }
+.intro-hex-logo::after { content:''; position:absolute; inset:-3px; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); background:linear-gradient(135deg, var(--accent), var(--purple), var(--cyan)); z-index:-1; opacity:.5; animation:logoPulse 3s ease-in-out infinite; }
+@keyframes logoFloat { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-10px) scale(1.02)} }
+@keyframes logoPulse { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:.6;transform:scale(1.05)} }
+.intro-title { font-size:36px; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--purple),var(--cyan),var(--accent)); background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center; animation:titleShimmer 4s linear infinite; letter-spacing:-.5px; }
+@keyframes titleShimmer { 0%{background-position:0% center} 100%{background-position:200% center} }
+.intro-sub { color:var(--text-muted); font-size:14px; text-align:center; max-width:440px; line-height:1.7; opacity:.8; }
+.intro-menu { display:flex; flex-direction:column; gap:12px; width:320px; margin-top:16px; animation:menuSlideUp 1s ease-out .4s both; }
+@keyframes menuSlideUp { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
+.intro-menu-btn { position:relative; padding:16px 24px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-weight:600; cursor:pointer; transition:all .25s ease; display:flex; align-items:center; gap:14px; overflow:hidden; }
+.intro-menu-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(74,144,217,.05),transparent); transform:translateX(-100%); transition:transform .5s ease; }
+.intro-menu-btn:hover::before { transform:translateX(100%); }
+.intro-menu-btn:hover { border-color:var(--accent); transform:translateX(4px); box-shadow:0 4px 20px rgba(74,144,217,.15); }
+.intro-menu-btn .imb-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.intro-menu-btn .imb-text { display:flex; flex-direction:column; gap:2px; text-align:left; }
+.intro-menu-btn .imb-label { font-size:15px; font-weight:600; }
+.intro-menu-btn .imb-desc { font-size:11px; color:var(--text-muted); font-weight:400; }
+.intro-menu-btn.primary { border-color:var(--accent); background:linear-gradient(135deg,rgba(74,144,217,.12),rgba(123,94,167,.08)); }
+.intro-menu-btn.primary:hover { background:linear-gradient(135deg,rgba(74,144,217,.2),rgba(123,94,167,.15)); box-shadow:0 4px 30px rgba(74,144,217,.25); }
+.intro-menu-btn.continue { border-color:rgba(56,178,160,.3); background:linear-gradient(135deg,rgba(56,178,160,.08),rgba(45,157,94,.05)); }
+.intro-menu-btn.continue:hover { border-color:var(--cyan); background:linear-gradient(135deg,rgba(56,178,160,.15),rgba(45,157,94,.1)); box-shadow:0 4px 30px rgba(56,178,160,.2); }
+.intro-footer { margin-top:32px; color:var(--text-muted); font-size:11px; opacity:.4; animation:introFadeIn 1.5s ease-out .8s both; text-align:center; line-height:1.6; }
+.intro-footer a { color:var(--accent); text-decoration:none; opacity:.7; }
 
 /* ══ GAME SELECT SCREEN ══ */
 .game-select { position:fixed; inset:0; background:var(--bg); z-index:250; display:none; overflow-y:auto; }
-.game-select.show { display:block; }
-.gs-container { max-width:700px; margin:0 auto; padding:40px 24px; }
-.gs-container h2 { font-size:22px; margin-bottom:20px; }
-.gs-back { cursor:pointer; color:var(--accent); font-size:13px; margin-bottom:16px; display:inline-block; }
-.gs-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:10px; cursor:pointer; transition:all .15s; display:flex; justify-content:space-between; align-items:center; }
-.gs-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+.game-select.show { display:flex; align-items:flex-start; justify-content:center; }
+.gs-container { max-width:700px; width:100%; padding:50px 24px; animation:gsFadeIn .5s ease-out; }
+@keyframes gsFadeIn { 0%{opacity:0;transform:translateY(15px)} 100%{opacity:1;transform:translateY(0)} }
+.gs-header { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+.gs-header h2 { font-size:24px; font-weight:700; flex:1; }
+.gs-back { cursor:pointer; color:var(--text-muted); font-size:13px; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); transition:all .2s; }
+.gs-back:hover { border-color:var(--accent); color:var(--accent); }
+.gs-section-label { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted); margin-bottom:10px; font-weight:600; }
+.gs-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 22px; margin-bottom:10px; cursor:pointer; transition:all .2s ease; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; }
+.gs-card::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(74,144,217,.03),transparent); transform:translateX(-100%); transition:transform .4s ease; }
+.gs-card:hover::before { transform:translateX(100%); }
+.gs-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,0,0,.3); }
 .gs-card .gs-name { font-weight:600; font-size:15px; }
-.gs-card .gs-meta { font-size:12px; color:var(--text-muted); }
-.gs-card .gs-fitness { font-size:20px; font-weight:700; color:var(--cyan); }
-.gs-form { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-top:12px; }
-.gs-form input, .gs-form textarea { width:100%; padding:8px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; margin-bottom:10px; }
-.gs-form input:focus, .gs-form textarea:focus { outline:none; border-color:var(--accent); }
+.gs-card .gs-meta { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.gs-card .gs-arrow { font-size:18px; color:var(--accent); transition:transform .2s; }
+.gs-card:hover .gs-arrow { transform:translateX(4px); }
+.gs-card .gs-fitness { display:flex; align-items:center; gap:10px; }
+.gs-card .gs-fitness-score { font-size:22px; font-weight:800; color:var(--cyan); }
+.gs-card .gs-fitness-label { font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
+.gs-divider { height:1px; background:var(--border); margin:24px 0; }
+.gs-form { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; margin-top:8px; }
+.gs-form-title { font-size:13px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; color:var(--text); }
+.gs-form input, .gs-form textarea { width:100%; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; margin-bottom:10px; transition:border-color .2s; }
+.gs-form input:focus, .gs-form textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(74,144,217,.1); }
 .gs-form textarea { resize:vertical; min-height:50px; font-family:inherit; }
-.gs-empty { text-align:center; color:var(--text-muted); padding:40px; font-size:14px; }
+.gs-form .btn { width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:10px; }
+.gs-empty { text-align:center; color:var(--text-muted); padding:40px; font-size:14px; border:1px dashed var(--border); border-radius:14px; }
+.gs-org-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:8px; background:rgba(74,144,217,.1); border:1px solid rgba(74,144,217,.2); font-size:12px; color:var(--accent); font-weight:500; }
 
 /* ══ HEADER ══ */
 .app-header { background:linear-gradient(135deg,#171c24,#1c2233); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
@@ -333,14 +369,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 <!-- ══ INTRO ══ -->
 <div class="intro-screen" id="introScreen">
-  <div class="intro-hex">N</div>
-  <div class="intro-title">Nexus Transformation Board</div>
-  <div class="intro-sub">A strategic game for organizational transformation. Map patterns, replace anti-patterns, assign agents, and navigate toward adaptive fitness.</div>
-  <div style="display:flex;gap:10px;margin-top:8px;">
-    <button class="btn btn-primary" onclick="showGameSelect()" style="padding:12px 28px;font-size:14px;">Start</button>
-    <button class="btn" onclick="showModal('howToPlayModal')" style="padding:12px 28px;font-size:14px;">How to Play</button>
+  <canvas class="intro-bg-canvas" id="introBgCanvas"></canvas>
+  <div class="intro-content">
+    <div class="intro-hex-logo">N</div>
+    <div class="intro-title">Nexus Transformation Board</div>
+    <div class="intro-sub">Navigate organizational transformation through strategic sensemaking. Map patterns, replace anti-patterns, and evolve toward adaptive fitness.</div>
+    <div class="intro-menu" id="introMenu">
+      <button class="intro-menu-btn primary" onclick="showNewGame()">
+        <div class="imb-icon" style="background:linear-gradient(135deg,rgba(74,144,217,.2),rgba(123,94,167,.2));">🎯</div>
+        <div class="imb-text"><div class="imb-label">New Game</div><div class="imb-desc">Create organization &amp; start a transformation</div></div>
+      </button>
+      <button class="intro-menu-btn continue" onclick="showContinueGame()" id="btnContinue">
+        <div class="imb-icon" style="background:linear-gradient(135deg,rgba(56,178,160,.2),rgba(45,157,94,.15));">📂</div>
+        <div class="imb-text"><div class="imb-label">Continue</div><div class="imb-desc">Load a saved game</div></div>
+      </button>
+      <button class="intro-menu-btn" onclick="showModal('howToPlayModal')">
+        <div class="imb-icon" style="background:rgba(255,255,255,.05);">📖</div>
+        <div class="imb-text"><div class="imb-label">How to Play</div><div class="imb-desc">Learn the Codex mechanics &amp; rules</div></div>
+      </button>
+    </div>
+    <div class="intro-footer">Based on the Enterprise Transformation Codex<br><a>NTT DATA DS&A USA</a></div>
   </div>
-  <div style="color:var(--text-muted);font-size:11px;opacity:.5;">Based on the Enterprise Transformation Codex — NTT DATA DS&A USA</div>
 </div>
 
 <!-- ══ GAME SELECT ══ -->
@@ -703,69 +752,134 @@ function renderAll() {
 // ══════════════════════════════════════════
 // GAME SELECT SCREEN
 // ══════════════════════════════════════════
+// ── Intro Menu: "New Game" vs "Continue" ──
+function showNewGame() {
+  document.getElementById('introScreen').classList.add('hidden');
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('gameSelect').classList.add('show');
+  renderNewGameFlow();
+}
+function showContinueGame() {
+  document.getElementById('introScreen').classList.add('hidden');
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('gameSelect').classList.add('show');
+  renderContinueFlow();
+}
 function showGameSelect() {
   document.getElementById('introScreen').classList.add('hidden');
   document.getElementById('mainApp').style.display='none';
   document.getElementById('gameSelect').classList.add('show');
-  renderCompanySelect();
+  renderContinueFlow();
 }
 function switchGame() {
   document.getElementById('mainApp').style.display='none';
   document.getElementById('gameSelect').classList.add('show');
-  renderCompanySelect();
+  renderContinueFlow();
 }
-async function renderCompanySelect() {
+function backToIntro() {
+  document.getElementById('gameSelect').classList.remove('show');
+  document.getElementById('introScreen').classList.remove('hidden');
+}
+
+// ── "New Game" flow: pick or create org → create game ──
+async function renderNewGameFlow() {
   const c = document.getElementById('gsContent');
   let companies = [];
   try { companies = await api('GET','/companies'); } catch(e) { console.error(e); }
   c.innerHTML = `
-    <h2>Select Organization</h2>
-    ${companies.length ? companies.map(co=>`
-      <div class="gs-card" onclick="selectCompany('${co.id}','${co.name.replace(/'/g,"\\'")}')">
-        <div><div class="gs-name">${co.name}</div><div class="gs-meta">${co.game_count} game${co.game_count!==1?'s':''}</div></div>
-        <div style="font-size:20px;color:var(--accent)">→</div>
-      </div>
-    `).join('') : '<div class="gs-empty">No organizations yet. Create one below.</div>'}
+    <div class="gs-header">
+      <div class="gs-back" onclick="backToIntro()">← Back</div>
+      <h2>🎯 New Game</h2>
+    </div>
+    ${companies.length ? `
+      <div class="gs-section-label">Select an existing organization</div>
+      ${companies.map(co=>`
+        <div class="gs-card" onclick="newGameForCompany('${co.id}','${co.name.replace(/'/g,"\\'")}')">
+          <div><div class="gs-name">${co.name}</div><div class="gs-meta">${co.game_count} game${co.game_count!==1?'s':''} created</div></div>
+          <div class="gs-arrow">→</div>
+        </div>
+      `).join('')}
+      <div class="gs-divider"></div>
+    ` : ''}
+    <div class="gs-section-label">Or create a new organization</div>
     <div class="gs-form">
-      <input id="newCompName" placeholder="Organization name (e.g., NTT DATA DS&A)">
+      <div class="gs-form-title">🏢 New Organization</div>
+      <input id="newCompName" placeholder="Organization name (e.g., NTT DATA DS&A)" autofocus>
       <input id="newCompSlug" placeholder="Slug (e.g., ntt-data-dsa)" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')">
-      <button class="btn btn-primary" onclick="createComp()" style="width:100%">Create Organization</button>
+      <button class="btn btn-primary" onclick="createCompAndGame()">Create &amp; Continue →</button>
     </div>
   `;
 }
-async function createComp() {
-  const name = document.getElementById('newCompName').value.trim();
-  const slug = document.getElementById('newCompSlug').value.trim();
-  if (!name||!slug) return;
-  try { await api('POST','/companies',{name,slug}); renderCompanySelect(); } catch(e) { alert(e.message); }
-}
-async function selectCompany(id, name) {
+async function newGameForCompany(id, name) {
   currentCompanyId = id;
-  let games = [];
-  try { games = await api('GET',`/companies/${id}/games`); } catch(e) { console.error(e); }
   const c = document.getElementById('gsContent');
   c.innerHTML = `
-    <div class="gs-back" onclick="renderCompanySelect()">← Back to organizations</div>
-    <h2>${name}</h2>
-    ${games.length ? games.map(g=>{
+    <div class="gs-header">
+      <div class="gs-back" onclick="renderNewGameFlow()">← Back</div>
+      <h2>New Game</h2>
+    </div>
+    <div class="gs-org-badge">🏢 ${name}</div>
+    <div style="margin-top:20px"></div>
+    <div class="gs-form">
+      <div class="gs-form-title">🎮 Create Game</div>
+      <input id="newGameName" placeholder="Game name (e.g., Q1 2026 Transformation Sprint)" autofocus>
+      <textarea id="newGameDesc" placeholder="Description — what transformation are you exploring? (optional)"></textarea>
+      <button class="btn btn-primary" onclick="createGame('${id}')">Start Game →</button>
+    </div>
+  `;
+}
+async function createCompAndGame() {
+  const name = document.getElementById('newCompName').value.trim();
+  const slug = document.getElementById('newCompSlug').value.trim();
+  if (!name||!slug) { showToast('Fill in both name and slug','warning'); return; }
+  try {
+    const co = await api('POST','/companies',{name,slug});
+    newGameForCompany(co.id, co.name);
+  } catch(e) { alert(e.message); }
+}
+
+// ── "Continue" flow: browse orgs → games → load ──
+async function renderContinueFlow() {
+  const c = document.getElementById('gsContent');
+  let companies = [];
+  try { companies = await api('GET','/companies'); } catch(e) { console.error(e); }
+
+  // Fetch all games across all companies for a unified view
+  let allGames = [];
+  for (const co of companies) {
+    try {
+      const games = await api('GET',`/companies/${co.id}/games`);
+      games.forEach(g => { g._companyName = co.name; g._companyId = co.id; });
+      allGames.push(...games);
+    } catch(e) { /* skip */ }
+  }
+  allGames.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+  c.innerHTML = `
+    <div class="gs-header">
+      <div class="gs-back" onclick="backToIntro()">← Back</div>
+      <h2>📂 Saved Games</h2>
+    </div>
+    ${allGames.length ? allGames.map(g => {
       const d = new Date(g.updated_at);
       const ago = timeAgo(d);
       return `<div class="gs-card" onclick="enterGame('${g.id}')">
-        <div><div class="gs-name">${g.name}</div><div class="gs-meta">Cycle ${g.cycle_number} · Phase ${PHASES[g.cycle_phase]?.n||'?'} · Updated ${ago}</div></div>
-        <div class="gs-fitness">${g.fitness_score}</div>
+        <div>
+          <div class="gs-name">${g.name}</div>
+          <div class="gs-meta">🏢 ${g._companyName} · Cycle ${g.cycle_number} · ${PHASES[g.cycle_phase]?.n||'—'} · ${ago}</div>
+        </div>
+        <div class="gs-fitness">
+          <div><div class="gs-fitness-score">${g.fitness_score}</div><div class="gs-fitness-label">fitness</div></div>
+          <div class="gs-arrow">→</div>
+        </div>
       </div>`;
-    }).join('') : '<div class="gs-empty">No games yet. Create one below.</div>'}
-    <div class="gs-form">
-      <input id="newGameName" placeholder="Game name (e.g., Q1 2026 Transformation Sprint)">
-      <textarea id="newGameDesc" placeholder="Description (optional)"></textarea>
-      <button class="btn btn-primary" onclick="createGame('${id}')" style="width:100%">Create New Game</button>
-    </div>
+    }).join('') : '<div class="gs-empty">No saved games yet.<br>Start a new game from the main menu!</div>'}
   `;
 }
 async function createGame(companyId) {
   const name = document.getElementById('newGameName').value.trim();
   const desc = document.getElementById('newGameDesc').value.trim();
-  if (!name) return;
+  if (!name) { showToast('Enter a game name','warning'); return; }
   try {
     const g = await api('POST',`/companies/${companyId}/games`,{name,description:desc||null});
     enterGame(g.id);
@@ -1403,6 +1517,118 @@ function exportSession(){
 function showModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+
+// ══════════════════════════════════════════
+// INTRO CANVAS — Floating hex particles
+// ══════════════════════════════════════════
+(function initIntroCanvas() {
+  const canvas = document.getElementById('introBgCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+  const COLORS = ['rgba(74,144,217,.12)','rgba(123,94,167,.1)','rgba(56,178,160,.08)','rgba(232,148,58,.06)'];
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function hexPath(ctx, x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 3 * i - Math.PI / 6;
+      const px = x + r * Math.cos(a), py = y + r * Math.sin(a);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  }
+
+  // Create particles
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: 8 + Math.random() * 28,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.2 - 0.1,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.003,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      alpha: 0.3 + Math.random() * 0.5
+    });
+  }
+
+  let animId;
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      if (p.x < -50) p.x = w + 50;
+      if (p.x > w + 50) p.x = -50;
+      if (p.y < -50) p.y = h + 50;
+      if (p.y > h + 50) p.y = -50;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = p.alpha;
+      hexPath(ctx, 0, 0, p.r);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.strokeStyle = p.color.replace(/[\d.]+\)$/, (parseFloat(p.color.match(/[\d.]+\)$/)[0]) * 2) + ')');
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Draw faint connecting lines between nearby particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 200) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(74,144,217,${0.04 * (1 - dist / 200)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Stop animation when intro is hidden
+  const obs = new MutationObserver(() => {
+    if (document.getElementById('introScreen')?.classList.contains('hidden')) {
+      cancelAnimationFrame(animId);
+      obs.disconnect();
+    }
+  });
+  obs.observe(document.getElementById('introScreen'), { attributes: true, attributeFilter: ['class'] });
+})();
+
+// Load saved game count for "Continue" button
+(async function initContinueBtn() {
+  try {
+    const companies = await api('GET','/companies');
+    let total = 0;
+    companies.forEach(co => total += (co.game_count || 0));
+    const btn = document.getElementById('btnContinue');
+    if (btn && total > 0) {
+      btn.querySelector('.imb-desc').textContent = `${total} saved game${total!==1?'s':''}`;
+    } else if (btn && total === 0) {
+      btn.style.opacity = '.4';
+      btn.style.pointerEvents = 'none';
+      btn.querySelector('.imb-desc').textContent = 'No saved games yet';
+    }
+  } catch(e) { /* offline or no backend */ }
+})();
 </script>
 </body>
 </html>
