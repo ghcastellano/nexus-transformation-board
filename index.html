@@ -138,35 +138,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .lane-corner span { font-size:7px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); text-align:center; line-height:1.4; }
 
 /* Zone cells */
-.board-zone { min-height:200px; position:relative; padding:10px; border-right:1px solid rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.06); transition:background .2s; }
+.board-zone { min-height:200px; position:relative; padding:6px; border-right:1px solid rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.06); transition:background .2s; }
 .board-zone:nth-child(3n+1) { border-right:1px solid rgba(255,255,255,.04); }
-.board-zone.drag-over { background:rgba(74,144,217,.06); }
 
 /* Gradient overlay to indicate direction */
 .board-zone.zone-current { background:linear-gradient(90deg, rgba(217,74,74,.04), transparent); }
 .board-zone.zone-desired { background:linear-gradient(270deg, rgba(45,157,94,.04), transparent); }
 
-.zone-items { display:flex; flex-wrap:wrap; gap:8px; align-content:flex-start; }
+/* Hex grid inside each zone — 3 columns of hex cells */
+.zone-items { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 2px; align-content:start; }
+/* Odd rows offset to create honeycomb effect */
+.hex-cell { position:relative; aspect-ratio:1.15/1; }
+.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); background:rgba(255,255,255,.025); border:1px dashed rgba(255,255,255,.06); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
+.hex-cell.empty .hex-cell-bg { cursor:default; }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:18px; color:rgba(255,255,255,.06); }
 
-/* ── Board hexagons ── */
-.board-hex { position:relative; width:calc(50% - 4px); min-width:140px; cursor:grab; transition:all .2s; }
-.board-hex:hover { transform:translateY(-2px); }
+/* ── Board hexagons (inside hex cells) ── */
+.board-hex { position:absolute; inset:2px; cursor:grab; transition:all .2s; z-index:1; }
+.board-hex:hover { transform:scale(1.03); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); padding:14px 16px; min-height:70px; display:flex; flex-direction:column; justify-content:center; }
+.board-hex-shape { clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); padding:8px 10px; height:100%; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
-.board-hex .bh-type { font-size:7px; text-transform:uppercase; letter-spacing:.8px; font-weight:700; color:rgba(255,255,255,.6); }
-.board-hex .bh-name { font-size:12px; font-weight:600; color:#fff; margin-top:2px; }
-.board-hex .bh-signal { font-size:9px; color:rgba(255,255,255,.55); margin-top:2px; }
-.board-hex .bh-agents { display:flex; gap:4px; margin-top:6px; }
-.board-hex .remove-hex { position:absolute; top:2px; right:8px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:14px; z-index:2; opacity:0; transition:opacity .15s; }
+.board-hex .bh-type { font-size:6px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:rgba(255,255,255,.5); }
+.board-hex .bh-name { font-size:10px; font-weight:600; color:#fff; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.board-hex .bh-signal { font-size:8px; color:rgba(255,255,255,.45); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.board-hex .bh-agents { display:flex; gap:3px; margin-top:3px; }
+.board-hex .remove-hex { position:absolute; top:1px; right:6px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:12px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
 
 /* Agent badges */
-.agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
+.agent-badge { width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; }
 .agent-badge.human { background:rgba(255,255,255,.2); }
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
@@ -180,9 +186,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-drivers { border-top:1px solid var(--border); background:var(--surface); padding:8px 14px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; position:sticky; bottom:0; z-index:10; }
 .driver-label { font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-right:4px; display:flex; align-items:center; gap:4px; }
 .driver-label .bolt { color:var(--orange); font-size:14px; }
-.driver-chip { padding:4px 12px; background:rgba(74,144,217,.08); border:1px solid rgba(74,144,217,.25); border-radius:16px; font-size:10px; color:var(--accent); cursor:pointer; transition:all .15s; }
+.driver-chip { padding:4px 12px; background:rgba(74,144,217,.08); border:1px solid rgba(74,144,217,.25); border-radius:16px; font-size:10px; color:var(--accent); cursor:pointer; transition:all .15s; user-select:none; }
 .driver-chip:hover { background:rgba(74,144,217,.15); }
-.driver-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.driver-chip.selected { background:var(--orange); color:#fff; border-color:var(--orange); box-shadow:0 0 10px rgba(232,148,58,.3); }
+.driver-chip.used { background:rgba(232,148,58,.1); border-color:var(--orange); color:var(--orange); }
+.driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
+/* Driver badges on hexes */
+.bh-drivers { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; }
+.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:1px 6px; border-radius:10px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:7px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.driver-badge:hover { background:rgba(232,148,58,.3); }
+.driver-badge .db-bolt { font-size:9px; }
 .axis-bottom { text-align:center; padding:4px; font-size:9px; color:var(--text-muted); letter-spacing:.5px; border-top:1px solid var(--border); background:var(--surface); }
 
 /* ══ RIGHT PANEL ══ */
@@ -424,26 +437,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="zone-col-header hdr-desired"><span class="zone-tag">Improved Fitness ▶</span></div>
           <!-- Row 1: Strategic Lane -->
           <div class="lane-label-cell"><div class="lane-label strategic">Highest Strategic Layer<span class="lane-sub">Intent, Meaning,<br>Investment Logic<br>(Why leadership cares)</span></div></div>
-          <div class="board-zone zone-current" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'current_strategic')">
-            <div class="zone-items" id="zone-current_strategic-items"></div>
-          </div>
-          <div class="board-zone zone-path" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'path_strategic')">
-            <div class="zone-items" id="zone-path_strategic-items"></div>
-          </div>
-          <div class="board-zone zone-desired" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'desired_strategic')">
-            <div class="zone-items" id="zone-desired_strategic-items"></div>
-          </div>
+          <div class="board-zone zone-current"><div class="zone-items" id="zone-current_strategic-items"></div></div>
+          <div class="board-zone zone-path"><div class="zone-items" id="zone-path_strategic-items"></div></div>
+          <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_strategic-items"></div></div>
           <!-- Row 2: Operational Lane -->
           <div class="lane-label-cell"><div class="lane-label operational">Lowest Operational Layer<span class="lane-sub">Execution, Habits,<br>Daily Decisions<br>(Where change happens)</span></div></div>
-          <div class="board-zone zone-current" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'current_operational')">
-            <div class="zone-items" id="zone-current_operational-items"></div>
-          </div>
-          <div class="board-zone zone-path" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'path_operational')">
-            <div class="zone-items" id="zone-path_operational-items"></div>
-          </div>
-          <div class="board-zone zone-desired" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'desired_operational')">
-            <div class="zone-items" id="zone-desired_operational-items"></div>
-          </div>
+          <div class="board-zone zone-current"><div class="zone-items" id="zone-current_operational-items"></div></div>
+          <div class="board-zone zone-path"><div class="zone-items" id="zone-path_operational-items"></div></div>
+          <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_operational-items"></div></div>
         </div>
       </div>
       <div class="board-drivers" id="boardDrivers"><span class="driver-label"><span class="bolt">⚡</span> Drivers:</span></div>
@@ -592,7 +593,8 @@ const PHASES = [{n:'Sense',i:'👁',d:'Observe signals, friction, bottlenecks'},
 let allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
 const ZONES = ['current_strategic','current_operational','path_strategic','path_operational','desired_strategic','desired_operational'];
 let boardState = {current_strategic:[],current_operational:[],path_strategic:[],path_operational:[],desired_strategic:[],desired_operational:[]};
-let activeDrivers = new Set(['Cost Efficiency','Time-to-Market','Innovation Stagnation']);
+let driverAssignments = {}; // { hexId: ['Cost Efficiency', ...] }
+let selectedDriver = null;
 let currentFilter = 'all';
 let searchQuery = '';
 let cyclePhase = 0, cycleNumber = 1;
@@ -629,7 +631,7 @@ async function saveGame() {
     await api('PUT', `/games/${currentGameId}`, {
       board_state: boardState,
       agent_assignments: agentAssignments,
-      active_drivers: [...activeDrivers],
+      active_drivers: driverAssignments,
       cycle_number: cycleNumber,
       cycle_phase: cyclePhase,
       completed_phases: [...completedPhases],
@@ -666,7 +668,9 @@ async function loadGame(gameId) {
   agentAssignments = g.agent_assignments || {};
   connections = g.connections || [];
   boardMarkers = g.board_markers || [];
-  activeDrivers = new Set(g.active_drivers || []);
+  // Migrate old array format to new object format
+  const ad = g.active_drivers || {};
+  if (Array.isArray(ad)) { driverAssignments = {}; } else { driverAssignments = ad; }
   cycleNumber = g.cycle_number || 1;
   cyclePhase = g.cycle_phase || 0;
   completedPhases = new Set(g.completed_phases || []);
@@ -758,8 +762,8 @@ async function enterGame(gameId) {
   allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
   boardState = emptyBoard();
   agentAssignments = {};
+  driverAssignments = {};
   connections = [];
-  activeDrivers = new Set(['Cost Efficiency','Time-to-Market','Innovation Stagnation']);
   cyclePhase=0; cycleNumber=1; completedPhases.clear(); logEntries=[];
   await loadGame(gameId);
 }
@@ -806,68 +810,87 @@ function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab'
 // ══════════════════════════════════════════
 // BOARD ZONES
 // ══════════════════════════════════════════
+const HEX_CELLS_PER_ZONE = 9; // 3x3 grid of hex cells per zone
 function renderZone(zone) {
   const c = document.getElementById(`zone-${zone}-items`);
   c.innerHTML='';
-  boardState[zone].forEach(id => {
-    const item = allItems.find(i=>i.id===id);
-    if (!item) return;
-    const dim = activeDomain && item.domain!==activeDomain ? ' domain-dimmed':'';
-    const cm = connectMode ? ' connect-mode' : '';
-    const cs = connectFrom===id ? ' connect-source' : '';
-    const el = document.createElement('div');
-    el.className = `board-hex ${item.type}${dim}${cm}${cs}`;
-    el.draggable = !connectMode;
-    el.setAttribute('data-hex-id', id);
-    const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
-    const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
-    el.innerHTML = `
-      <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
-      <div class="board-hex-shape">
-        <div class="bh-type">${item.type==='pattern'?'⬡ Pattern':item.type==='antipattern'?'⬡ Anti-Pattern':'⬡ Transition'}</div>
-        <div class="bh-name">${item.name}</div>
-        <div class="bh-signal">${item.signal}</div>
-        <div class="bh-agents">${agents}</div>
-        ${markers?'<div class="bh-markers">'+markers+'</div>':''}
-      </div>
-    `;
-    el.addEventListener('click',()=>{
-      if(connectMode){ handleConnectClick(id); return; }
-      if(selectedMarker){toggleMarker(id,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
-      if(selectedAgent){assignAgent(id,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
+  const items = boardState[zone];
+  const totalCells = Math.max(HEX_CELLS_PER_ZONE, items.length + 3); // always show some empty cells
+  for (let i = 0; i < totalCells; i++) {
+    const id = items[i] || null;
+    const cell = document.createElement('div');
+    cell.className = `hex-cell${id?'':' empty'}`;
+    // Drop target on each cell
+    cell.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect='move'; cell.classList.add('drag-over'); });
+    cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+    cell.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation(); cell.classList.remove('drag-over');
+      if (!draggedId) return;
+      if (dragSource) boardState[dragSource] = boardState[dragSource].filter(x=>x!==draggedId);
+      // Remove from current position in this zone if re-ordering
+      boardState[zone] = boardState[zone].filter(x=>x!==draggedId);
+      // Insert at this cell's position
+      const insertIdx = Math.min(i, boardState[zone].length);
+      boardState[zone].splice(insertIdx, 0, draggedId);
+      const item = allItems.find(x=>x.id===draggedId);
+      addLog(`${dragSource&&dragSource!==zone?'Moved':'Placed'} "${item?.name}" → ${zonePrettyName(zone)}`,'action');
+      draggedId=null; dragSource=null;
+      renderAllZones(); scheduleAutoSave();
     });
-    el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';});
-    c.appendChild(el);
-  });
+    // Background hex shape
+    const bg = document.createElement('div');
+    bg.className = 'hex-cell-bg';
+    cell.appendChild(bg);
+    if (id) {
+      const item = allItems.find(x=>x.id===id);
+      if (!item) { c.appendChild(cell); continue; }
+      const dim = activeDomain && item.domain!==activeDomain ? ' domain-dimmed':'';
+      const cm = connectMode ? ' connect-mode' : '';
+      const cs = connectFrom===id ? ' connect-source' : '';
+      const el = document.createElement('div');
+      el.className = `board-hex ${item.type}${dim}${cm}${cs}`;
+      el.draggable = !connectMode;
+      el.setAttribute('data-hex-id', id);
+      const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
+      const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
+      const drvs = (driverAssignments[id]||[]).map(d=>`<div class="driver-badge" title="${d} (click to remove)" onclick="event.stopPropagation();assignDriver('${id}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
+      el.innerHTML = `
+        <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
+        <div class="board-hex-shape">
+          <div class="bh-type">${item.type==='pattern'?'P':item.type==='antipattern'?'A':'T'}</div>
+          <div class="bh-name" title="${item.name}">${item.name}</div>
+          <div class="bh-signal" title="${item.signal}">${item.signal}</div>
+          <div class="bh-agents">${agents}${markers}</div>
+          ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
+        </div>
+      `;
+      el.addEventListener('click',()=>{
+        if(connectMode){ handleConnectClick(id); return; }
+        if(selectedDriver){assignDriver(id,selectedDriver);selectedDriver=null;renderDrivers();return;}
+        if(selectedMarker){toggleMarker(id,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
+        if(selectedAgent){assignAgent(id,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
+      });
+      el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';});
+      cell.appendChild(el);
+    }
+    c.appendChild(cell);
+  }
   requestAnimationFrame(renderConnections);
 }
 function renderAllZones(){ZONES.forEach(renderZone);renderLibrary();updateStats();}
 function isOnBoard(id){return ZONES.some(z=>boardState[z].includes(id));}
 
 // ══════════════════════════════════════════
-// DRAG & DROP
+// DRAG & DROP (cell-level drops handled in renderZone)
 // ══════════════════════════════════════════
-function dOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
-function dLeave(e){e.currentTarget.classList.remove('drag-over');}
 function zonePrettyName(z){
   const map={current_strategic:'Current Reality (Strategic)',current_operational:'Current Reality (Operational)',path_strategic:'Transformation Path (Strategic)',path_operational:'Transformation Path (Operational)',desired_strategic:'Improved Fitness (Strategic)',desired_operational:'Improved Fitness (Operational)'};
   return map[z]||z;
 }
-function dDrop(e,zone){
-  e.preventDefault();e.currentTarget.classList.remove('drag-over');
-  if(!draggedId)return;
-  if(dragSource)boardState[dragSource]=boardState[dragSource].filter(i=>i!==draggedId);
-  if(!boardState[zone].includes(draggedId)){
-    boardState[zone].push(draggedId);
-    const item=allItems.find(i=>i.id===draggedId);
-    addLog(`${dragSource?'Moved':'Placed'} "${item?.name}" → ${zonePrettyName(zone)}`,'action');
-  }
-  draggedId=null;dragSource=null;
-  renderAllZones();scheduleAutoSave();
-}
 function removeHex(id,zone){
   boardState[zone]=boardState[zone].filter(i=>i!==id);
   delete agentAssignments[id];
+  delete driverAssignments[id];
   boardMarkers=boardMarkers.filter(m=>m.hexId!==id);
   connections=connections.filter(c=>c.from!==id&&c.to!==id);
   const item=allItems.find(i=>i.id===id);
@@ -881,8 +904,9 @@ function removeHex(id,zone){
 function selectAgent(type){
   if(selectedAgent===type){selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));return;}
   selectedAgent=type;
-  // Deselect markers when selecting agent
+  // Deselect markers and drivers when selecting agent
   selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
+  selectedDriver=null; renderDrivers();
   document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
   document.querySelector(`.agent-pal[data-agent="${type}"]`).classList.add('selected');
 }
@@ -1109,8 +1133,9 @@ let selectedMarker = null;
 function selectMarker(type) {
   if (selectedMarker===type) { selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected')); return; }
   selectedMarker=type;
-  // Deselect agents when selecting marker
+  // Deselect agents and drivers when selecting marker
   selectedAgent=null; document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
+  selectedDriver=null; renderDrivers();
   document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
   document.querySelector(`.marker-pal[data-marker="${type}"]`).classList.add('selected');
 }
@@ -1139,16 +1164,51 @@ function renderDomains(){
     c.appendChild(el);
   });
 }
+function getUsedDrivers(){
+  const s=new Set();
+  Object.values(driverAssignments).forEach(arr=>arr.forEach(d=>s.add(d)));
+  return s;
+}
 function renderDrivers(){
   const c=document.getElementById('boardDrivers');
+  const used=getUsedDrivers();
   c.innerHTML='<span class="driver-label"><span class="bolt">⚡</span> Drivers:</span>';
   DEFAULT_DRIVERS.forEach(d=>{
     const ch=document.createElement('div');
-    ch.className=`driver-chip${activeDrivers.has(d)?' active':''}`;
+    const sel=selectedDriver===d;
+    const inUse=used.has(d);
+    ch.className=`driver-chip${sel?' selected':''}${!sel&&inUse?' used':''}`;
     ch.textContent=d;
-    ch.onclick=()=>{if(activeDrivers.has(d))activeDrivers.delete(d);else activeDrivers.add(d);renderDrivers();updateStats();scheduleAutoSave();};
+    ch.onclick=()=>{
+      selectedDriver=selectedDriver===d?null:d;
+      // Deselect agents/markers
+      selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
+      selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
+      renderDrivers();updateDriverStatus();
+    };
     c.appendChild(ch);
   });
+  const st=document.getElementById('driverStatus');
+  if(st) updateDriverStatus();
+}
+function updateDriverStatus(){
+  let st=document.getElementById('driverStatus');
+  if(!st){const c=document.getElementById('boardDrivers');st=document.createElement('span');st.id='driverStatus';st.className='driver-status';c.appendChild(st);}
+  if(selectedDriver){st.style.display='inline';st.textContent=`"${selectedDriver}" selected — click a hex to link`;}
+  else{st.style.display='none';}
+}
+function assignDriver(hexId,driver){
+  if(!driverAssignments[hexId])driverAssignments[hexId]=[];
+  const idx=driverAssignments[hexId].indexOf(driver);
+  if(idx>=0){
+    driverAssignments[hexId].splice(idx,1);
+    if(!driverAssignments[hexId].length)delete driverAssignments[hexId];
+    addLog(`Unlinked "${driver}" from "${allItems.find(i=>i.id===hexId)?.name}"`,'warning');
+  } else {
+    driverAssignments[hexId].push(driver);
+    addLog(`Linked driver "${driver}" → "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
+  }
+  renderAllZones();renderDrivers();scheduleAutoSave();
 }
 
 // ══════════════════════════════════════════
@@ -1190,7 +1250,8 @@ function updateStats(){
   desired.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=1;if(i?.type==='antipattern')f-=3;});
   path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=1;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
   current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=.5;});
-  f+=ag*.5+activeDrivers.size*.3+(cycleNumber-1)*2;
+  const totalDriverLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
+  f+=ag*.5+totalDriverLinks*.5+(cycleNumber-1)*2;
   f=Math.max(0,Math.min(100,Math.round(f)));
   document.getElementById('fitnessScore').textContent=f;
   document.getElementById('fitnessGauge').style.width=f+'%';
@@ -1229,11 +1290,11 @@ function addCustomPattern(){
 function emptyBoard(){return {current_strategic:[],current_operational:[],path_strategic:[],path_operational:[],desired_strategic:[],desired_operational:[]};}
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  boardState=emptyBoard();agentAssignments={};connections=[];cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  boardState=emptyBoard();agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,boardState,connections,agentAssignments,activeDrivers:[...activeDrivers],cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,boardState,connections,agentAssignments,driverAssignments,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');
