@@ -181,8 +181,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex grid inside each zone — 4 columns of hex cells */
 .zone-items { display:grid; grid-template-columns:repeat(4, 1fr); gap:4px 3px; align-content:start; padding:6px; }
-.hex-cell { position:relative; aspect-ratio:1.25/1; min-width:0; }
-.hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(5% 25%, 50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%); background:rgba(255,255,255,.018); border:1px dashed rgba(255,255,255,.04); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+/* Flat-top hexagon: wider than tall, symmetric */
+.hex-cell { position:relative; aspect-ratio:1.15/1; min-width:0; }
+.hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.018); border:1px dashed rgba(255,255,255,.04); transition:all .2s; display:flex; align-items:center; justify-content:center; }
 .hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
 .hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.04); }
@@ -192,19 +193,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-hex:hover { transform:scale(1.06); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(5% 25%, 50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%); padding:0; height:100%; display:flex; flex-direction:column; overflow:hidden; text-align:center; position:relative; }
+.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; text-align:center; position:relative; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
-/* Text area — centered */
-.bh-text { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:14px 12px 2px; }
+/* All content centered symmetrically inside the hex safe zone */
+.bh-text { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 20%; }
 .board-hex .bh-type { font-size:8px; text-transform:uppercase; letter-spacing:1px; font-weight:800; color:rgba(255,255,255,.7); }
 .board-hex .bh-name { font-size:13px; font-weight:700; color:#fff; margin-top:3px; line-height:1.3; word-break:break-word; text-shadow:0 1px 3px rgba(0,0,0,.4); }
 .board-hex .bh-signal { font-size:10px; color:rgba(255,255,255,.6); margin-top:3px; line-height:1.25; }
-/* Icons area — pinned to bottom */
-.bh-bottom { display:flex; gap:4px; justify-content:center; align-items:center; padding:2px 12px 14px; flex-shrink:0; }
-.board-hex .remove-hex { position:absolute; top:8%; right:30%; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:12px; z-index:2; opacity:0; transition:opacity .15s; }
+/* Icons row below text */
+.bh-bottom { display:flex; gap:4px; justify-content:center; align-items:center; margin-top:4px; flex-shrink:0; }
+.board-hex .remove-hex { position:absolute; top:5px; right:22%; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:12px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
 
 /* Agent badges */
