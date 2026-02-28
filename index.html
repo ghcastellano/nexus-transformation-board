@@ -150,8 +150,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .domain-label.active { opacity:1; background:rgba(56,178,160,.08); border-bottom:2px solid var(--cyan); }
 
 /* Hex grid board */
-.board-map { flex:1; position:relative; background: repeating-conic-gradient(rgba(255,255,255,.02) 0% 25%, transparent 0% 50%) 50%/60px 60px; overflow:auto; }
-.board-map-inner { display:grid; grid-template-columns:40px 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr; min-height:100%; position:relative; }
+.board-map { flex:1; position:relative; background:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.03) 1px, transparent 0); background-size:24px 24px; overflow:auto; }
+.board-map-inner { display:grid; grid-template-columns:48px 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr; min-height:100%; position:relative; }
 
 /* Zone column headers */
 .zone-col-header { padding:8px 12px; display:flex; justify-content:center; align-items:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.04); }
@@ -162,10 +162,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .zone-col-header.hdr-desired .zone-tag { color:var(--green); background:rgba(45,157,94,.1); }
 
 /* Lane label (vertical text on the left) */
-.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); }
-.lane-label-cell:first-of-type { border-bottom:1px solid rgba(255,255,255,.06); }
-.lane-label { writing-mode:vertical-rl; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:10px 4px; text-align:center; line-height:1.3; }
-.lane-label .lane-sub { display:block; font-weight:400; font-size:8px; letter-spacing:.3px; text-transform:none; color:var(--text-muted); margin-top:6px; }
+.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); padding:8px 2px; overflow:hidden; }
+.lane-label { writing-mode:vertical-lr; transform:rotate(180deg); font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; text-align:center; line-height:1.4; white-space:nowrap; }
+.lane-label .lane-sub { display:block; font-weight:400; font-size:7px; letter-spacing:.2px; text-transform:none; color:var(--text-muted); margin-top:8px; white-space:normal; text-align:center; }
 .lane-label.strategic { color:var(--cyan); }
 .lane-label.operational { color:var(--orange); }
 
@@ -182,33 +181,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-zone.zone-desired { background:linear-gradient(270deg, rgba(45,157,94,.04), transparent); }
 
 /* Hex grid inside each zone — 6 columns of hex cells */
-.zone-items { display:grid; grid-template-columns:repeat(6, 1fr); gap:2px 1px; align-content:start; padding:4px; }
-.hex-cell { position:relative; aspect-ratio:1.2/1; min-width:0; }
-.hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); background:rgba(255,255,255,.02); border:1px dashed rgba(255,255,255,.05); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.12); border-color:rgba(74,144,217,.35); }
+.zone-items { display:grid; grid-template-columns:repeat(6, 1fr); gap:3px 2px; align-content:start; padding:6px; }
+.hex-cell { position:relative; aspect-ratio:1/1.05; min-width:0; }
+.hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.018); border:1px dashed rgba(255,255,255,.04); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:12px; color:rgba(255,255,255,.05); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:14px; color:rgba(255,255,255,.04); }
 
 /* ── Board hexagons (inside hex cells) ── */
 .board-hex { position:absolute; inset:1px; cursor:grab; transition:all .15s; z-index:1; }
-.board-hex:hover { transform:scale(1.05); z-index:2; }
+.board-hex:hover { transform:scale(1.06); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); padding:4px 6px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
+.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:6px 14px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
 .board-hex .bh-type { font-size:5px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; color:rgba(255,255,255,.5); }
 .board-hex .bh-name { font-size:8px; font-weight:600; color:#fff; margin-top:1px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; }
-.board-hex .bh-signal { display:none; }
-.board-hex .bh-agents { display:flex; gap:2px; margin-top:2px; }
-.board-hex .remove-hex { position:absolute; top:0px; right:4px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:10px; z-index:2; opacity:0; transition:opacity .15s; }
+.board-hex .bh-signal { font-size:6px; color:rgba(255,255,255,.4); margin-top:1px; line-height:1.1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.board-hex .bh-agents { display:flex; gap:3px; margin-top:3px; }
+.board-hex .remove-hex { position:absolute; top:2px; right:14px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:10px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
 .board-hex:hover .bh-name { -webkit-line-clamp:3; }
 
 /* Agent badges */
-.agent-badge { width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:6px; }
+.agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
 .agent-badge.human { background:rgba(255,255,255,.2); }
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
@@ -228,7 +227,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-chip.used { background:rgba(232,148,58,.1); border-color:var(--orange); color:var(--orange); }
 .driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
 /* Driver badges on hexes */
-.bh-drivers { display:none; }
+.bh-drivers { display:flex; flex-wrap:wrap; gap:2px; margin-top:3px; justify-content:center; }
 .driver-badge { display:inline-flex; align-items:center; gap:1px; padding:0px 4px; border-radius:8px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:6px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .driver-badge:hover { background:rgba(232,148,58,.3); }
 .driver-badge .db-bolt { font-size:7px; }
@@ -354,7 +353,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .marker-circle.capability { background:var(--cyan); }
 /* Marker badges on board hexes */
 .bh-markers { display:flex; gap:4px; margin-top:4px; }
-.marker-badge { width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:6px; font-weight:700; color:#fff; cursor:pointer; }
+.marker-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; cursor:pointer; }
 .marker-badge.s2f { background:#8b8b8b; }
 .marker-badge.capability { background:var(--cyan); color:#1a1a2e; }
 .marker-badge:hover { opacity:.7; }
@@ -1026,11 +1025,15 @@ function renderZone(zone) {
       el.setAttribute('data-hex-id', id);
       const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
       const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
+      const drvs = (driverAssignments[id]||[]).map(d=>`<div class="driver-badge" title="${d} (click to remove)" onclick="event.stopPropagation();assignDriver('${id}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
       el.innerHTML = `
         <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
         <div class="board-hex-shape">
+          <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':'TRANSITION'}</div>
           <div class="bh-name" title="${item.name}">${item.name}</div>
+          <div class="bh-signal" title="${item.signal}">${item.signal}</div>
           <div class="bh-agents">${agents}${markers}</div>
+          ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
         </div>
       `;
       el.addEventListener('click',()=>{
