@@ -700,13 +700,13 @@ function computeHexLayout() {
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
   const ah = wrapper.clientHeight || 700;
-  // Width constraint: PAD + (COLS + 0.5) * (HEX_W + GAP) = aw
-  const maxWFromWidth = (aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP;
-  // Height constraint: ROWS * (HEX_H + GAP) + HEX_H * 0.5 = ah
-  const maxHFromHeight = (ah - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5);
-  const maxWFromHeight = maxHFromHeight / 0.866;
-  // Use the smaller, clamped between 80 and 160
-  HEX_W = Math.max(80, Math.min(160, Math.floor(Math.min(maxWFromWidth, maxWFromHeight))));
+  // Width: fill the full board width
+  const hexFromWidth = (aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP;
+  // Height: allow up to 15% vertical overflow (mild scroll is OK)
+  const maxH = ah * 1.15;
+  const hexFromHeight = (maxH - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5) / 0.866;
+  // Pick the smaller, clamped 80–180
+  HEX_W = Math.max(80, Math.min(180, Math.floor(Math.min(hexFromWidth, hexFromHeight))));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
