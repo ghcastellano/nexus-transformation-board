@@ -229,10 +229,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-chip.used { background:rgba(232,148,58,.1); border-color:var(--orange); color:var(--orange); }
 .driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
 /* Driver badges on hexes */
-.bh-drivers { display:flex; flex-wrap:wrap; gap:2px; margin-top:3px; justify-content:center; }
-.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border-radius:8px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:7px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
-.driver-badge:hover { background:rgba(232,148,58,.3); opacity:.7; }
-.driver-badge .db-bolt { font-size:8px; }
+.bh-drivers { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; justify-content:center; }
+.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:2px 7px; border-radius:8px; background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); font-size:8px; font-weight:600; color:#fff; cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.driver-badge:hover { background:rgba(0,0,0,.6); border-color:rgba(255,255,255,.4); }
+.driver-badge .db-bolt { font-size:9px; color:var(--orange); }
 /* ══ ZONE GUIDANCE (highlight correct zones during drag) ══ */
 .board-zone.guide-best { box-shadow:inset 0 0 30px rgba(45,200,94,.25); border-color:rgba(45,200,94,.4); }
 .board-zone.guide-best .hex-cell.empty .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); }
