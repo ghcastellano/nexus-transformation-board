@@ -1250,39 +1250,40 @@ function getAllHexRects(excludeIds) {
   return rects;
 }
 function ptInRect(px, py, r, pad) {
-  pad = pad === undefined ? 4 : pad;
+  pad = pad === undefined ? 10 : pad;
   return px >= r.x - pad && px <= r.x + r.w + pad && py >= r.y - pad && py <= r.y + r.h + pad;
 }
 function segHitsAny(ax, ay, bx, by, obs, pad) {
-  pad = pad === undefined ? 4 : pad;
-  for (let i = 1; i < 15; i++) {
-    const t = i / 15;
+  pad = pad === undefined ? 10 : pad;
+  // Sample many points along the segment to catch all collisions
+  const dist = Math.hypot(bx - ax, by - ay);
+  const steps = Math.max(30, Math.ceil(dist / 5)); // 1 sample per 5px
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
     const px = ax + (bx - ax) * t, py = ay + (by - ay) * t;
     for (const r of obs) { if (ptInRect(px, py, r, pad)) return true; }
   }
   return false;
 }
-// Get smart anchor points on hex edges based on direction to other hex
+// Anchor: always exit RIGHT edge, enter LEFT edge (consistent direction)
 function getAnchor(r, toR) {
   const dx = (toR.x + toR.w / 2) - (r.x + r.w / 2);
   const dy = (toR.y + toR.h / 2) - (r.y + r.h / 2);
-  if (Math.abs(dx) > Math.abs(dy) * 1.2) {
-    // Mostly horizontal — use left/right edge
+  if (Math.abs(dx) > Math.abs(dy) * 0.8) {
     return dx > 0
-      ? { x: r.x + r.w + 1, y: r.cy }    // right
-      : { x: r.x - 1, y: r.cy };           // left
+      ? { x: r.x + r.w + 2, y: r.cy }
+      : { x: r.x - 2, y: r.cy };
   } else {
-    // Mostly vertical — use top/bottom edge
     return dy > 0
-      ? { x: r.x + r.w / 2, y: r.y + r.h + 1 }  // bottom
-      : { x: r.x + r.w / 2, y: r.y - 1 };         // top
+      ? { x: r.x + r.w / 2, y: r.y + r.h + 2 }
+      : { x: r.x + r.w / 2, y: r.y - 2 };
   }
 }
 
 function buildRoute(fromR, toR, obstacles) {
   const s = getAnchor(fromR, toR);
   const e = getAnchor(toR, fromR);
-  const GAP = 10;
+  const GAP = 20; // generous clearance around obstacles
 
   // 1) Direct line — if nothing in the way
   if (!segHitsAny(s.x, s.y, e.x, e.y, obstacles)) {
@@ -1295,8 +1296,16 @@ function buildRoute(fromR, toR, obstacles) {
     return { d: `M${s.x},${s.y} L${e.x},${e.y}`, midPt: { x: (s.x + e.x) / 2, y: (s.y + e.y) / 2 } };
   }
 
-  // 3) Compute bounding box of all blockers
-  let minOX = Infinity, minOY = Infinity, maxOX = -Infinity, maxOY = -Infinity;
+  // 3) Compute bounding box of ALL obstacles (not just blocking) in the corridor
+  // This prevents routing into non-blocking hexes
+  const corridorMinX = Math.min(s.x, e.x) - GAP;
+  const corridorMaxX = Math.max(s.x, e.x) + GAP;
+  const corridorObs = obstacles.filter(r =>
+    r.x + r.w > corridorMinX && r.x < corridorMaxX
+  );
+
+  let minOY = Infinity, maxOY = -Infinity;
+  let minOX = Infinity, maxOX = -Infinity;
   blocking.forEach(r => {
     minOX = Math.min(minOX, r.x);
     minOY = Math.min(minOY, r.y);
@@ -1304,17 +1313,12 @@ function buildRoute(fromR, toR, obstacles) {
     maxOY = Math.max(maxOY, r.y + r.h);
   });
 
-  // 4) Try 4 detour strategies and pick the shortest clear one
-  const midSY = (s.y + e.y) / 2;
+  // 4) Try detour strategies: above and below all blockers
   const candidates = [
-    // Go above all blockers
+    // Go ABOVE: exit right → go up → travel horizontally above → go down → enter left
     [{ x: s.x, y: minOY - GAP }, { x: e.x, y: minOY - GAP }],
-    // Go below all blockers
+    // Go BELOW: exit right → go down → travel horizontally below → go up → enter left
     [{ x: s.x, y: maxOY + GAP }, { x: e.x, y: maxOY + GAP }],
-    // Go left of all blockers
-    [{ x: minOX - GAP, y: s.y }, { x: minOX - GAP, y: e.y }],
-    // Go right of all blockers
-    [{ x: maxOX + GAP, y: s.y }, { x: maxOX + GAP, y: e.y }],
   ];
 
   let bestPath = null, bestLen = Infinity;
@@ -1322,7 +1326,7 @@ function buildRoute(fromR, toR, obstacles) {
     const segs = [[s, wp1], [wp1, wp2], [wp2, e]];
     let clear = true;
     for (const [a, b] of segs) {
-      if (segHitsAny(a.x, a.y, b.x, b.y, obstacles)) { clear = false; break; }
+      if (segHitsAny(a.x, a.y, b.x, b.y, corridorObs)) { clear = false; break; }
     }
     if (clear) {
       const len = Math.hypot(wp1.x - s.x, wp1.y - s.y) + Math.hypot(wp2.x - wp1.x, wp2.y - wp1.y) + Math.hypot(e.x - wp2.x, e.y - wp2.y);
