@@ -174,41 +174,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .lane-corner span { font-size:7px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); text-align:center; line-height:1.4; }
 
 /* Zone cells */
-.board-zone { min-height:200px; position:relative; padding:6px; border-right:1px solid rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.06); transition:background .2s; }
+.board-zone { min-height:160px; position:relative; padding:4px; border-right:1px solid rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.06); transition:background .2s; }
 .board-zone:nth-child(3n+1) { border-right:1px solid rgba(255,255,255,.04); }
 
 /* Gradient overlay to indicate direction */
 .board-zone.zone-current { background:linear-gradient(90deg, rgba(217,74,74,.04), transparent); }
 .board-zone.zone-desired { background:linear-gradient(270deg, rgba(45,157,94,.04), transparent); }
 
-/* Hex grid inside each zone — 3 columns of hex cells */
-.zone-items { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 2px; align-content:start; }
-/* Odd rows offset to create honeycomb effect */
-.hex-cell { position:relative; aspect-ratio:1.15/1; }
-.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); background:rgba(255,255,255,.025); border:1px dashed rgba(255,255,255,.06); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
+/* Hex grid inside each zone — 6 columns of hex cells */
+.zone-items { display:grid; grid-template-columns:repeat(6, 1fr); gap:2px 1px; align-content:start; padding:4px; }
+.hex-cell { position:relative; aspect-ratio:1.2/1; min-width:0; }
+.hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); background:rgba(255,255,255,.02); border:1px dashed rgba(255,255,255,.05); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.12); border-color:rgba(74,144,217,.35); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:18px; color:rgba(255,255,255,.06); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:12px; color:rgba(255,255,255,.05); }
 
 /* ── Board hexagons (inside hex cells) ── */
-.board-hex { position:absolute; inset:2px; cursor:grab; transition:all .2s; z-index:1; }
-.board-hex:hover { transform:scale(1.03); z-index:2; }
+.board-hex { position:absolute; inset:1px; cursor:grab; transition:all .15s; z-index:1; }
+.board-hex:hover { transform:scale(1.05); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); padding:8px 10px; height:100%; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+.board-hex-shape { clip-path:polygon(5% 0%,95% 0%,100% 50%,95% 100%,5% 100%,0% 50%); padding:4px 6px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
-.board-hex .bh-type { font-size:6px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; color:rgba(255,255,255,.5); }
-.board-hex .bh-name { font-size:10px; font-weight:600; color:#fff; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.board-hex .bh-signal { font-size:8px; color:rgba(255,255,255,.45); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.board-hex .bh-agents { display:flex; gap:3px; margin-top:3px; }
-.board-hex .remove-hex { position:absolute; top:1px; right:6px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:12px; z-index:2; opacity:0; transition:opacity .15s; }
+.board-hex .bh-type { font-size:5px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; color:rgba(255,255,255,.5); }
+.board-hex .bh-name { font-size:8px; font-weight:600; color:#fff; margin-top:1px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; }
+.board-hex .bh-signal { display:none; }
+.board-hex .bh-agents { display:flex; gap:2px; margin-top:2px; }
+.board-hex .remove-hex { position:absolute; top:0px; right:4px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:10px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
+.board-hex:hover .bh-name { -webkit-line-clamp:3; }
 
 /* Agent badges */
-.agent-badge { width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; }
+.agent-badge { width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:6px; }
 .agent-badge.human { background:rgba(255,255,255,.2); }
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
@@ -228,10 +228,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-chip.used { background:rgba(232,148,58,.1); border-color:var(--orange); color:var(--orange); }
 .driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
 /* Driver badges on hexes */
-.bh-drivers { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; }
-.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:1px 6px; border-radius:10px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:7px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.bh-drivers { display:none; }
+.driver-badge { display:inline-flex; align-items:center; gap:1px; padding:0px 4px; border-radius:8px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:6px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .driver-badge:hover { background:rgba(232,148,58,.3); }
-.driver-badge .db-bolt { font-size:9px; }
+.driver-badge .db-bolt { font-size:7px; }
 /* ══ ZONE GUIDANCE (highlight correct zones during drag) ══ */
 .board-zone.guide-best { box-shadow:inset 0 0 30px rgba(45,200,94,.25); border-color:rgba(45,200,94,.4); }
 .board-zone.guide-best .hex-cell.empty .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); }
@@ -354,7 +354,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .marker-circle.capability { background:var(--cyan); }
 /* Marker badges on board hexes */
 .bh-markers { display:flex; gap:4px; margin-top:4px; }
-.marker-badge { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; cursor:pointer; }
+.marker-badge { width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:6px; font-weight:700; color:#fff; cursor:pointer; }
 .marker-badge.s2f { background:#8b8b8b; }
 .marker-badge.capability { background:var(--cyan); color:#1a1a2e; }
 .marker-badge:hover { opacity:.7; }
@@ -891,6 +891,7 @@ async function enterGame(gameId) {
   // Reset state
   allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
   boardState = emptyBoard();
+  cellMap = {};
   agentAssignments = {};
   driverAssignments = {};
   connections = [];
@@ -941,14 +942,40 @@ function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab'
 // ══════════════════════════════════════════
 // BOARD ZONES
 // ══════════════════════════════════════════
-const HEX_CELLS_PER_ZONE = 9; // 3x3 grid of hex cells per zone
+const HEX_COLS = 6;
+const HEX_ROWS = 5;
+const HEX_CELLS_PER_ZONE = HEX_COLS * HEX_ROWS; // 30 cells per zone
+
+// boardState[zone] is an array of item IDs (sequential).
+// cellMap[zone] maps cellIndex → itemId for free positioning.
+let cellMap = {};
+function buildCellMap(zone) {
+  if (!cellMap[zone]) cellMap[zone] = {};
+  // Place items sequentially into first available cells if not mapped
+  const items = boardState[zone];
+  const mapped = new Set(Object.values(cellMap[zone]));
+  items.forEach(id => {
+    if (!mapped.has(id)) {
+      // Find first empty cell
+      for (let i = 0; i < 999; i++) {
+        if (!cellMap[zone][i]) { cellMap[zone][i] = id; break; }
+      }
+    }
+  });
+  // Clean stale entries (items no longer in zone)
+  for (const idx in cellMap[zone]) {
+    if (!items.includes(cellMap[zone][idx])) delete cellMap[zone][idx];
+  }
+}
+
 function renderZone(zone) {
+  buildCellMap(zone);
   const c = document.getElementById(`zone-${zone}-items`);
   c.innerHTML='';
   const items = boardState[zone];
-  const totalCells = Math.max(HEX_CELLS_PER_ZONE, items.length + 3); // always show some empty cells
+  const totalCells = Math.max(HEX_CELLS_PER_ZONE, Object.keys(cellMap[zone]).reduce((mx,k)=>Math.max(mx,+k),0) + HEX_COLS + 1);
   for (let i = 0; i < totalCells; i++) {
-    const id = items[i] || null;
+    const id = cellMap[zone][i] || null;
     const cell = document.createElement('div');
     cell.className = `hex-cell${id?'':' empty'}`;
     // Drop target on each cell
@@ -958,13 +985,28 @@ function renderZone(zone) {
       e.preventDefault(); e.stopPropagation(); cell.classList.remove('drag-over');
       clearZoneGuidance();
       if (!draggedId) return;
-      checkPlacement(draggedId, zone);
-      if (dragSource) boardState[dragSource] = boardState[dragSource].filter(x=>x!==draggedId);
+      // Check placement rules
+      const itemObj = allItems.find(x=>x.id===draggedId);
+      const guide = itemObj ? GUIDANCE[itemObj.type] : null;
+      if (guide) {
+        const allOk = [...guide.best, ...guide.ok];
+        if (!allOk.includes(zone)) {
+          showToast(`⚠️ ${guide.tip}`,'warning');
+        }
+      }
+      // Remove from previous position
+      if (dragSource) {
+        boardState[dragSource] = boardState[dragSource].filter(x=>x!==draggedId);
+        // Remove from cellMap
+        for (const k in cellMap[dragSource]) { if (cellMap[dragSource][k]===draggedId) { delete cellMap[dragSource][k]; break; } }
+      }
+      // Remove if already in this zone (repositioning)
       boardState[zone] = boardState[zone].filter(x=>x!==draggedId);
-      const insertIdx = Math.min(i, boardState[zone].length);
-      boardState[zone].splice(insertIdx, 0, draggedId);
-      const item = allItems.find(x=>x.id===draggedId);
-      addLog(`${dragSource&&dragSource!==zone?'Moved':'Placed'} "${item?.name}" → ${zonePrettyName(zone)}`,'action');
+      for (const k in cellMap[zone]) { if (cellMap[zone][k]===draggedId) { delete cellMap[zone][k]; break; } }
+      // Place at this specific cell
+      boardState[zone].push(draggedId);
+      cellMap[zone][i] = draggedId;
+      addLog(`${dragSource&&dragSource!==zone?'Moved':'Placed'} "${itemObj?.name}" → ${zonePrettyName(zone)}`,'action');
       draggedId=null; dragSource=null;
       renderAllZones(); scheduleAutoSave();
     });
@@ -984,15 +1026,11 @@ function renderZone(zone) {
       el.setAttribute('data-hex-id', id);
       const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
       const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
-      const drvs = (driverAssignments[id]||[]).map(d=>`<div class="driver-badge" title="${d} (click to remove)" onclick="event.stopPropagation();assignDriver('${id}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
       el.innerHTML = `
         <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
         <div class="board-hex-shape">
-          <div class="bh-type">${item.type==='pattern'?'P':item.type==='antipattern'?'A':'T'}</div>
           <div class="bh-name" title="${item.name}">${item.name}</div>
-          <div class="bh-signal" title="${item.signal}">${item.signal}</div>
           <div class="bh-agents">${agents}${markers}</div>
-          ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
         </div>
       `;
       el.addEventListener('click',()=>{
@@ -1097,6 +1135,8 @@ function zonePrettyName(z){
 }
 function removeHex(id,zone){
   boardState[zone]=boardState[zone].filter(i=>i!==id);
+  // Clean cellMap
+  if (cellMap[zone]) { for (const k in cellMap[zone]) { if (cellMap[zone][k]===id) { delete cellMap[zone][k]; break; } } }
   delete agentAssignments[id];
   delete driverAssignments[id];
   boardMarkers=boardMarkers.filter(m=>m.hexId!==id);
@@ -1189,13 +1229,7 @@ function getHexRect(hexId) {
   const sx = map.scrollLeft, sy = map.scrollTop;
   return { x:eR.left-mR.left+sx, y:eR.top-mR.top+sy, w:eR.width, h:eR.height, cy:eR.top-mR.top+sy+eR.height/2 };
 }
-// Always exit from the RIGHT tip of the source hex, enter from the LEFT tip of the target hex
-// Hex clip-path: polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)
-// Right tip = (100%, 50%) = (x+w, cy)
-// Left tip = (0%, 50%) = (x, cy)
-function getExitPt(r) { return { x: r.x + r.w, y: r.cy }; }
-function getEntryPt(r) { return { x: r.x, y: r.cy }; }
-// Collect all hex rects except the source/target
+// ── Connection routing that goes AROUND all hex cards ──
 function getAllHexRects(excludeIds) {
   const rects = [];
   document.querySelectorAll('[data-hex-id]').forEach(el => {
@@ -1206,132 +1240,159 @@ function getAllHexRects(excludeIds) {
   });
   return rects;
 }
-// Does a point (px,py) lie inside a rect (with padding)?
-function ptInRect(px,py,r,pad=8) {
-  return px >= r.x-pad && px <= r.x+r.w+pad && py >= r.y-pad && py <= r.y+r.h+pad;
+function ptInRect(px, py, r, pad) {
+  pad = pad === undefined ? 4 : pad;
+  return px >= r.x - pad && px <= r.x + r.w + pad && py >= r.y - pad && py <= r.y + r.h + pad;
 }
-// Sample a cubic bezier at t and check if any point collides with obstacle rects
-function bezierCollidesAny(sx,sy,c1x,c1y,c2x,c2y,ex,ey,obstacles) {
-  for (let t=0.1; t<=0.9; t+=0.1) {
-    const u=1-t;
-    const px=u*u*u*sx + 3*u*u*t*c1x + 3*u*t*t*c2x + t*t*t*ex;
-    const py=u*u*u*sy + 3*u*u*t*c1y + 3*u*t*t*c2y + t*t*t*ey;
-    for (const r of obstacles) { if (ptInRect(px,py,r)) return true; }
+function segHitsAny(ax, ay, bx, by, obs, pad) {
+  pad = pad === undefined ? 4 : pad;
+  for (let i = 1; i < 15; i++) {
+    const t = i / 15;
+    const px = ax + (bx - ax) * t, py = ay + (by - ay) * t;
+    for (const r of obs) { if (ptInRect(px, py, r, pad)) return true; }
   }
   return false;
 }
-// Build a routed path:  exit RIGHT → curve → enter LEFT
-function buildRoute(fromR, toR, obstacles, type) {
-  const s = getExitPt(fromR);   // start = right edge of source
-  const e = getEntryPt(toR);    // end   = left edge of target
-  const gap = 20; // control point offset from hex edge
-  if (type === 'nexus') {
-    // L-shaped: exit right → horizontal → 90° turn → vertical → enter left
-    // Route through empty space between the two hexes
-    const turnX = s.x + gap;
-    // If target is to the right and below/above, just go right then turn
-    // If target is to the left, swing wider
-    const routeX = e.x > s.x ? s.x + (e.x - s.x) / 2 : s.x + gap;
-    // Check if vertical segment hits any obstacle, shift if needed
-    let safeX = routeX;
-    const minY = Math.min(s.y, e.y) - 5, maxY = Math.max(s.y, e.y) + 5;
-    for (const obs of obstacles) {
-      if (safeX >= obs.x - 8 && safeX <= obs.x + obs.w + 8 &&
-          obs.y + obs.h > minY && obs.y < maxY) {
-        safeX = obs.x + obs.w + gap; // go to the right of the obstacle
+// Get smart anchor points on hex edges based on direction to other hex
+function getAnchor(r, toR) {
+  const dx = (toR.x + toR.w / 2) - (r.x + r.w / 2);
+  const dy = (toR.y + toR.h / 2) - (r.y + r.h / 2);
+  if (Math.abs(dx) > Math.abs(dy) * 1.2) {
+    // Mostly horizontal — use left/right edge
+    return dx > 0
+      ? { x: r.x + r.w + 1, y: r.cy }    // right
+      : { x: r.x - 1, y: r.cy };           // left
+  } else {
+    // Mostly vertical — use top/bottom edge
+    return dy > 0
+      ? { x: r.x + r.w / 2, y: r.y + r.h + 1 }  // bottom
+      : { x: r.x + r.w / 2, y: r.y - 1 };         // top
+  }
+}
+
+function buildRoute(fromR, toR, obstacles) {
+  const s = getAnchor(fromR, toR);
+  const e = getAnchor(toR, fromR);
+  const GAP = 10;
+
+  // 1) Direct line — if nothing in the way
+  if (!segHitsAny(s.x, s.y, e.x, e.y, obstacles)) {
+    return { d: `M${s.x},${s.y} L${e.x},${e.y}`, midPt: { x: (s.x + e.x) / 2, y: (s.y + e.y) / 2 } };
+  }
+
+  // 2) Find ALL blocking obstacles
+  const blocking = obstacles.filter(r => segHitsAny(s.x, s.y, e.x, e.y, [r]));
+  if (blocking.length === 0) {
+    return { d: `M${s.x},${s.y} L${e.x},${e.y}`, midPt: { x: (s.x + e.x) / 2, y: (s.y + e.y) / 2 } };
+  }
+
+  // 3) Compute bounding box of all blockers
+  let minOX = Infinity, minOY = Infinity, maxOX = -Infinity, maxOY = -Infinity;
+  blocking.forEach(r => {
+    minOX = Math.min(minOX, r.x);
+    minOY = Math.min(minOY, r.y);
+    maxOX = Math.max(maxOX, r.x + r.w);
+    maxOY = Math.max(maxOY, r.y + r.h);
+  });
+
+  // 4) Try 4 detour strategies and pick the shortest clear one
+  const midSY = (s.y + e.y) / 2;
+  const candidates = [
+    // Go above all blockers
+    [{ x: s.x, y: minOY - GAP }, { x: e.x, y: minOY - GAP }],
+    // Go below all blockers
+    [{ x: s.x, y: maxOY + GAP }, { x: e.x, y: maxOY + GAP }],
+    // Go left of all blockers
+    [{ x: minOX - GAP, y: s.y }, { x: minOX - GAP, y: e.y }],
+    // Go right of all blockers
+    [{ x: maxOX + GAP, y: s.y }, { x: maxOX + GAP, y: e.y }],
+  ];
+
+  let bestPath = null, bestLen = Infinity;
+  for (const [wp1, wp2] of candidates) {
+    const segs = [[s, wp1], [wp1, wp2], [wp2, e]];
+    let clear = true;
+    for (const [a, b] of segs) {
+      if (segHitsAny(a.x, a.y, b.x, b.y, obstacles)) { clear = false; break; }
+    }
+    if (clear) {
+      const len = Math.hypot(wp1.x - s.x, wp1.y - s.y) + Math.hypot(wp2.x - wp1.x, wp2.y - wp1.y) + Math.hypot(e.x - wp2.x, e.y - wp2.y);
+      if (len < bestLen) { bestLen = len; bestPath = [s, wp1, wp2, e]; }
+    }
+  }
+
+  // 5) Fallback: try wider gaps
+  if (!bestPath) {
+    const WIDE = GAP * 3;
+    const wideCands = [
+      [{ x: s.x, y: minOY - WIDE }, { x: e.x, y: minOY - WIDE }],
+      [{ x: s.x, y: maxOY + WIDE }, { x: e.x, y: maxOY + WIDE }],
+    ];
+    for (const [wp1, wp2] of wideCands) {
+      const segs = [[s, wp1], [wp1, wp2], [wp2, e]];
+      let clear = true;
+      for (const [a, b] of segs) {
+        if (segHitsAny(a.x, a.y, b.x, b.y, obstacles)) { clear = false; break; }
+      }
+      if (clear) {
+        const len = Math.hypot(wp1.x - s.x, wp1.y - s.y) + Math.hypot(wp2.x - wp1.x, wp2.y - wp1.y) + Math.hypot(e.x - wp2.x, e.y - wp2.y);
+        if (len < bestLen) { bestLen = len; bestPath = [s, wp1, wp2, e]; }
       }
     }
-    return {
-      d: `M${s.x},${s.y} L${safeX},${s.y} L${safeX},${e.y} L${e.x},${e.y}`,
-      midPt: { x: safeX, y: (s.y + e.y) / 2 }
-    };
   }
-  // ── Transition Path (dashed curve) ──
-  // Try a clean cubic bezier that bows out to avoid cards
-  const dx = e.x - s.x;
-  const dy = e.y - s.y;
-  // Default: smooth S-curve with control points pulled right from start and left from end
-  const cpLen = Math.max(Math.abs(dx) * 0.4, 50);
-  let c1 = { x: s.x + cpLen, y: s.y };
-  let c2 = { x: e.x - cpLen, y: e.y };
-  // Check if default curve collides with any obstacle
-  if (!bezierCollidesAny(s.x,s.y,c1.x,c1.y,c2.x,c2.y,e.x,e.y,obstacles)) {
-    const mx = (s.x+e.x)/2, my = (c1.y+c2.y)/2;
-    return {
-      d: `M${s.x},${s.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`,
-      midPt: { x: mx, y: my }
-    };
-  }
-  // Collision → bow the curve above or below the obstacle
-  const blockingObs = obstacles.filter(r => {
-    for (let t=0.1;t<=0.9;t+=0.1) {
-      const u=1-t;
-      const px=u*u*u*s.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*e.x;
-      const py=u*u*u*s.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*e.y;
-      if (ptInRect(px,py,r)) return true;
-    }
-    return false;
-  });
-  if (blockingObs.length > 0) {
-    const br = blockingObs[0];
-    const midY = (s.y + e.y) / 2;
-    // Go above or below, whichever is closer
-    const above = br.y - 40;
-    const below = br.y + br.h + 40;
-    const detourY = Math.abs(midY - above) < Math.abs(midY - below) ? above : below;
-    c1 = { x: s.x + cpLen, y: detourY };
-    c2 = { x: e.x - cpLen, y: detourY };
-  }
-  const mx = (s.x+e.x)/2, my = (c1.y+c2.y)/2;
-  return {
-    d: `M${s.x},${s.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`,
-    midPt: { x: mx, y: my }
-  };
+
+  // 6) Ultimate fallback — just go direct (shouldn't happen)
+  if (!bestPath) bestPath = [s, e];
+
+  let d = `M${bestPath[0].x},${bestPath[0].y}`;
+  for (let i = 1; i < bestPath.length; i++) d += ` L${bestPath[i].x},${bestPath[i].y}`;
+  const mid = bestPath[Math.floor(bestPath.length / 2)];
+  return { d, midPt: { x: mid.x, y: mid.y } };
 }
+
 function renderConnections() {
   const svg = document.getElementById('connectionsSvg');
   const defs = svg.querySelector('defs');
   svg.innerHTML = '';
   svg.appendChild(defs);
-  const map = document.getElementById('boardMap');
   const inner = document.querySelector('.board-map-inner');
   if (inner) {
     svg.setAttribute('width', inner.scrollWidth);
     svg.setAttribute('height', inner.scrollHeight);
-    svg.style.width = inner.scrollWidth+'px';
-    svg.style.height = inner.scrollHeight+'px';
+    svg.style.width = inner.scrollWidth + 'px';
+    svg.style.height = inner.scrollHeight + 'px';
   }
   connections.forEach(conn => {
     const fromR = getHexRect(conn.from);
     const toR = getHexRect(conn.to);
     if (!fromR || !toR) return;
     const obstacles = getAllHexRects([conn.from, conn.to]);
-    const route = buildRoute(fromR, toR, obstacles, conn.type);
-    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    // Invisible wider hit area for easy hovering
-    const hit = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const route = buildRoute(fromR, toR, obstacles);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    // Wider invisible hit area
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     hit.setAttribute('d', route.d);
-    hit.setAttribute('class','conn-hit');
+    hit.setAttribute('class', 'conn-hit');
     g.appendChild(hit);
     // Visible path
-    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     p.setAttribute('d', route.d);
-    p.setAttribute('class', conn.type==='path'?'conn-path':'conn-nexus');
-    p.setAttribute('marker-end', conn.type==='path'?'url(#arrowPath)':'url(#arrowNexus)');
+    p.setAttribute('class', conn.type === 'path' ? 'conn-path' : 'conn-nexus');
+    p.setAttribute('marker-end', conn.type === 'path' ? 'url(#arrowPath)' : 'url(#arrowNexus)');
     g.appendChild(p);
-    // Delete button at route midpoint
+    // Delete button at midpoint
     const mp = route.midPt;
-    const del = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    del.setAttribute('cx',mp.x); del.setAttribute('cy',mp.y);
-    del.setAttribute('r','8'); del.setAttribute('class','conn-delete');
-    del.addEventListener('click',()=>deleteConnection(conn.id));
+    const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    del.setAttribute('cx', mp.x); del.setAttribute('cy', mp.y);
+    del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
+    del.addEventListener('click', () => deleteConnection(conn.id));
     g.appendChild(del);
-    const delX = document.createElementNS('http://www.w3.org/2000/svg','text');
-    delX.setAttribute('x',mp.x); delX.setAttribute('y',mp.y+3.5);
-    delX.setAttribute('text-anchor','middle'); delX.setAttribute('font-size','10');
-    delX.setAttribute('fill','#fff'); delX.setAttribute('class','conn-delete');
-    delX.setAttribute('style','pointer-events:none');
-    delX.textContent='×';
+    const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    delX.setAttribute('x', mp.x); delX.setAttribute('y', mp.y + 3);
+    delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
+    delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
+    delX.setAttribute('style', 'pointer-events:none');
+    delX.textContent = '×';
     g.appendChild(delX);
     svg.appendChild(g);
   });
@@ -1501,7 +1562,7 @@ function addCustomPattern(){
 function emptyBoard(){return {current_strategic:[],current_operational:[],path_strategic:[],path_operational:[],desired_strategic:[],desired_operational:[]};}
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  boardState=emptyBoard();agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  boardState=emptyBoard();cellMap={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
