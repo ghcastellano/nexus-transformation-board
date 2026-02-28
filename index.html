@@ -151,7 +151,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex grid board */
 .board-map { flex:1; position:relative; background:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.03) 1px, transparent 0); background-size:24px 24px; overflow:auto; }
-.board-map-inner { display:grid; grid-template-columns:36px 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr; min-height:100%; position:relative; }
+.board-map-inner { display:grid; grid-template-columns:42px 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr; min-height:100%; position:relative; }
 
 /* Zone column headers */
 .zone-col-header { padding:8px 12px; display:flex; justify-content:center; align-items:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.04); }
@@ -162,8 +162,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .zone-col-header.hdr-desired .zone-tag { color:var(--green); background:rgba(45,157,94,.1); }
 
 /* Lane label (vertical text on the left) */
-.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); }
-.lane-label { writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; text-align:center; line-height:36px; white-space:nowrap; }
+.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); padding:4px 2px; }
+.lane-label { writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; text-align:center; white-space:nowrap; display:flex; flex-direction:row; align-items:center; gap:8px; }
+.lane-label .ll-name { font-size:10px; font-weight:700; letter-spacing:1.5px; }
+.lane-label .ll-sub { font-size:7px; font-weight:400; opacity:.5; letter-spacing:.8px; text-transform:none; }
 .lane-label.strategic { color:var(--cyan); }
 .lane-label.operational { color:var(--orange); }
 
@@ -215,10 +217,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
 
-/* Axis labels */
-.axis-label-left, .axis-label-right { position:absolute; top:50%; writing-mode:vertical-rl; font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; z-index:5; pointer-events:none; }
-.axis-label-left { left:4px; transform:translateY(-50%) rotate(180deg); color:var(--red); opacity:.5; }
-.axis-label-right { right:4px; transform:translateY(-50%); color:var(--green); opacity:.5; }
+/* Axis labels — subtle vertical cues along the edges, outside the grid lane column */
+.axis-label-left, .axis-label-right { position:absolute; top:50%; writing-mode:vertical-rl; font-size:8px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; z-index:5; pointer-events:none; opacity:.3; }
+.axis-label-left { left:48px; transform:translateY(-50%) rotate(180deg); color:var(--red); }
+.axis-label-right { right:6px; transform:translateY(-50%); color:var(--green); }
 
 /* Drivers bar */
 .board-drivers { border-top:1px solid var(--border); background:var(--surface); padding:8px 14px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; position:sticky; bottom:0; z-index:10; }
@@ -503,12 +505,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="zone-col-header hdr-path"><span class="zone-tag">⟷ Transformation Path</span></div>
           <div class="zone-col-header hdr-desired"><span class="zone-tag">Improved Fitness ▶</span></div>
           <!-- Row 1: Strategic Lane -->
-          <div class="lane-label-cell"><div class="lane-label strategic">Strategic</div></div>
+          <div class="lane-label-cell"><div class="lane-label strategic"><span class="ll-name">Strategic</span><span class="ll-sub">Intent · Meaning · Investment Logic</span></div></div>
           <div class="board-zone zone-current"><div class="zone-items" id="zone-current_strategic-items"></div></div>
           <div class="board-zone zone-path"><div class="zone-items" id="zone-path_strategic-items"></div></div>
           <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_strategic-items"></div></div>
           <!-- Row 2: Operational Lane -->
-          <div class="lane-label-cell"><div class="lane-label operational">Operational</div></div>
+          <div class="lane-label-cell"><div class="lane-label operational"><span class="ll-name">Operational</span><span class="ll-sub">Structure · Process · Tooling</span></div></div>
           <div class="board-zone zone-current"><div class="zone-items" id="zone-current_operational-items"></div></div>
           <div class="board-zone zone-path"><div class="zone-items" id="zone-path_operational-items"></div></div>
           <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_operational-items"></div></div>
@@ -1238,7 +1240,7 @@ function getHexRect(hexId) {
   const sx = map.scrollLeft, sy = map.scrollTop;
   return { x:eR.left-mR.left+sx, y:eR.top-mR.top+sy, w:eR.width, h:eR.height, cy:eR.top-mR.top+sy+eR.height/2 };
 }
-// ── Connection routing that goes AROUND all hex cards ──
+// ── Connection routing: ALWAYS curves above or below, never through cards ──
 function getAllHexRects(excludeIds) {
   const rects = [];
   document.querySelectorAll('[data-hex-id]').forEach(el => {
@@ -1249,118 +1251,67 @@ function getAllHexRects(excludeIds) {
   });
   return rects;
 }
-function ptInRect(px, py, r, pad) {
-  pad = pad === undefined ? 10 : pad;
-  return px >= r.x - pad && px <= r.x + r.w + pad && py >= r.y - pad && py <= r.y + r.h + pad;
-}
-function segHitsAny(ax, ay, bx, by, obs, pad) {
-  pad = pad === undefined ? 10 : pad;
-  // Sample many points along the segment to catch all collisions
-  const dist = Math.hypot(bx - ax, by - ay);
-  const steps = Math.max(30, Math.ceil(dist / 5)); // 1 sample per 5px
-  for (let i = 1; i < steps; i++) {
-    const t = i / steps;
-    const px = ax + (bx - ax) * t, py = ay + (by - ay) * t;
-    for (const r of obs) { if (ptInRect(px, py, r, pad)) return true; }
-  }
-  return false;
-}
-// Anchor: always exit RIGHT edge, enter LEFT edge (consistent direction)
-function getAnchor(r, toR) {
-  const dx = (toR.x + toR.w / 2) - (r.x + r.w / 2);
-  const dy = (toR.y + toR.h / 2) - (r.y + r.h / 2);
-  if (Math.abs(dx) > Math.abs(dy) * 0.8) {
-    return dx > 0
-      ? { x: r.x + r.w + 2, y: r.cy }
-      : { x: r.x - 2, y: r.cy };
-  } else {
-    return dy > 0
-      ? { x: r.x + r.w / 2, y: r.y + r.h + 2 }
-      : { x: r.x + r.w / 2, y: r.y - 2 };
-  }
-}
 
-function buildRoute(fromR, toR, obstacles) {
-  const s = getAnchor(fromR, toR);
-  const e = getAnchor(toR, fromR);
-  const GAP = 20; // generous clearance around obstacles
-
-  // 1) Direct line — if nothing in the way
-  if (!segHitsAny(s.x, s.y, e.x, e.y, obstacles)) {
-    return { d: `M${s.x},${s.y} L${e.x},${e.y}`, midPt: { x: (s.x + e.x) / 2, y: (s.y + e.y) / 2 } };
-  }
-
-  // 2) Find ALL blocking obstacles
-  const blocking = obstacles.filter(r => segHitsAny(s.x, s.y, e.x, e.y, [r]));
-  if (blocking.length === 0) {
-    return { d: `M${s.x},${s.y} L${e.x},${e.y}`, midPt: { x: (s.x + e.x) / 2, y: (s.y + e.y) / 2 } };
-  }
-
-  // 3) Compute bounding box of ALL obstacles (not just blocking) in the corridor
-  // This prevents routing into non-blocking hexes
-  const corridorMinX = Math.min(s.x, e.x) - GAP;
-  const corridorMaxX = Math.max(s.x, e.x) + GAP;
-  const corridorObs = obstacles.filter(r =>
-    r.x + r.w > corridorMinX && r.x < corridorMaxX
-  );
-
-  let minOY = Infinity, maxOY = -Infinity;
-  let minOX = Infinity, maxOX = -Infinity;
-  blocking.forEach(r => {
-    minOX = Math.min(minOX, r.x);
-    minOY = Math.min(minOY, r.y);
-    maxOX = Math.max(maxOX, r.x + r.w);
-    maxOY = Math.max(maxOY, r.y + r.h);
+function buildRoute(fromR, toR, allObstacles) {
+  // Find the top-most and bottom-most edges of ALL hexes on the board
+  // so we can route cleanly above or below everything
+  let boardTop = Infinity, boardBottom = -Infinity;
+  // Include source and target in the boundary calculation
+  const allRects = [...allObstacles, fromR, toR];
+  allRects.forEach(r => {
+    boardTop = Math.min(boardTop, r.y);
+    boardBottom = Math.max(boardBottom, r.y + r.h);
   });
 
-  // 4) Try detour strategies: above and below all blockers
-  const candidates = [
-    // Go ABOVE: exit right → go up → travel horizontally above → go down → enter left
-    [{ x: s.x, y: minOY - GAP }, { x: e.x, y: minOY - GAP }],
-    // Go BELOW: exit right → go down → travel horizontally below → go up → enter left
-    [{ x: s.x, y: maxOY + GAP }, { x: e.x, y: maxOY + GAP }],
-  ];
+  const GAP = 25; // clearance above/below all hexes
+  const fromCx = fromR.x + fromR.w / 2;
+  const fromCy = fromR.cy;
+  const toCx = toR.x + toR.w / 2;
+  const toCy = toR.cy;
 
-  let bestPath = null, bestLen = Infinity;
-  for (const [wp1, wp2] of candidates) {
-    const segs = [[s, wp1], [wp1, wp2], [wp2, e]];
-    let clear = true;
-    for (const [a, b] of segs) {
-      if (segHitsAny(a.x, a.y, b.x, b.y, corridorObs)) { clear = false; break; }
-    }
-    if (clear) {
-      const len = Math.hypot(wp1.x - s.x, wp1.y - s.y) + Math.hypot(wp2.x - wp1.x, wp2.y - wp1.y) + Math.hypot(e.x - wp2.x, e.y - wp2.y);
-      if (len < bestLen) { bestLen = len; bestPath = [s, wp1, wp2, e]; }
-    }
-  }
+  // Determine if source is left or right of target
+  const goingRight = fromCx < toCx;
 
-  // 5) Fallback: try wider gaps
-  if (!bestPath) {
-    const WIDE = GAP * 3;
-    const wideCands = [
-      [{ x: s.x, y: minOY - WIDE }, { x: e.x, y: minOY - WIDE }],
-      [{ x: s.x, y: maxOY + WIDE }, { x: e.x, y: maxOY + WIDE }],
-    ];
-    for (const [wp1, wp2] of wideCands) {
-      const segs = [[s, wp1], [wp1, wp2], [wp2, e]];
-      let clear = true;
-      for (const [a, b] of segs) {
-        if (segHitsAny(a.x, a.y, b.x, b.y, obstacles)) { clear = false; break; }
-      }
-      if (clear) {
-        const len = Math.hypot(wp1.x - s.x, wp1.y - s.y) + Math.hypot(wp2.x - wp1.x, wp2.y - wp1.y) + Math.hypot(e.x - wp2.x, e.y - wp2.y);
-        if (len < bestLen) { bestLen = len; bestPath = [s, wp1, wp2, e]; }
-      }
-    }
-  }
+  // Exit point: bottom or top of source hex
+  // Entry point: bottom or top of target hex
+  // Route: exit → curve down (or up) → travel horizontally → curve up (or down) → enter
 
-  // 6) Ultimate fallback — just go direct (shouldn't happen)
-  if (!bestPath) bestPath = [s, e];
+  // Decide above vs below:
+  // - If both hexes are in the top lane, route below
+  // - If both hexes are in the bottom lane, route above
+  // - Otherwise, route through the closest edge
+  const avgY = (fromCy + toCy) / 2;
+  const midBoard = (boardTop + boardBottom) / 2;
+  const routeBelow = avgY <= midBoard; // if hexes are in upper half, go below
 
-  let d = `M${bestPath[0].x},${bestPath[0].y}`;
-  for (let i = 1; i < bestPath.length; i++) d += ` L${bestPath[i].x},${bestPath[i].y}`;
-  const mid = bestPath[Math.floor(bestPath.length / 2)];
-  return { d, midPt: { x: mid.x, y: mid.y } };
+  const curveY = routeBelow
+    ? Math.max(fromR.y + fromR.h, toR.y + toR.h) + GAP
+    : Math.min(fromR.y, toR.y) - GAP;
+
+  // Anchor points on hex edges
+  const sx = goingRight ? fromR.x + fromR.w : fromR.x;
+  const sy = fromCy;
+  const ex = goingRight ? toR.x : toR.x + toR.w;
+  const ey = toCy;
+
+  // For adjacent hexes (close together), use a gentle curve
+  // For distant hexes, use a wider arc
+  const dist = Math.abs(toCx - fromCx);
+  const cpOffset = Math.max(dist * 0.3, 40);
+
+  // Build SVG cubic bezier: two control points push the curve above/below
+  const cp1x = sx + (goingRight ? cpOffset : -cpOffset);
+  const cp1y = curveY;
+  const cp2x = ex + (goingRight ? -cpOffset : cpOffset);
+  const cp2y = curveY;
+
+  const mx = (sx + ex) / 2;
+  const my = curveY;
+
+  return {
+    d: `M${sx},${sy} C${cp1x},${cp1y} ${cp2x},${cp2y} ${ex},${ey}`,
+    midPt: { x: mx, y: my }
+  };
 }
 
 function renderConnections() {
