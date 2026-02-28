@@ -694,13 +694,19 @@ const HEX_GAP = 6;             // gap between hexes
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
+// Columns valid per row: even rows=all 9, odd rows=skip last of each zone (2 per zone)
+function getColsForRow(row) {
+  if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8];
+  return [0,1,3,4,6,7]; // skip cols 2,5,8
+}
+
 function computeHexLayout() {
   const grid = document.getElementById('honeycombGrid');
   const wrapper = grid?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  // Fill width — vertical scroll is natural on wide screens
-  HEX_W = Math.max(80, Math.min(180, Math.floor((aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP)));
+  // Width = PAD + (GRID_COLS-1)*COL_W + HEX_W  (even rows define the width)
+  HEX_W = Math.max(80, Math.min(180, Math.floor((aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS)));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
@@ -814,6 +820,19 @@ async function loadGame(gameId) {
   } else {
     gridState = bs;
   }
+  // Migrate: move hexes from invalid odd-row positions (cols 2,5,8 on odd rows)
+  const migrated = {};
+  Object.entries(gridState).forEach(([k,v])=>{
+    const [r,c] = k.split(',').map(Number);
+    if (r % 2 === 1 && (c === 2 || c === 5 || c === 8)) {
+      // Move to previous valid col (1, 4, or 7)
+      const newKey = `${r},${c-1}`;
+      if (!gridState[newKey] && !migrated[newKey]) { migrated[newKey] = v; }
+      else { migrated[`${r-1},${c}`] = v; } // fallback: move to row above
+      delete gridState[k];
+    }
+  });
+  Object.assign(gridState, migrated);
   agentAssignments = g.agent_assignments || {};
   connections = g.connections || [];
   boardMarkers = g.board_markers || [];
@@ -1039,34 +1058,28 @@ function renderBoard() {
   computeHexLayout();
   // Set CSS custom properties for text scaling
   container.style.setProperty('--hex-w', HEX_W + 'px');
-  // Compute grid size
+  // Compute grid size (even rows define width)
   const laneRows = GRID_ROWS / 2;
-  const totalW = GRID_PAD_LEFT + (GRID_COLS + 0.5) * COL_W;
+  const totalW = GRID_PAD_LEFT + (GRID_COLS - 1) * COL_W + HEX_W;
   const strategicH = laneRows * ROW_H;
   const totalH = GRID_ROWS * ROW_H + HEX_H * 0.5;
   container.style.width = totalW + 'px';
   container.style.height = totalH + 'px';
   container.style.position = 'relative';
 
-  // Zone background overlays (3 cols per zone, 4 rows per lane)
-  const zoneCols = GRID_COLS / 3; // 3
-  const zoneConfigs = [
-    {cls:'zb-current', cols:[0, zoneCols-1], rows:[0, laneRows-1]},
-    {cls:'', cols:[zoneCols, zoneCols*2-1], rows:[0, laneRows-1]},
-    {cls:'zb-desired', cols:[zoneCols*2, GRID_COLS-1], rows:[0, laneRows-1]},
-    {cls:'zb-current', cols:[0, zoneCols-1], rows:[laneRows, GRID_ROWS-1]},
-    {cls:'', cols:[zoneCols, zoneCols*2-1], rows:[laneRows, GRID_ROWS-1]},
-    {cls:'zb-desired', cols:[zoneCols*2, GRID_COLS-1], rows:[laneRows, GRID_ROWS-1]}
-  ];
-  zoneConfigs.forEach(z=>{
-    const p1 = hexPixelPosition(z.rows[0], z.cols[0]);
-    const p2 = hexPixelPosition(z.rows[1], z.cols[1]);
-    const div = document.createElement('div');
-    div.className = `zone-bg ${z.cls}`;
-    div.style.left = (p1.x - HEX_GAP/2) + 'px'; div.style.top = (p1.y - HEX_GAP/2) + 'px';
-    div.style.width = (p2.x + HEX_W - p1.x + ROW_OFFSET + HEX_GAP) + 'px';
-    div.style.height = (p2.y + HEX_H - p1.y + HEX_GAP) + 'px';
-    container.appendChild(div);
+  // Zone background overlays — symmetric 3 equal zones × 2 lanes
+  const gridWidth = totalW - GRID_PAD_LEFT;
+  const zoneW = gridWidth / 3;
+  [{cls:'zb-current',zi:0},{cls:'',zi:1},{cls:'zb-desired',zi:2}].forEach(z=>{
+    [0,1].forEach(li=>{
+      const div = document.createElement('div');
+      div.className = `zone-bg ${z.cls}`;
+      div.style.left = (GRID_PAD_LEFT + z.zi * zoneW) + 'px';
+      div.style.top = (li * strategicH) + 'px';
+      div.style.width = zoneW + 'px';
+      div.style.height = (li === 0 ? strategicH : totalH - strategicH) + 'px';
+      container.appendChild(div);
+    });
   });
 
   // Lane divider
@@ -1086,9 +1099,10 @@ function renderBoard() {
     container.appendChild(lbl);
   });
 
-  // Render hex cells
+  // Render hex cells (odd rows: 2 per zone for symmetric honeycomb)
   for (let row = 0; row < GRID_ROWS; row++) {
-    for (let col = 0; col < GRID_COLS; col++) {
+    const validCols = getColsForRow(row);
+    for (const col of validCols) {
       const key = `${row},${col}`;
       const hexId = gridState[key] || null;
       const pos = hexPixelPosition(row, col);
@@ -1159,7 +1173,17 @@ function renderBoard() {
           if(selectedMarker){toggleMarker(hexId,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
           if(selectedAgent){assignAgent(hexId,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
         });
-        el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=hexId;dragSource=key;e.dataTransfer.effectAllowed='move';showZoneGuidance(item.type);});
+        el.addEventListener('dragstart',e=>{
+          if(connectMode){e.preventDefault();return;}
+          draggedId=hexId;dragSource=key;e.dataTransfer.effectAllowed='move';
+          // Clean drag ghost: clone just this hex
+          const ghost=el.cloneNode(true);
+          ghost.style.position='absolute';ghost.style.left='-9999px';ghost.style.width=HEX_W+'px';ghost.style.height=HEX_H+'px';
+          document.body.appendChild(ghost);
+          e.dataTransfer.setDragImage(ghost,HEX_W/2,HEX_H/2);
+          requestAnimationFrame(()=>ghost.remove());
+          showZoneGuidance(item.type);
+        });
         el.addEventListener('dragend',()=>clearZoneGuidance());
         cell.appendChild(el);
       }
@@ -1674,9 +1698,12 @@ function toggleHexDomain(hexId){
   if(!selectedDomainId)return;
   const dom=domainDefinitions.find(d=>d.id===selectedDomainId);
   if(!dom)return;
+  // Check if hex is already in this domain BEFORE removing
+  const wasInDomain = dom.hexIds.includes(hexId);
+  // Remove hex from all domains
   domainDefinitions.forEach(d=>{d.hexIds=d.hexIds.filter(h=>h!==hexId);});
-  const idx=dom.hexIds.indexOf(hexId);
-  if(idx<0)dom.hexIds.push(hexId);
+  // Toggle: only add if it wasn't already in the selected domain
+  if(!wasInDomain) dom.hexIds.push(hexId);
   renderBoard();renderDomainList();scheduleAutoSave();
 }
 function createDomain(){
