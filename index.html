@@ -162,11 +162,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .zone-col-header.hdr-desired .zone-tag { color:var(--green); background:rgba(45,157,94,.1); }
 
 /* Lane label (vertical text on the left) */
-.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); padding:8px 2px; overflow:hidden; }
-.lane-label { writing-mode:vertical-lr; transform:rotate(180deg); font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; text-align:center; line-height:1.4; white-space:nowrap; }
-.lane-label .lane-sub { display:block; font-weight:400; font-size:7px; letter-spacing:.2px; text-transform:none; color:var(--text-muted); margin-top:8px; white-space:normal; text-align:center; }
+.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); position:relative; }
+.lane-label { writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; text-align:center; line-height:1; white-space:nowrap; cursor:default; }
 .lane-label.strategic { color:var(--cyan); }
 .lane-label.operational { color:var(--orange); }
+.lane-label-cell .lane-tooltip { display:none; position:absolute; left:100%; top:50%; transform:translateY(-50%); z-index:50; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; white-space:nowrap; font-size:11px; color:var(--text-muted); box-shadow:0 4px 16px rgba(0,0,0,.4); pointer-events:none; }
+.lane-label-cell:hover .lane-tooltip { display:block; }
 
 /* Empty top-left corner */
 .lane-corner { grid-column:1; grid-row:1; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); display:flex; align-items:center; justify-content:center; }
@@ -193,15 +194,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-hex:hover { transform:scale(1.06); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:6px 14px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
+.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:8px 16px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
-.board-hex .bh-type { font-size:5px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; color:rgba(255,255,255,.5); }
-.board-hex .bh-name { font-size:8px; font-weight:600; color:#fff; margin-top:1px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; }
-.board-hex .bh-signal { font-size:6px; color:rgba(255,255,255,.4); margin-top:1px; line-height:1.1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
-.board-hex .bh-agents { display:flex; gap:3px; margin-top:3px; }
+.board-hex .bh-type { font-size:6px; text-transform:uppercase; letter-spacing:.8px; font-weight:800; color:rgba(255,255,255,.7); }
+.board-hex .bh-name { font-size:10px; font-weight:700; color:#fff; margin-top:2px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; text-shadow:0 1px 2px rgba(0,0,0,.3); }
+.board-hex .bh-signal { font-size:7px; color:rgba(255,255,255,.65); margin-top:2px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.board-hex .bh-agents { display:flex; gap:3px; margin-top:4px; }
 .board-hex .remove-hex { position:absolute; top:2px; right:14px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:10px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
 .board-hex:hover .bh-name { -webkit-line-clamp:3; }
@@ -501,12 +502,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="zone-col-header hdr-path"><span class="zone-tag">⟷ Transformation Path</span></div>
           <div class="zone-col-header hdr-desired"><span class="zone-tag">Improved Fitness ▶</span></div>
           <!-- Row 1: Strategic Lane -->
-          <div class="lane-label-cell"><div class="lane-label strategic">Highest Strategic Layer<span class="lane-sub">Intent, Meaning,<br>Investment Logic<br>(Why leadership cares)</span></div></div>
+          <div class="lane-label-cell"><div class="lane-label strategic">Strategic</div><div class="lane-tooltip">Highest Strategic Layer — Intent, Meaning, Investment Logic (Why leadership cares)</div></div>
           <div class="board-zone zone-current"><div class="zone-items" id="zone-current_strategic-items"></div></div>
           <div class="board-zone zone-path"><div class="zone-items" id="zone-path_strategic-items"></div></div>
           <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_strategic-items"></div></div>
           <!-- Row 2: Operational Lane -->
-          <div class="lane-label-cell"><div class="lane-label operational">Lowest Operational Layer<span class="lane-sub">Execution, Habits,<br>Daily Decisions<br>(Where change happens)</span></div></div>
+          <div class="lane-label-cell"><div class="lane-label operational">Operational</div><div class="lane-tooltip">Lowest Operational Layer — Execution, Habits, Daily Decisions (Where change happens)</div></div>
           <div class="board-zone zone-current"><div class="zone-items" id="zone-current_operational-items"></div></div>
           <div class="board-zone zone-path"><div class="zone-items" id="zone-path_operational-items"></div></div>
           <div class="board-zone zone-desired"><div class="zone-items" id="zone-desired_operational-items"></div></div>
