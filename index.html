@@ -197,16 +197,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-badge:hover { background:rgba(232,148,58,.3); }
 .driver-badge .db-bolt { font-size:9px; }
 /* ══ ZONE GUIDANCE (highlight correct zones during drag) ══ */
-.board-zone.guide-yes { box-shadow:inset 0 0 20px rgba(45,157,94,.15); }
-.board-zone.guide-yes .hex-cell.empty .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.2); }
-.board-zone.guide-no { opacity:.4; }
+.board-zone.guide-best { box-shadow:inset 0 0 30px rgba(45,200,94,.25); border-color:rgba(45,200,94,.4); }
+.board-zone.guide-best .hex-cell.empty .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); }
+.board-zone.guide-yes { box-shadow:inset 0 0 15px rgba(45,157,94,.1); }
+.board-zone.guide-yes .hex-cell.empty .hex-cell-bg { background:rgba(45,157,94,.05); border-color:rgba(45,157,94,.15); }
+.board-zone.guide-no { opacity:.35; }
 /* Toast notification */
 .board-toast { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:50; padding:8px 18px; border-radius:8px; font-size:11px; font-weight:500; pointer-events:none; opacity:0; transition:opacity .3s, top .3s; white-space:nowrap; }
 .board-toast.show { opacity:1; top:40px; }
 .board-toast.warning { background:rgba(232,148,58,.9); color:#fff; }
 .board-toast.hint { background:rgba(74,144,217,.9); color:#fff; }
 /* Agent assignment hint glow on transitions */
-.board-hex.transition.agent-hint { outline:2px solid var(--purple); outline-offset:1px; animation:agentPulse 1s ease-in-out infinite; }
+.board-hex.agent-hint { outline:2px solid var(--purple); outline-offset:1px; animation:agentPulse 1s ease-in-out infinite; }
 @keyframes agentPulse { 0%,100%{outline-color:rgba(123,94,167,.3)} 50%{outline-color:rgba(123,94,167,.7)} }
 
 .axis-bottom { text-align:center; padding:4px; font-size:9px; color:var(--text-muted); letter-spacing:.5px; border-top:1px solid var(--border); background:var(--surface); }
@@ -900,22 +902,44 @@ function isOnBoard(id){return ZONES.some(z=>boardState[z].includes(id));}
 // PLACEMENT GUIDANCE
 // ══════════════════════════════════════════
 // Which zones each type SHOULD go in (Codex rules)
+// Codex Core Mechanic (Section 4): Where things go on the map
+// 4.1 Anti-Patterns: always LEFT, cluster bottom-left (operational = habits/inertia)
+// 4.2 Patterns: center-right (rarely far right). Proven moves, not guarantees
+// 4.3 Transitions: diagonally between anti-patterns & patterns. Safe moves
+// 4.4 Agents: ON THE PATH, not at the destination. Forces, not owners
 const GUIDANCE = {
-  antipattern: { yes:['current_strategic','current_operational'], label:'Current Reality' },
-  pattern:     { yes:['desired_strategic','desired_operational'], label:'Improved Fitness' },
-  transition:  { yes:['path_strategic','path_operational'], label:'Transformation Path' }
+  antipattern: {
+    best: ['current_operational'],
+    ok:   ['current_strategic'],
+    label: 'Current Reality (bottom-left)',
+    tip:   'Anti-Patterns always start left. They cluster near bottom-left — habits, inertia, operational constraints.'
+  },
+  pattern: {
+    best: ['path_strategic','desired_strategic'],
+    ok:   ['path_operational','desired_operational'],
+    label: 'Center-Right (Path → Fitness)',
+    tip:   'Patterns rarely go directly to the far right. They live center-right as proven directional moves.'
+  },
+  transition: {
+    best: ['path_strategic','path_operational'],
+    ok:   ['current_strategic','desired_operational'],
+    label: 'Transformation Path (diagonally)',
+    tip:   'Transitions sit between anti-patterns and patterns. Place diagonally — they are safe bridges.'
+  }
 };
 function showZoneGuidance(itemType) {
   const guide = GUIDANCE[itemType];
   if (!guide) return;
+  const allZones = [...guide.best, ...guide.ok];
   document.querySelectorAll('.board-zone').forEach(z => {
     const zoneId = z.querySelector('.zone-items')?.id?.replace('zone-','').replace('-items','');
-    if (guide.yes.includes(zoneId)) z.classList.add('guide-yes');
+    if (guide.best.includes(zoneId)) z.classList.add('guide-best');
+    else if (guide.ok.includes(zoneId)) z.classList.add('guide-yes');
     else z.classList.add('guide-no');
   });
 }
 function clearZoneGuidance() {
-  document.querySelectorAll('.board-zone').forEach(z => { z.classList.remove('guide-yes','guide-no'); });
+  document.querySelectorAll('.board-zone').forEach(z => { z.classList.remove('guide-best','guide-yes','guide-no'); });
 }
 let _toastTimer = null;
 function showToast(msg, type='warning') {
@@ -923,22 +947,31 @@ function showToast(msg, type='warning') {
   el.textContent = msg;
   el.className = `board-toast ${type} show`;
   if (_toastTimer) clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+  _toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 3500);
 }
 function checkPlacement(itemId, zone) {
   const item = allItems.find(i=>i.id===itemId);
   if (!item) return;
   const guide = GUIDANCE[item.type];
   if (!guide) return;
-  if (!guide.yes.includes(zone)) {
-    const names = {antipattern:'Anti-Patterns',pattern:'Patterns',transition:'Transitions'};
-    showToast(`💡 ${names[item.type]} are typically placed in "${guide.label}" — but you can override this.`,'warning');
+  const allOk = [...guide.best, ...guide.ok];
+  if (!allOk.includes(zone)) {
+    showToast(`💡 ${guide.tip}`,'warning');
+  } else if (guide.best.includes(zone)) {
+    // Perfect placement — no toast needed
   }
 }
-// Highlight transitions when agent is selected
+// 4.4 Agents: highlight hexes ON THE PATH (not destination)
 function showAgentHint() {
-  if (!selectedAgent) { document.querySelectorAll('.board-hex.agent-hint').forEach(h=>h.classList.remove('agent-hint')); return; }
-  document.querySelectorAll('.board-hex.transition').forEach(h=>h.classList.add('agent-hint'));
+  document.querySelectorAll('.board-hex.agent-hint').forEach(h=>h.classList.remove('agent-hint'));
+  if (!selectedAgent) return;
+  // Highlight hexes in path zones (where agents belong)
+  ZONES.filter(z=>z.startsWith('path_')).forEach(z=>{
+    boardState[z].forEach(id=>{
+      const el=document.querySelector(`[data-hex-id="${id}"]`);
+      if(el) el.classList.add('agent-hint');
+    });
+  });
 }
 
 // ══════════════════════════════════════════
@@ -971,7 +1004,7 @@ function selectAgent(type){
   document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
   document.querySelector(`.agent-pal[data-agent="${type}"]`).classList.add('selected');
   showAgentHint();
-  showToast('💡 Agents work best on Transitions — they are the engines of pattern replacement','hint');
+  showToast('💡 Agents are placed ON THE PATH — they represent who can activate movement, not owners','hint');
 }
 function assignAgent(hexId,type){
   if(!agentAssignments[hexId])agentAssignments[hexId]=[];
