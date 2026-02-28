@@ -705,8 +705,12 @@ function computeHexLayout() {
   const wrapper = grid?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  // Width = PAD + (GRID_COLS-1)*COL_W + HEX_W  (even rows define the width)
-  HEX_W = Math.max(80, Math.min(180, Math.floor((aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS)));
+  const ah = wrapper.clientHeight || 700;
+  // Fill width fully
+  const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
+  // Soft height cap: don't exceed 2x viewport height
+  const hexFromHeight = (ah * 2 - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5) / 0.866;
+  HEX_W = Math.max(80, Math.floor(Math.min(hexFromWidth, hexFromHeight)));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
