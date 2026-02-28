@@ -114,20 +114,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .domain-label.active { opacity:1; background:rgba(56,178,160,.08); border-bottom:2px solid var(--cyan); }
 
 /* Hex grid board */
-.board-map { flex:1; position:relative; background: repeating-conic-gradient(rgba(255,255,255,.02) 0% 25%, transparent 0% 50%) 50%/60px 60px; overflow:hidden; }
-.board-map-inner { display:grid; grid-template-columns:1fr 1fr 1fr; min-height:100%; position:relative; }
+.board-map { flex:1; position:relative; background: repeating-conic-gradient(rgba(255,255,255,.02) 0% 25%, transparent 0% 50%) 50%/60px 60px; overflow:auto; }
+.board-map-inner { display:grid; grid-template-columns:40px 1fr 1fr 1fr; grid-template-rows:auto 1fr 1fr; min-height:100%; position:relative; }
 
-/* Zone columns */
-.board-zone { min-height:400px; position:relative; padding:36px 14px 14px; border-right:1px solid rgba(255,255,255,.04); transition:background .2s; }
-.board-zone:last-child { border-right:none; }
+/* Zone column headers */
+.zone-col-header { padding:8px 12px; display:flex; justify-content:center; align-items:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.04); }
+.zone-col-header:last-child { border-right:none; }
+.zone-col-header .zone-tag { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:3px 10px; border-radius:4px; }
+.zone-col-header.hdr-current .zone-tag { color:var(--red); background:rgba(217,74,74,.1); }
+.zone-col-header.hdr-path .zone-tag { color:var(--orange); background:rgba(232,148,58,.1); }
+.zone-col-header.hdr-desired .zone-tag { color:var(--green); background:rgba(45,157,94,.1); }
+
+/* Lane label (vertical text on the left) */
+.lane-label-cell { grid-column:1; display:flex; align-items:center; justify-content:center; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); }
+.lane-label-cell:first-of-type { border-bottom:1px solid rgba(255,255,255,.06); }
+.lane-label { writing-mode:vertical-rl; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:10px 4px; text-align:center; line-height:1.3; }
+.lane-label .lane-sub { display:block; font-weight:400; font-size:8px; letter-spacing:.3px; text-transform:none; color:var(--text-muted); margin-top:6px; }
+.lane-label.strategic { color:var(--cyan); }
+.lane-label.operational { color:var(--orange); }
+
+/* Empty top-left corner */
+.lane-corner { grid-column:1; grid-row:1; border-bottom:1px solid rgba(255,255,255,.06); border-right:1px solid rgba(255,255,255,.06); background:var(--surface); display:flex; align-items:center; justify-content:center; }
+.lane-corner span { font-size:7px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); text-align:center; line-height:1.4; }
+
+/* Zone cells */
+.board-zone { min-height:200px; position:relative; padding:10px; border-right:1px solid rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.06); transition:background .2s; }
+.board-zone:nth-child(3n+1) { border-right:1px solid rgba(255,255,255,.04); }
 .board-zone.drag-over { background:rgba(74,144,217,.06); }
-
-/* Zone labels */
-.zone-header { position:absolute; top:0; left:0; right:0; padding:8px 12px; display:flex; justify-content:center; align-items:center; gap:8px; }
-.zone-header .zone-tag { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:3px 10px; border-radius:4px; }
-.zone-current .zone-tag { color:var(--red); background:rgba(217,74,74,.1); }
-.zone-path .zone-tag { color:var(--orange); background:rgba(232,148,58,.1); }
-.zone-desired .zone-tag { color:var(--green); background:rgba(45,157,94,.1); }
 
 /* Gradient overlay to indicate direction */
 .board-zone.zone-current { background:linear-gradient(90deg, rgba(217,74,74,.04), transparent); }
@@ -232,6 +245,52 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .form-group input, .form-group select { width:100%; padding:7px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; }
 .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--accent); }
 
+/* ══ CONNECTION MODE ══ */
+.connect-toolbar { display:flex; align-items:center; gap:6px; padding:6px 14px; border-bottom:1px solid var(--border); background:var(--surface); }
+.connect-toolbar .ct-label { font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-right:4px; display:flex; align-items:center; gap:4px; }
+.connect-btn { padding:4px 12px; border-radius:16px; border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:10px; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:5px; }
+.connect-btn:hover { border-color:var(--accent); color:var(--text); }
+.connect-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.connect-btn .cb-icon { display:inline-block; width:20px; height:2px; position:relative; }
+.connect-btn.path-btn .cb-icon { border-top:2px dashed var(--text-muted); }
+.connect-btn.path-btn.active .cb-icon { border-top-color:#fff; }
+.connect-btn.nexus-btn .cb-icon { border-top:2px solid var(--cyan); width:14px; height:10px; border-right:2px solid var(--cyan); border-top:none; border-left:none; border-bottom:none; }
+.connect-btn.nexus-btn .cb-icon::after { content:''; position:absolute; top:-1px; right:-2px; width:14px; border-top:2px solid var(--cyan); }
+.connect-status { font-size:10px; color:var(--orange); margin-left:8px; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* SVG overlay for connections */
+.connections-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; }
+.connections-svg line, .connections-svg path, .connections-svg polyline { pointer-events:stroke; cursor:pointer; }
+.connections-svg .conn-path { stroke:var(--text-muted); stroke-width:2; stroke-dasharray:6,4; fill:none; }
+.connections-svg .conn-nexus { stroke:var(--cyan); stroke-width:2.5; fill:none; }
+.connections-svg .conn-arrow { fill:var(--text-muted); }
+.connections-svg .conn-arrow-nexus { fill:var(--cyan); }
+.connections-svg .conn-delete { fill:var(--red); opacity:0; cursor:pointer; pointer-events:all; transition:opacity .15s; }
+.connections-svg g:hover .conn-delete { opacity:1; }
+
+/* Hex highlight in connect mode */
+.board-hex.connect-source { outline:2px solid var(--accent); outline-offset:2px; }
+.board-hex.connect-target { outline:2px dashed var(--orange); outline-offset:2px; cursor:crosshair; }
+.board-hex.connect-mode { cursor:crosshair; }
+
+/* ══ MARKERS (S2F / Capabilities) ══ */
+.marker-section { margin-top:12px; }
+.marker-palette { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.marker-pal { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; transition:all .15s; }
+.marker-pal:hover { transform:scale(1.05); }
+.marker-circle { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; border:2px solid var(--border); transition:border-color .15s; color:#fff; }
+.marker-pal.selected .marker-circle { border-color:var(--accent); box-shadow:0 0 12px rgba(74,144,217,.3); }
+.marker-pal .marker-label { font-size:8px; color:var(--text-muted); text-align:center; max-width:55px; }
+.marker-circle.s2f { background:#8b8b8b; }
+.marker-circle.capability { background:var(--cyan); }
+/* Marker badges on board hexes */
+.bh-markers { display:flex; gap:4px; margin-top:4px; }
+.marker-badge { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; cursor:pointer; }
+.marker-badge.s2f { background:#8b8b8b; }
+.marker-badge.capability { background:var(--cyan); color:#1a1a2e; }
+.marker-badge:hover { opacity:.7; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -262,14 +321,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   <div class="modal" style="max-width:620px;">
     <h2>How to Play the Nexus Game</h2>
     <p>The Nexus Transformation Board is a <strong>strategic sensemaking game</strong> where participants navigate organizational transformation.</p>
-    <h3>The Board</h3>
+    <h3>The Board (Two Lanes)</h3>
+    <p>The board has <strong>3 zones × 2 layers</strong>:</p>
     <p><strong style="color:var(--red)">Current Reality</strong> — Where anti-patterns live. Constraints, inertia, habits.</p>
     <p><strong style="color:var(--orange)">Transformation Path</strong> — Transitional space. Experiments and learning.</p>
     <p><strong style="color:var(--green)">Improved Fitness</strong> — Enabling patterns and adaptive capacity.</p>
+    <p style="margin-top:6px"><strong style="color:var(--cyan)">Top Lane — Strategic</strong>: Intent, Meaning, Investment Logic (why leadership cares).</p>
+    <p><strong style="color:var(--orange)">Bottom Lane — Operational</strong>: Execution, Habits, Daily Decisions (where change happens).</p>
     <h3>The Hexagons</h3>
     <p><span style="color:#6b8fd4">Blue Hexagons</span> — Patterns: enabling behaviors.</p>
     <p><span style="color:var(--orange)">Orange Hexagons</span> — Anti-Patterns: constraining behaviors.</p>
     <p><span style="color:var(--gray)">Gray Hexagons</span> — Transition Patterns: safe bridges.</p>
+    <h3>Connections (Links)</h3>
+    <p>Use the <strong>🔗 Links</strong> toolbar above the board to draw arrows between hexagons:</p>
+    <p><strong>Transition Path</strong> (dashed arrow) — Shows the transformation journey. Typically Anti-Pattern → Transition → Pattern.</p>
+    <p><strong>Transition Nexus</strong> (solid L-shaped arrow) — Shows a nexus point where multiple transitions converge or branch.</p>
+    <p style="font-size:11px;color:var(--text-muted)">Click a link type → click the source hex → click the target hex. Hover a link to see the delete button.</p>
+    <h3>Board Markers</h3>
+    <p><span style="color:#8b8b8b;font-weight:700">S2F</span> — <strong>Safe to Fail Experiment</strong>: Mark a hex as an experimental probe. Small, contained tests with clear hypotheses.</p>
+    <p><span style="color:var(--cyan);font-weight:700">C</span> — <strong>Capability</strong>: Mark organizational capabilities that need to be developed or leveraged for the transformation.</p>
+    <p style="font-size:11px;color:var(--text-muted)">Select a marker from the Dashboard, then click a hex. Click the badge on the hex to remove it.</p>
     <h3>The Mobius Cycle</h3>
     <p><strong>Sense → Focus → Experiment → Stabilize → Diffuse</strong>. Each phase guides your actions.</p>
     <h3>Agents of Change</h3>
@@ -331,21 +402,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
     <!-- CENTER: Board -->
     <div class="board-area">
       <div class="board-domains" id="boardDomains"></div>
-      <div class="board-map">
+      <div class="connect-toolbar">
+        <span class="ct-label">🔗 Links:</span>
+        <button class="connect-btn path-btn" onclick="toggleConnectMode('path')"><span class="cb-icon"></span> Transition Path</button>
+        <button class="connect-btn nexus-btn" onclick="toggleConnectMode('nexus')"><span class="cb-icon"></span> Transition Nexus</button>
+        <span class="connect-status" id="connectStatus" style="display:none"></span>
+      </div>
+      <div class="board-map" id="boardMap">
         <div class="axis-label-left">Current Reality · Constraints · Inertia</div>
         <div class="axis-label-right">Improved Fitness · Adaptive Capacity</div>
+        <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
         <div class="board-map-inner">
-          <div class="board-zone zone-current" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'current')">
-            <div class="zone-header"><span class="zone-tag">◀ Current Reality</span></div>
-            <div class="zone-items" id="zone-current-items"></div>
+          <!-- Row 0: corner + column headers -->
+          <div class="lane-corner"><span>Layer /<br>Zone</span></div>
+          <div class="zone-col-header hdr-current"><span class="zone-tag">◀ Current Reality</span></div>
+          <div class="zone-col-header hdr-path"><span class="zone-tag">⟷ Transformation Path</span></div>
+          <div class="zone-col-header hdr-desired"><span class="zone-tag">Improved Fitness ▶</span></div>
+          <!-- Row 1: Strategic Lane -->
+          <div class="lane-label-cell"><div class="lane-label strategic">Highest Strategic Layer<span class="lane-sub">Intent, Meaning,<br>Investment Logic<br>(Why leadership cares)</span></div></div>
+          <div class="board-zone zone-current" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'current_strategic')">
+            <div class="zone-items" id="zone-current_strategic-items"></div>
           </div>
-          <div class="board-zone zone-path" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'path')">
-            <div class="zone-header"><span class="zone-tag">⟷ Transformation Path</span></div>
-            <div class="zone-items" id="zone-path-items"></div>
+          <div class="board-zone zone-path" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'path_strategic')">
+            <div class="zone-items" id="zone-path_strategic-items"></div>
           </div>
-          <div class="board-zone zone-desired" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'desired')">
-            <div class="zone-header"><span class="zone-tag">Improved Fitness ▶</span></div>
-            <div class="zone-items" id="zone-desired-items"></div>
+          <div class="board-zone zone-desired" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'desired_strategic')">
+            <div class="zone-items" id="zone-desired_strategic-items"></div>
+          </div>
+          <!-- Row 2: Operational Lane -->
+          <div class="lane-label-cell"><div class="lane-label operational">Lowest Operational Layer<span class="lane-sub">Execution, Habits,<br>Daily Decisions<br>(Where change happens)</span></div></div>
+          <div class="board-zone zone-current" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'current_operational')">
+            <div class="zone-items" id="zone-current_operational-items"></div>
+          </div>
+          <div class="board-zone zone-path" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'path_operational')">
+            <div class="zone-items" id="zone-path_operational-items"></div>
+          </div>
+          <div class="board-zone zone-desired" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'desired_operational')">
+            <div class="zone-items" id="zone-desired_operational-items"></div>
           </div>
         </div>
       </div>
@@ -382,6 +475,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="agent-pal" data-agent="human" onclick="selectAgent('human')"><div class="agent-circle human">🧑</div><div class="agent-label">Human</div></div>
           <div class="agent-pal" data-agent="systemic" onclick="selectAgent('systemic')"><div class="agent-circle systemic">🏛</div><div class="agent-label">Systemic</div></div>
           <div class="agent-pal" data-agent="ai" onclick="selectAgent('ai')"><div class="agent-circle ai">🤖</div><div class="agent-label">AI</div></div>
+        </div>
+      </div>
+      <div class="dash-section marker-section">
+        <h3>Board Markers</h3>
+        <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Select a marker, then click a hex on the board.</p>
+        <div class="marker-palette">
+          <div class="marker-pal" data-marker="s2f" onclick="selectMarker('s2f')"><div class="marker-circle s2f">S2F</div><div class="marker-label">Safe to Fail Experiment</div></div>
+          <div class="marker-pal" data-marker="capability" onclick="selectMarker('capability')"><div class="marker-circle capability">C</div><div class="marker-label">Capability</div></div>
         </div>
       </div>
       <div class="dash-section">
@@ -485,7 +586,8 @@ const PHASES = [{n:'Sense',i:'👁',d:'Observe signals, friction, bottlenecks'},
 // STATE
 // ══════════════════════════════════════════
 let allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
-let boardState = {current:[],path:[],desired:[]};
+const ZONES = ['current_strategic','current_operational','path_strategic','path_operational','desired_strategic','desired_operational'];
+let boardState = {current_strategic:[],current_operational:[],path_strategic:[],path_operational:[],desired_strategic:[],desired_operational:[]};
 let activeDrivers = new Set(['Cost Efficiency','Time-to-Market','Innovation Stagnation']);
 let currentFilter = 'all';
 let searchQuery = '';
@@ -496,6 +598,12 @@ let agentAssignments = {};
 let logEntries = [];
 let draggedId = null, dragSource = null;
 let activeDomain = null;
+// Connections: [{id, from, to, type:'path'|'nexus'}]
+let connections = [];
+let connectMode = null; // null | 'path' | 'nexus'
+let connectFrom = null; // hex id being connected from
+// Board markers: [{id, hexId, type:'s2f'|'capability', label}]
+let boardMarkers = [];
 // DB state
 let currentGameId = null, currentCompanyId = null;
 let autoSaveTimer = null;
@@ -523,7 +631,9 @@ async function saveGame() {
       completed_phases: [...completedPhases],
       log_entries: logEntries.slice(0,50),
       custom_items: allItems.filter(i=>i.id.startsWith('custom_')),
-      fitness_score: parseInt(document.getElementById('fitnessScore').textContent)||0
+      fitness_score: parseInt(document.getElementById('fitnessScore').textContent)||0,
+      connections: connections,
+      board_markers: boardMarkers
     });
     showSave('saved');
   } catch(e) { showSave('error'); console.error('Save failed:',e); }
@@ -542,8 +652,16 @@ async function loadGame(gameId) {
   const g = await api('GET', `/games/${gameId}`);
   currentGameId = g.id;
   currentCompanyId = g.company_id;
-  boardState = g.board_state || {current:[],path:[],desired:[]};
+  // Migrate old 3-zone format to new 6-zone format
+  const bs = g.board_state || {};
+  if ('current' in bs && !('current_strategic' in bs)) {
+    boardState = {current_strategic:bs.current||[],current_operational:[],path_strategic:bs.path||[],path_operational:[],desired_strategic:bs.desired||[],desired_operational:[]};
+  } else {
+    boardState = Object.assign(emptyBoard(), bs);
+  }
   agentAssignments = g.agent_assignments || {};
+  connections = g.connections || [];
+  boardMarkers = g.board_markers || [];
   activeDrivers = new Set(g.active_drivers || []);
   cycleNumber = g.cycle_number || 1;
   cyclePhase = g.cycle_phase || 0;
@@ -555,7 +673,7 @@ async function loadGame(gameId) {
   addLog('Game loaded: ' + g.name, 'success');
 }
 function renderAll() {
-  renderDomains(); renderDrivers(); renderLibrary(); renderCycleSteps(); ['current','path','desired'].forEach(renderZone); updateStats(); renderLog();
+  renderDomains(); renderDrivers(); renderLibrary(); renderCycleSteps(); ZONES.forEach(renderZone); updateStats(); renderLog();
 }
 
 // ══════════════════════════════════════════
@@ -634,8 +752,9 @@ async function enterGame(gameId) {
   document.getElementById('mainApp').style.display='';
   // Reset state
   allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
-  boardState = {current:[],path:[],desired:[]};
+  boardState = emptyBoard();
   agentAssignments = {};
+  connections = [];
   activeDrivers = new Set(['Cost Efficiency','Time-to-Market','Innovation Stagnation']);
   cyclePhase=0; cycleNumber=1; completedPhases.clear(); logEntries=[];
   await loadGame(gameId);
@@ -690,10 +809,14 @@ function renderZone(zone) {
     const item = allItems.find(i=>i.id===id);
     if (!item) return;
     const dim = activeDomain && item.domain!==activeDomain ? ' domain-dimmed':'';
+    const cm = connectMode ? ' connect-mode' : '';
+    const cs = connectFrom===id ? ' connect-source' : '';
     const el = document.createElement('div');
-    el.className = `board-hex ${item.type}${dim}`;
-    el.draggable = true;
+    el.className = `board-hex ${item.type}${dim}${cm}${cs}`;
+    el.draggable = !connectMode;
+    el.setAttribute('data-hex-id', id);
     const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
+    const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
     el.innerHTML = `
       <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
       <div class="board-hex-shape">
@@ -701,21 +824,31 @@ function renderZone(zone) {
         <div class="bh-name">${item.name}</div>
         <div class="bh-signal">${item.signal}</div>
         <div class="bh-agents">${agents}</div>
+        ${markers?'<div class="bh-markers">'+markers+'</div>':''}
       </div>
     `;
-    el.addEventListener('click',()=>{if(selectedAgent){assignAgent(id,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}});
-    el.addEventListener('dragstart',e=>{draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';});
+    el.addEventListener('click',()=>{
+      if(connectMode){ handleConnectClick(id); return; }
+      if(selectedMarker){toggleMarker(id,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
+      if(selectedAgent){assignAgent(id,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
+    });
+    el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';});
     c.appendChild(el);
   });
+  requestAnimationFrame(renderConnections);
 }
-function renderAllZones(){['current','path','desired'].forEach(renderZone);renderLibrary();updateStats();}
-function isOnBoard(id){return boardState.current.includes(id)||boardState.path.includes(id)||boardState.desired.includes(id);}
+function renderAllZones(){ZONES.forEach(renderZone);renderLibrary();updateStats();}
+function isOnBoard(id){return ZONES.some(z=>boardState[z].includes(id));}
 
 // ══════════════════════════════════════════
 // DRAG & DROP
 // ══════════════════════════════════════════
 function dOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
 function dLeave(e){e.currentTarget.classList.remove('drag-over');}
+function zonePrettyName(z){
+  const map={current_strategic:'Current Reality (Strategic)',current_operational:'Current Reality (Operational)',path_strategic:'Transformation Path (Strategic)',path_operational:'Transformation Path (Operational)',desired_strategic:'Improved Fitness (Strategic)',desired_operational:'Improved Fitness (Operational)'};
+  return map[z]||z;
+}
 function dDrop(e,zone){
   e.preventDefault();e.currentTarget.classList.remove('drag-over');
   if(!draggedId)return;
@@ -723,8 +856,7 @@ function dDrop(e,zone){
   if(!boardState[zone].includes(draggedId)){
     boardState[zone].push(draggedId);
     const item=allItems.find(i=>i.id===draggedId);
-    const zn=zone==='current'?'Current Reality':zone==='path'?'Transformation Path':'Improved Fitness';
-    addLog(`${dragSource?'Moved':'Placed'} "${item?.name}" → ${zn}`,'action');
+    addLog(`${dragSource?'Moved':'Placed'} "${item?.name}" → ${zonePrettyName(zone)}`,'action');
   }
   draggedId=null;dragSource=null;
   renderAllZones();scheduleAutoSave();
@@ -732,6 +864,8 @@ function dDrop(e,zone){
 function removeHex(id,zone){
   boardState[zone]=boardState[zone].filter(i=>i!==id);
   delete agentAssignments[id];
+  boardMarkers=boardMarkers.filter(m=>m.hexId!==id);
+  connections=connections.filter(c=>c.from!==id&&c.to!==id);
   const item=allItems.find(i=>i.id===id);
   addLog(`Removed "${item?.name}"`,'warning');
   renderAllZones();scheduleAutoSave();
@@ -743,6 +877,8 @@ function removeHex(id,zone){
 function selectAgent(type){
   if(selectedAgent===type){selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));return;}
   selectedAgent=type;
+  // Deselect markers when selecting agent
+  selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
   document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
   document.querySelector(`.agent-pal[data-agent="${type}"]`).classList.add('selected');
 }
@@ -756,6 +892,134 @@ function assignAgent(hexId,type){
     addLog(`Assigned ${type} agent to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
   }
   renderAllZones();scheduleAutoSave();
+}
+
+// ══════════════════════════════════════════
+// CONNECTIONS
+// ══════════════════════════════════════════
+function toggleConnectMode(type) {
+  if (connectMode === type) { connectMode=null; connectFrom=null; } else { connectMode=type; connectFrom=null; }
+  document.querySelectorAll('.connect-btn').forEach(b=>b.classList.remove('active'));
+  if (connectMode) document.querySelector(`.connect-btn.${connectMode==='path'?'path':'nexus'}-btn`).classList.add('active');
+  updateConnectStatus();
+  renderAllZones();
+}
+function updateConnectStatus() {
+  const el=document.getElementById('connectStatus');
+  if (!connectMode) { el.style.display='none'; return; }
+  el.style.display='inline';
+  if (!connectFrom) el.textContent=`Click a source hexagon to start a ${connectMode==='path'?'Transition Path':'Transition Nexus'}`;
+  else { const item=allItems.find(i=>i.id===connectFrom); el.textContent=`"${item?.name}" selected — now click the target hexagon`; }
+}
+function handleConnectClick(hexId) {
+  if (!connectMode) return;
+  if (!connectFrom) {
+    connectFrom = hexId;
+    updateConnectStatus();
+    renderAllZones();
+    return;
+  }
+  if (connectFrom === hexId) { connectFrom=null; updateConnectStatus(); renderAllZones(); return; }
+  // Check duplicate
+  if (connections.some(c=>c.from===connectFrom && c.to===hexId && c.type===connectMode)) {
+    connectFrom=null; updateConnectStatus(); renderAllZones(); return;
+  }
+  connections.push({id:'conn_'+Date.now(), from:connectFrom, to:hexId, type:connectMode});
+  const fromItem=allItems.find(i=>i.id===connectFrom);
+  const toItem=allItems.find(i=>i.id===hexId);
+  addLog(`Connected "${fromItem?.name}" → "${toItem?.name}" (${connectMode==='path'?'Transition Path':'Transition Nexus'})`,'success');
+  connectFrom=null;
+  updateConnectStatus();
+  renderAllZones();
+  scheduleAutoSave();
+}
+function deleteConnection(connId) {
+  connections = connections.filter(c=>c.id!==connId);
+  addLog('Connection removed','warning');
+  renderConnections();
+  scheduleAutoSave();
+}
+function getHexCenter(hexId) {
+  const el = document.querySelector(`[data-hex-id="${hexId}"]`);
+  const map = document.getElementById('boardMap');
+  if (!el || !map) return null;
+  const eRect = el.getBoundingClientRect();
+  const mRect = map.getBoundingClientRect();
+  return { x: eRect.left - mRect.left + eRect.width/2 + map.scrollLeft, y: eRect.top - mRect.top + eRect.height/2 + map.scrollTop };
+}
+function renderConnections() {
+  const svg = document.getElementById('connectionsSvg');
+  // Keep defs
+  const defs = svg.querySelector('defs');
+  svg.innerHTML = '';
+  svg.appendChild(defs);
+  // Set SVG size to match board-map scroll area
+  const map = document.getElementById('boardMap');
+  const inner = document.querySelector('.board-map-inner');
+  if (inner) { svg.setAttribute('width', inner.scrollWidth); svg.setAttribute('height', inner.scrollHeight); svg.style.width=inner.scrollWidth+'px'; svg.style.height=inner.scrollHeight+'px'; }
+  connections.forEach(conn => {
+    const from = getHexCenter(conn.from);
+    const to = getHexCenter(conn.to);
+    if (!from || !to) return;
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    if (conn.type === 'path') {
+      // Dashed straight arrow
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',from.x); line.setAttribute('y1',from.y);
+      line.setAttribute('x2',to.x); line.setAttribute('y2',to.y);
+      line.setAttribute('class','conn-path');
+      line.setAttribute('marker-end','url(#arrowPath)');
+      g.appendChild(line);
+    } else {
+      // L-shaped connector (nexus) — go right then up/down
+      const midX = to.x;
+      const pts = `${from.x},${from.y} ${midX},${from.y} ${to.x},${to.y}`;
+      const pl = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+      pl.setAttribute('points', pts);
+      pl.setAttribute('class','conn-nexus');
+      pl.setAttribute('marker-end','url(#arrowNexus)');
+      g.appendChild(pl);
+    }
+    // Delete button (circle with X)
+    const midPt = conn.type==='path' ? {x:(from.x+to.x)/2, y:(from.y+to.y)/2} : {x:to.x, y:(from.y+to.y)/2};
+    const del = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    del.setAttribute('cx',midPt.x); del.setAttribute('cy',midPt.y);
+    del.setAttribute('r','8'); del.setAttribute('class','conn-delete');
+    del.addEventListener('click',()=>deleteConnection(conn.id));
+    g.appendChild(del);
+    const delX = document.createElementNS('http://www.w3.org/2000/svg','text');
+    delX.setAttribute('x',midPt.x); delX.setAttribute('y',midPt.y+3.5);
+    delX.setAttribute('text-anchor','middle'); delX.setAttribute('font-size','10');
+    delX.setAttribute('fill','#fff'); delX.setAttribute('class','conn-delete');
+    delX.setAttribute('style','pointer-events:none');
+    delX.textContent='×';
+    g.appendChild(delX);
+    svg.appendChild(g);
+  });
+}
+
+// ══════════════════════════════════════════
+// MARKERS (S2F / Capabilities)
+// ══════════════════════════════════════════
+let selectedMarker = null;
+function selectMarker(type) {
+  if (selectedMarker===type) { selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected')); return; }
+  selectedMarker=type;
+  // Deselect agents when selecting marker
+  selectedAgent=null; document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
+  document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
+  document.querySelector(`.marker-pal[data-marker="${type}"]`).classList.add('selected');
+}
+function toggleMarker(hexId, type) {
+  const idx = boardMarkers.findIndex(m=>m.hexId===hexId && m.type===type);
+  if (idx>=0) {
+    boardMarkers.splice(idx,1);
+    addLog(`Removed ${type==='s2f'?'S2F Experiment':'Capability'} from "${allItems.find(i=>i.id===hexId)?.name}"`,'warning');
+  } else {
+    boardMarkers.push({id:'mk_'+Date.now(), hexId, type});
+    addLog(`Added ${type==='s2f'?'S2F Experiment':'Capability'} to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
+  }
+  renderAllZones(); scheduleAutoSave();
 }
 
 // ══════════════════════════════════════════
@@ -805,7 +1069,7 @@ function advanceCycle(){
 // STATS & FITNESS
 // ══════════════════════════════════════════
 function updateStats(){
-  const all=[...boardState.current,...boardState.path,...boardState.desired];
+  const all=ZONES.flatMap(z=>boardState[z]);
   const p=all.filter(id=>allItems.find(i=>i.id===id)?.type==='pattern').length;
   const a=all.filter(id=>allItems.find(i=>i.id===id)?.type==='antipattern').length;
   const t=all.filter(id=>allItems.find(i=>i.id===id)?.type==='transition').length;
@@ -816,9 +1080,12 @@ function updateStats(){
   document.getElementById('sAg').textContent=ag;
   // Fitness
   let f=0;
-  boardState.desired.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=1;if(i?.type==='antipattern')f-=3;});
-  boardState.path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=1;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
-  boardState.current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=.5;});
+  const desired=[...boardState.desired_strategic,...boardState.desired_operational];
+  const path=[...boardState.path_strategic,...boardState.path_operational];
+  const current=[...boardState.current_strategic,...boardState.current_operational];
+  desired.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=1;if(i?.type==='antipattern')f-=3;});
+  path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=1;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
+  current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=.5;});
   f+=ag*.5+activeDrivers.size*.3+(cycleNumber-1)*2;
   f=Math.max(0,Math.min(100,Math.round(f)));
   document.getElementById('fitnessScore').textContent=f;
@@ -855,13 +1122,14 @@ function addCustomPattern(){
   document.getElementById('newName').value='';document.getElementById('newSignal').value='';document.getElementById('newImpact').value='';
   scheduleAutoSave();
 }
+function emptyBoard(){return {current_strategic:[],current_operational:[],path_strategic:[],path_operational:[],desired_strategic:[],desired_operational:[]};}
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  boardState={current:[],path:[],desired:[]};agentAssignments={};cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  boardState=emptyBoard();agentAssignments={};connections=[];cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,boardState,agentAssignments,activeDrivers:[...activeDrivers],cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,boardState,connections,agentAssignments,activeDrivers:[...activeDrivers],cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');

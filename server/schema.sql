@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS games (
     company_id        UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     name              VARCHAR(255) NOT NULL,
     description       TEXT,
-    board_state       JSONB NOT NULL DEFAULT '{"current":[],"path":[],"desired":[]}',
+    board_state       JSONB NOT NULL DEFAULT '{"current_strategic":[],"current_operational":[],"path_strategic":[],"path_operational":[],"desired_strategic":[],"desired_operational":[]}',
     agent_assignments JSONB NOT NULL DEFAULT '{}',
     active_drivers    JSONB NOT NULL DEFAULT '[]',
     cycle_number      INTEGER NOT NULL DEFAULT 1,
@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS games (
     completed_phases  JSONB NOT NULL DEFAULT '[]',
     log_entries       JSONB NOT NULL DEFAULT '[]',
     custom_items      JSONB NOT NULL DEFAULT '[]',
+    connections       JSONB NOT NULL DEFAULT '[]',
+    board_markers     JSONB NOT NULL DEFAULT '[]',
     fitness_score     INTEGER NOT NULL DEFAULT 0,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
