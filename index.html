@@ -699,14 +699,8 @@ function computeHexLayout() {
   const wrapper = grid?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  const ah = wrapper.clientHeight || 700;
-  // Width: fill the full board width
-  const hexFromWidth = (aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP;
-  // Height: allow up to 15% vertical overflow (mild scroll is OK)
-  const maxH = ah * 1.15;
-  const hexFromHeight = (maxH - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5) / 0.866;
-  // Pick the smaller, clamped 80–180
-  HEX_W = Math.max(80, Math.min(180, Math.floor(Math.min(hexFromWidth, hexFromHeight))));
+  // Fill width — vertical scroll is natural on wide screens
+  HEX_W = Math.max(80, Math.min(180, Math.floor((aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP)));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
