@@ -196,6 +196,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-badge { display:inline-flex; align-items:center; gap:2px; padding:1px 6px; border-radius:10px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:7px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .driver-badge:hover { background:rgba(232,148,58,.3); }
 .driver-badge .db-bolt { font-size:9px; }
+/* ══ ZONE GUIDANCE (highlight correct zones during drag) ══ */
+.board-zone.guide-yes { box-shadow:inset 0 0 20px rgba(45,157,94,.15); }
+.board-zone.guide-yes .hex-cell.empty .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.2); }
+.board-zone.guide-no { opacity:.4; }
+/* Toast notification */
+.board-toast { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:50; padding:8px 18px; border-radius:8px; font-size:11px; font-weight:500; pointer-events:none; opacity:0; transition:opacity .3s, top .3s; white-space:nowrap; }
+.board-toast.show { opacity:1; top:40px; }
+.board-toast.warning { background:rgba(232,148,58,.9); color:#fff; }
+.board-toast.hint { background:rgba(74,144,217,.9); color:#fff; }
+/* Agent assignment hint glow on transitions */
+.board-hex.transition.agent-hint { outline:2px solid var(--purple); outline-offset:1px; animation:agentPulse 1s ease-in-out infinite; }
+@keyframes agentPulse { 0%,100%{outline-color:rgba(123,94,167,.3)} 50%{outline-color:rgba(123,94,167,.7)} }
+
 .axis-bottom { text-align:center; padding:4px; font-size:9px; color:var(--text-muted); letter-spacing:.5px; border-top:1px solid var(--border); background:var(--surface); }
 
 /* ══ RIGHT PANEL ══ */
@@ -425,6 +438,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <button class="connect-btn nexus-btn" onclick="toggleConnectMode('nexus')"><span class="cb-icon"></span> Transition Nexus</button>
         <span class="connect-status" id="connectStatus" style="display:none"></span>
       </div>
+      <div class="board-toast" id="boardToast"></div>
       <div class="board-map" id="boardMap">
         <div class="axis-label-left">Current Reality · Constraints · Inertia</div>
         <div class="axis-label-right">Improved Fitness · Adaptive Capacity</div>
@@ -800,7 +814,8 @@ function renderLibrary() {
         <div class="hex-domain">${item.domain}</div>
       </div>
     `;
-    card.addEventListener('dragstart', e=>{draggedId=item.id;dragSource=null;e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragstart', e=>{draggedId=item.id;dragSource=null;e.dataTransfer.effectAllowed='move';showZoneGuidance(item.type);});
+    card.addEventListener('dragend', ()=>clearZoneGuidance());
     list.appendChild(card);
   });
 }
@@ -825,11 +840,11 @@ function renderZone(zone) {
     cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
     cell.addEventListener('drop', e => {
       e.preventDefault(); e.stopPropagation(); cell.classList.remove('drag-over');
+      clearZoneGuidance();
       if (!draggedId) return;
+      checkPlacement(draggedId, zone);
       if (dragSource) boardState[dragSource] = boardState[dragSource].filter(x=>x!==draggedId);
-      // Remove from current position in this zone if re-ordering
       boardState[zone] = boardState[zone].filter(x=>x!==draggedId);
-      // Insert at this cell's position
       const insertIdx = Math.min(i, boardState[zone].length);
       boardState[zone].splice(insertIdx, 0, draggedId);
       const item = allItems.find(x=>x.id===draggedId);
@@ -870,7 +885,8 @@ function renderZone(zone) {
         if(selectedMarker){toggleMarker(id,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
         if(selectedAgent){assignAgent(id,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
       });
-      el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';});
+      el.addEventListener('dragstart',e=>{if(connectMode){e.preventDefault();return;}draggedId=id;dragSource=zone;e.dataTransfer.effectAllowed='move';showZoneGuidance(item.type);});
+      el.addEventListener('dragend',()=>clearZoneGuidance());
       cell.appendChild(el);
     }
     c.appendChild(cell);
@@ -879,6 +895,51 @@ function renderZone(zone) {
 }
 function renderAllZones(){ZONES.forEach(renderZone);renderLibrary();updateStats();}
 function isOnBoard(id){return ZONES.some(z=>boardState[z].includes(id));}
+
+// ══════════════════════════════════════════
+// PLACEMENT GUIDANCE
+// ══════════════════════════════════════════
+// Which zones each type SHOULD go in (Codex rules)
+const GUIDANCE = {
+  antipattern: { yes:['current_strategic','current_operational'], label:'Current Reality' },
+  pattern:     { yes:['desired_strategic','desired_operational'], label:'Improved Fitness' },
+  transition:  { yes:['path_strategic','path_operational'], label:'Transformation Path' }
+};
+function showZoneGuidance(itemType) {
+  const guide = GUIDANCE[itemType];
+  if (!guide) return;
+  document.querySelectorAll('.board-zone').forEach(z => {
+    const zoneId = z.querySelector('.zone-items')?.id?.replace('zone-','').replace('-items','');
+    if (guide.yes.includes(zoneId)) z.classList.add('guide-yes');
+    else z.classList.add('guide-no');
+  });
+}
+function clearZoneGuidance() {
+  document.querySelectorAll('.board-zone').forEach(z => { z.classList.remove('guide-yes','guide-no'); });
+}
+let _toastTimer = null;
+function showToast(msg, type='warning') {
+  const el = document.getElementById('boardToast');
+  el.textContent = msg;
+  el.className = `board-toast ${type} show`;
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+}
+function checkPlacement(itemId, zone) {
+  const item = allItems.find(i=>i.id===itemId);
+  if (!item) return;
+  const guide = GUIDANCE[item.type];
+  if (!guide) return;
+  if (!guide.yes.includes(zone)) {
+    const names = {antipattern:'Anti-Patterns',pattern:'Patterns',transition:'Transitions'};
+    showToast(`💡 ${names[item.type]} are typically placed in "${guide.label}" — but you can override this.`,'warning');
+  }
+}
+// Highlight transitions when agent is selected
+function showAgentHint() {
+  if (!selectedAgent) { document.querySelectorAll('.board-hex.agent-hint').forEach(h=>h.classList.remove('agent-hint')); return; }
+  document.querySelectorAll('.board-hex.transition').forEach(h=>h.classList.add('agent-hint'));
+}
 
 // ══════════════════════════════════════════
 // DRAG & DROP (cell-level drops handled in renderZone)
@@ -902,13 +963,15 @@ function removeHex(id,zone){
 // AGENTS
 // ══════════════════════════════════════════
 function selectAgent(type){
-  if(selectedAgent===type){selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));return;}
+  if(selectedAgent===type){selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));showAgentHint();return;}
   selectedAgent=type;
   // Deselect markers and drivers when selecting agent
   selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));
   selectedDriver=null; renderDrivers();
   document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));
   document.querySelector(`.agent-pal[data-agent="${type}"]`).classList.add('selected');
+  showAgentHint();
+  showToast('💡 Agents work best on Transitions — they are the engines of pattern replacement','hint');
 }
 function assignAgent(hexId,type){
   if(!agentAssignments[hexId])agentAssignments[hexId]=[];
@@ -919,6 +982,7 @@ function assignAgent(hexId,type){
     agentAssignments[hexId].push({type});
     addLog(`Assigned ${type} agent to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
   }
+  showAgentHint();
   renderAllZones();scheduleAutoSave();
 }
 
