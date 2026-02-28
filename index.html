@@ -943,7 +943,8 @@ function deleteConnection(connId) {
   renderConnections();
   scheduleAutoSave();
 }
-// Get hex rect relative to board-map
+// ── Connection geometry helpers ──
+// Get hex bounding box relative to .board-map
 function getHexRect(hexId) {
   const el = document.querySelector(`[data-hex-id="${hexId}"]`);
   const map = document.getElementById('boardMap');
@@ -951,17 +952,15 @@ function getHexRect(hexId) {
   const eR = el.getBoundingClientRect();
   const mR = map.getBoundingClientRect();
   const sx = map.scrollLeft, sy = map.scrollTop;
-  return { x: eR.left - mR.left + sx, y: eR.top - mR.top + sy, w: eR.width, h: eR.height, cx: eR.left - mR.left + sx + eR.width/2, cy: eR.top - mR.top + sy + eR.height/2 };
+  return { x:eR.left-mR.left+sx, y:eR.top-mR.top+sy, w:eR.width, h:eR.height, cy:eR.top-mR.top+sy+eR.height/2 };
 }
-// Compute anchor point on the edge of a hex, facing toward a target point
-function getEdgeAnchor(rect, targetX, targetY) {
-  const dx = targetX - rect.cx, dy = targetY - rect.cy;
-  const angle = Math.atan2(dy, dx);
-  // Simplified hex edge: use ellipse approximation
-  const rx = rect.w/2 + 4, ry = rect.h/2 + 4;
-  return { x: rect.cx + rx * Math.cos(angle), y: rect.cy + ry * Math.sin(angle) };
-}
-// Get all hex rects on board (for obstacle avoidance)
+// Always exit from the RIGHT tip of the source hex, enter from the LEFT tip of the target hex
+// Hex clip-path: polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)
+// Right tip = (100%, 50%) = (x+w, cy)
+// Left tip = (0%, 50%) = (x, cy)
+function getExitPt(r) { return { x: r.x + r.w, y: r.cy }; }
+function getEntryPt(r) { return { x: r.x, y: r.cy }; }
+// Collect all hex rects except the source/target
 function getAllHexRects(excludeIds) {
   const rects = [];
   document.querySelectorAll('[data-hex-id]').forEach(el => {
@@ -972,67 +971,86 @@ function getAllHexRects(excludeIds) {
   });
   return rects;
 }
-// Check if a line segment from (ax,ay) to (bx,by) intersects a rect (with padding)
-function segIntersectsRect(ax,ay,bx,by,r,pad=6) {
-  const left=r.x-pad, right=r.x+r.w+pad, top=r.y-pad, bot=r.y+r.h+pad;
-  // Simple: check if midpoints or quarter-points hit the rect
-  const pts = [[.25],[.5],[.75]];
-  for (const [t] of pts) {
-    const px=ax+(bx-ax)*t, py=ay+(by-ay)*t;
-    if (px>=left && px<=right && py>=top && py<=bot) return true;
+// Does a point (px,py) lie inside a rect (with padding)?
+function ptInRect(px,py,r,pad=8) {
+  return px >= r.x-pad && px <= r.x+r.w+pad && py >= r.y-pad && py <= r.y+r.h+pad;
+}
+// Sample a cubic bezier at t and check if any point collides with obstacle rects
+function bezierCollidesAny(sx,sy,c1x,c1y,c2x,c2y,ex,ey,obstacles) {
+  for (let t=0.1; t<=0.9; t+=0.1) {
+    const u=1-t;
+    const px=u*u*u*sx + 3*u*u*t*c1x + 3*u*t*t*c2x + t*t*t*ex;
+    const py=u*u*u*sy + 3*u*u*t*c1y + 3*u*t*t*c2y + t*t*t*ey;
+    for (const r of obstacles) { if (ptInRect(px,py,r)) return true; }
   }
   return false;
 }
-// Build a curved path that avoids obstacles
-function buildSmartPath(from, to, obstacles, type) {
-  const fromR = from, toR = to;
-  // Compute edge anchors (start exits toward target, end enters from source)
-  const startPt = getEdgeAnchor(fromR, toR.cx, toR.cy);
-  const endPt = getEdgeAnchor(toR, fromR.cx, fromR.cy);
-  // Check if direct line hits any obstacle
-  const blocked = obstacles.some(r => segIntersectsRect(startPt.x,startPt.y,endPt.x,endPt.y,r));
+// Build a routed path:  exit RIGHT → curve → enter LEFT
+function buildRoute(fromR, toR, obstacles, type) {
+  const s = getExitPt(fromR);   // start = right edge of source
+  const e = getEntryPt(toR);    // end   = left edge of target
+  const gap = 20; // control point offset from hex edge
   if (type === 'nexus') {
-    // L-shaped: exit right from source, then vertical to target left
-    const exitX = fromR.x + fromR.w + 14;
-    const enterX = toR.x - 14;
-    const startY = fromR.cy;
-    const endY = toR.cy;
-    // Choose offset to route around cards
-    const midX = Math.max(exitX, enterX) + 20;
+    // L-shaped: exit right → horizontal → 90° turn → vertical → enter left
+    // Route through empty space between the two hexes
+    const turnX = s.x + gap;
+    // If target is to the right and below/above, just go right then turn
+    // If target is to the left, swing wider
+    const routeX = e.x > s.x ? s.x + (e.x - s.x) / 2 : s.x + gap;
+    // Check if vertical segment hits any obstacle, shift if needed
+    let safeX = routeX;
+    const minY = Math.min(s.y, e.y) - 5, maxY = Math.max(s.y, e.y) + 5;
+    for (const obs of obstacles) {
+      if (safeX >= obs.x - 8 && safeX <= obs.x + obs.w + 8 &&
+          obs.y + obs.h > minY && obs.y < maxY) {
+        safeX = obs.x + obs.w + gap; // go to the right of the obstacle
+      }
+    }
     return {
-      d: `M${fromR.x+fromR.w+2},${startY} L${midX},${startY} L${midX},${endY} L${toR.x-2},${endY}`,
-      midPt: {x:midX, y:(startY+endY)/2}
+      d: `M${s.x},${s.y} L${safeX},${s.y} L${safeX},${e.y} L${e.x},${e.y}`,
+      midPt: { x: safeX, y: (s.y + e.y) / 2 }
     };
   }
-  // Transition Path (dashed)
-  if (!blocked) {
-    // Direct line with slight curve for aesthetics
-    const mx = (startPt.x+endPt.x)/2, my = (startPt.y+endPt.y)/2;
-    const perpX = -(endPt.y-startPt.y)*0.08, perpY = (endPt.x-startPt.x)*0.08;
+  // ── Transition Path (dashed curve) ──
+  // Try a clean cubic bezier that bows out to avoid cards
+  const dx = e.x - s.x;
+  const dy = e.y - s.y;
+  // Default: smooth S-curve with control points pulled right from start and left from end
+  const cpLen = Math.max(Math.abs(dx) * 0.4, 50);
+  let c1 = { x: s.x + cpLen, y: s.y };
+  let c2 = { x: e.x - cpLen, y: e.y };
+  // Check if default curve collides with any obstacle
+  if (!bezierCollidesAny(s.x,s.y,c1.x,c1.y,c2.x,c2.y,e.x,e.y,obstacles)) {
+    const mx = (s.x+e.x)/2, my = (c1.y+c2.y)/2;
     return {
-      d: `M${startPt.x},${startPt.y} Q${mx+perpX},${my+perpY} ${endPt.x},${endPt.y}`,
-      midPt: {x:mx+perpX/2, y:my+perpY/2}
+      d: `M${s.x},${s.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`,
+      midPt: { x: mx, y: my }
     };
   }
-  // Blocked: route around by going above or below
-  const avgY = (startPt.y + endPt.y) / 2;
-  // Find which obstacle is in the way and go around it
-  let detourY;
-  const blockingRects = obstacles.filter(r => segIntersectsRect(startPt.x,startPt.y,endPt.x,endPt.y,r));
-  if (blockingRects.length > 0) {
-    // Go above or below the blocking rect, whichever is shorter
-    const br = blockingRects[0];
-    const aboveDist = Math.abs(avgY - (br.y - 30));
-    const belowDist = Math.abs(avgY - (br.y + br.h + 30));
-    detourY = aboveDist < belowDist ? br.y - 30 : br.y + br.h + 30;
-  } else {
-    detourY = avgY - 40;
+  // Collision → bow the curve above or below the obstacle
+  const blockingObs = obstacles.filter(r => {
+    for (let t=0.1;t<=0.9;t+=0.1) {
+      const u=1-t;
+      const px=u*u*u*s.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*e.x;
+      const py=u*u*u*s.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*e.y;
+      if (ptInRect(px,py,r)) return true;
+    }
+    return false;
+  });
+  if (blockingObs.length > 0) {
+    const br = blockingObs[0];
+    const midY = (s.y + e.y) / 2;
+    // Go above or below, whichever is closer
+    const above = br.y - 40;
+    const below = br.y + br.h + 40;
+    const detourY = Math.abs(midY - above) < Math.abs(midY - below) ? above : below;
+    c1 = { x: s.x + cpLen, y: detourY };
+    c2 = { x: e.x - cpLen, y: detourY };
   }
-  const mx1 = startPt.x + (endPt.x - startPt.x)*0.3;
-  const mx2 = startPt.x + (endPt.x - startPt.x)*0.7;
+  const mx = (s.x+e.x)/2, my = (c1.y+c2.y)/2;
   return {
-    d: `M${startPt.x},${startPt.y} C${mx1},${detourY} ${mx2},${detourY} ${endPt.x},${endPt.y}`,
-    midPt: {x:(mx1+mx2)/2, y:detourY}
+    d: `M${s.x},${s.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`,
+    midPt: { x: mx, y: my }
   };
 }
 function renderConnections() {
@@ -1042,13 +1060,18 @@ function renderConnections() {
   svg.appendChild(defs);
   const map = document.getElementById('boardMap');
   const inner = document.querySelector('.board-map-inner');
-  if (inner) { svg.setAttribute('width', inner.scrollWidth); svg.setAttribute('height', inner.scrollHeight); svg.style.width=inner.scrollWidth+'px'; svg.style.height=inner.scrollHeight+'px'; }
+  if (inner) {
+    svg.setAttribute('width', inner.scrollWidth);
+    svg.setAttribute('height', inner.scrollHeight);
+    svg.style.width = inner.scrollWidth+'px';
+    svg.style.height = inner.scrollHeight+'px';
+  }
   connections.forEach(conn => {
     const fromR = getHexRect(conn.from);
     const toR = getHexRect(conn.to);
     if (!fromR || !toR) return;
     const obstacles = getAllHexRects([conn.from, conn.to]);
-    const route = buildSmartPath(fromR, toR, obstacles, conn.type);
+    const route = buildRoute(fromR, toR, obstacles, conn.type);
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     // Invisible wider hit area for easy hovering
     const hit = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -1061,7 +1084,7 @@ function renderConnections() {
     p.setAttribute('class', conn.type==='path'?'conn-path':'conn-nexus');
     p.setAttribute('marker-end', conn.type==='path'?'url(#arrowPath)':'url(#arrowNexus)');
     g.appendChild(p);
-    // Delete button at midpoint
+    // Delete button at route midpoint
     const mp = route.midPt;
     const del = document.createElementNS('http://www.w3.org/2000/svg','circle');
     del.setAttribute('cx',mp.x); del.setAttribute('cy',mp.y);
