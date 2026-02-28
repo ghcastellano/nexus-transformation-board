@@ -181,31 +181,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-zone.zone-current { background:linear-gradient(90deg, rgba(217,74,74,.04), transparent); }
 .board-zone.zone-desired { background:linear-gradient(270deg, rgba(45,157,94,.04), transparent); }
 
-/* Hex grid inside each zone — 6 columns of hex cells */
-.zone-items { display:grid; grid-template-columns:repeat(6, 1fr); gap:3px 2px; align-content:start; padding:6px; }
-.hex-cell { position:relative; aspect-ratio:1/1.05; min-width:0; }
+/* Hex grid inside each zone — 4 columns of hex cells */
+.zone-items { display:grid; grid-template-columns:repeat(4, 1fr); gap:4px 3px; align-content:start; padding:6px; }
+.hex-cell { position:relative; aspect-ratio:1/1.15; min-width:0; }
 .hex-cell-bg { position:absolute; inset:1px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.018); border:1px dashed rgba(255,255,255,.04); transition:all .2s; display:flex; align-items:center; justify-content:center; }
 .hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:14px; color:rgba(255,255,255,.04); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.04); }
 
 /* ── Board hexagons (inside hex cells) ── */
 .board-hex { position:absolute; inset:1px; cursor:grab; transition:all .15s; z-index:1; }
 .board-hex:hover { transform:scale(1.06); z-index:2; }
 .board-hex.domain-dimmed { opacity:.15; }
 
-.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:8px 16px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; overflow:hidden; text-align:center; }
+.board-hex-shape { clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); padding:0; height:100%; display:flex; flex-direction:column; overflow:hidden; text-align:center; position:relative; }
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
 
-.board-hex .bh-type { font-size:6px; text-transform:uppercase; letter-spacing:.8px; font-weight:800; color:rgba(255,255,255,.7); }
-.board-hex .bh-name { font-size:10px; font-weight:700; color:#fff; margin-top:2px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; text-shadow:0 1px 2px rgba(0,0,0,.3); }
-.board-hex .bh-signal { font-size:7px; color:rgba(255,255,255,.65); margin-top:2px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
-.board-hex .bh-agents { display:flex; gap:3px; margin-top:4px; }
-.board-hex .remove-hex { position:absolute; top:2px; right:14px; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:10px; z-index:2; opacity:0; transition:opacity .15s; }
+/* Text area — centered in upper portion */
+.bh-text { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:10px 18px 2px; }
+.board-hex .bh-type { font-size:7px; text-transform:uppercase; letter-spacing:1px; font-weight:800; color:rgba(255,255,255,.65); }
+.board-hex .bh-name { font-size:11px; font-weight:700; color:#fff; margin-top:2px; line-height:1.3; word-break:break-word; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+.board-hex .bh-signal { font-size:8px; color:rgba(255,255,255,.6); margin-top:2px; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+/* Icons area — pinned to bottom */
+.bh-bottom { display:flex; gap:3px; justify-content:center; align-items:center; padding:2px 18px 10px; flex-shrink:0; }
+.board-hex .remove-hex { position:absolute; top:12%; right:18%; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:11px; z-index:2; opacity:0; transition:opacity .15s; }
 .board-hex:hover .remove-hex { opacity:1; }
-.board-hex:hover .bh-name { -webkit-line-clamp:3; }
 
 /* Agent badges */
 .agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; transition:opacity .15s; }
@@ -943,9 +945,9 @@ function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab'
 // ══════════════════════════════════════════
 // BOARD ZONES
 // ══════════════════════════════════════════
-const HEX_COLS = 6;
+const HEX_COLS = 4;
 const HEX_ROWS = 5;
-const HEX_CELLS_PER_ZONE = HEX_COLS * HEX_ROWS; // 30 cells per zone
+const HEX_CELLS_PER_ZONE = HEX_COLS * HEX_ROWS; // 20 cells per zone
 
 // boardState[zone] is an array of item IDs (sequential).
 // cellMap[zone] maps cellIndex → itemId for free positioning.
@@ -1028,14 +1030,17 @@ function renderZone(zone) {
       const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}" title="${a.type} agent (click to remove)" onclick="event.stopPropagation();assignAgent('${id}','${a.type}')">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
       const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
       const drvs = (driverAssignments[id]||[]).map(d=>`<div class="driver-badge" title="${d} (click to remove)" onclick="event.stopPropagation();assignDriver('${id}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
+      const icons = agents + markers;
       el.innerHTML = `
         <button class="remove-hex" onclick="event.stopPropagation();removeHex('${id}','${zone}')">×</button>
         <div class="board-hex-shape">
-          <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':'TRANSITION'}</div>
-          <div class="bh-name" title="${item.name}">${item.name}</div>
-          <div class="bh-signal" title="${item.signal}">${item.signal}</div>
-          <div class="bh-agents">${agents}${markers}</div>
-          ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
+          <div class="bh-text">
+            <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':'TRANSITION'}</div>
+            <div class="bh-name" title="${item.name}">${item.name}</div>
+            <div class="bh-signal" title="${item.signal}">${item.signal}</div>
+            ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
+          </div>
+          ${icons?'<div class="bh-bottom">'+icons+'</div>':''}
         </div>
       `;
       el.addEventListener('click',()=>{
