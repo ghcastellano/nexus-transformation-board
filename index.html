@@ -201,9 +201,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* All content centered symmetrically inside the hex safe zone */
 .bh-text { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 18%; }
-.board-hex .bh-type { font-size:7px; text-transform:uppercase; letter-spacing:.8px; font-weight:800; color:rgba(255,255,255,.65); }
-.board-hex .bh-name { font-size:11px; font-weight:700; color:#fff; margin-top:2px; line-height:1.2; word-break:break-word; text-shadow:0 1px 3px rgba(0,0,0,.4); }
-.board-hex .bh-signal { font-size:8px; color:rgba(255,255,255,.5); margin-top:2px; line-height:1.2; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.board-hex .bh-type { font-size:calc(var(--hex-w, 100px) * 0.07); text-transform:uppercase; letter-spacing:.8px; font-weight:800; color:rgba(255,255,255,.65); }
+.board-hex .bh-name { font-size:calc(var(--hex-w, 100px) * 0.11); font-weight:700; color:#fff; margin-top:2px; line-height:1.2; word-break:break-word; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+.board-hex .bh-signal { font-size:calc(var(--hex-w, 100px) * 0.08); color:rgba(255,255,255,.5); margin-top:2px; line-height:1.2; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
 /* Icons row below text */
 .bh-bottom { display:flex; gap:4px; justify-content:center; align-items:center; margin-top:4px; flex-shrink:0; }
 .board-hex .remove-hex { position:absolute; top:5px; right:22%; background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:12px; z-index:2; opacity:0; transition:opacity .15s; }
@@ -684,14 +684,34 @@ const PHASES = [{n:'Sense',i:'👁',d:'Observe signals, friction, bottlenecks'},
 let allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
 const ZONES = ['current_strategic','current_operational','path_strategic','path_operational','desired_strategic','desired_operational'];
 
-// ── Honeycomb grid constants ──
+// ── Honeycomb grid config ──
 const GRID_COLS = 9;  // 3 per zone column (current, path, desired)
 const GRID_ROWS = 8;  // 4 per lane (strategic, operational)
-const HEX_W = 120, HEX_H = 104;
-const ROW_H = HEX_H * 0.78;   // vertical spacing (~81px)
-const COL_W = HEX_W + 4;       // horizontal spacing (124px)
-const ROW_OFFSET = COL_W / 2;  // odd-row offset (62px)
-const GRID_PAD_LEFT = 40;      // space for lane labels
+const GRID_PAD_LEFT = 42;      // space for lane labels
+const HEX_GAP = 6;             // gap between hexes
+
+// Dynamic hex dimensions (computed by computeHexLayout)
+let HEX_W = 100, HEX_H = 87;
+let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
+
+function computeHexLayout() {
+  const grid = document.getElementById('honeycombGrid');
+  const wrapper = grid?.parentElement;
+  if (!wrapper) return;
+  const aw = wrapper.clientWidth || 900;
+  const ah = wrapper.clientHeight || 700;
+  // Width constraint: PAD + (COLS + 0.5) * (HEX_W + GAP) = aw
+  const maxWFromWidth = (aw - GRID_PAD_LEFT) / (GRID_COLS + 0.5) - HEX_GAP;
+  // Height constraint: ROWS * (HEX_H + GAP) + HEX_H * 0.5 = ah
+  const maxHFromHeight = (ah - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5);
+  const maxWFromHeight = maxHFromHeight / 0.866;
+  // Use the smaller, clamped between 80 and 160
+  HEX_W = Math.max(80, Math.min(160, Math.floor(Math.min(maxWFromWidth, maxWFromHeight))));
+  HEX_H = Math.round(HEX_W * 0.866);
+  COL_W = HEX_W + HEX_GAP;
+  ROW_H = HEX_H + HEX_GAP;
+  ROW_OFFSET = COL_W / 2;
+}
 
 function hexPixelPosition(row, col) {
   return {
@@ -818,6 +838,8 @@ async function loadGame(gameId) {
 function renderAll() {
   renderCategories(); renderDrivers(); renderLibrary(); renderCycleSteps(); renderBoard(); renderDomainList(); updateStats(); renderLog();
 }
+let _resizeTimer;
+window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer=setTimeout(()=>{ if(document.getElementById('mainApp').style.display!=='none') renderBoard(); },200); });
 
 // ══════════════════════════════════════════
 // GAME SELECT SCREEN
@@ -1020,10 +1042,13 @@ function getHexCoords(id){for(const[k,v]of Object.entries(gridState)){if(v===id)
 function renderBoard() {
   const container = document.getElementById('honeycombGrid');
   container.innerHTML = '';
+  computeHexLayout();
+  // Set CSS custom properties for text scaling
+  container.style.setProperty('--hex-w', HEX_W + 'px');
   // Compute grid size
-  const laneRows = GRID_ROWS / 2; // 4 rows per lane
-  const totalW = GRID_PAD_LEFT + GRID_COLS * COL_W + ROW_OFFSET + HEX_W;
-  const strategicH = laneRows * ROW_H + HEX_H * 0.3;
+  const laneRows = GRID_ROWS / 2;
+  const totalW = GRID_PAD_LEFT + (GRID_COLS + 0.5) * COL_W;
+  const strategicH = laneRows * ROW_H;
   const totalH = GRID_ROWS * ROW_H + HEX_H * 0.5;
   container.style.width = totalW + 'px';
   container.style.height = totalH + 'px';
@@ -1044,9 +1069,9 @@ function renderBoard() {
     const p2 = hexPixelPosition(z.rows[1], z.cols[1]);
     const div = document.createElement('div');
     div.className = `zone-bg ${z.cls}`;
-    div.style.left = p1.x + 'px'; div.style.top = p1.y + 'px';
-    div.style.width = (p2.x + HEX_W - p1.x + ROW_OFFSET) + 'px';
-    div.style.height = (p2.y + HEX_H - p1.y) + 'px';
+    div.style.left = (p1.x - HEX_GAP/2) + 'px'; div.style.top = (p1.y - HEX_GAP/2) + 'px';
+    div.style.width = (p2.x + HEX_W - p1.x + ROW_OFFSET + HEX_GAP) + 'px';
+    div.style.height = (p2.y + HEX_H - p1.y + HEX_GAP) + 'px';
     container.appendChild(div);
   });
 
