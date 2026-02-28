@@ -207,7 +207,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-hex:hover .bh-name { -webkit-line-clamp:3; }
 
 /* Agent badges */
-.agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
+.agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; transition:opacity .15s; }
+.agent-badge:hover { opacity:.7; }
 .agent-badge.human { background:rgba(255,255,255,.2); }
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
@@ -228,9 +229,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
 /* Driver badges on hexes */
 .bh-drivers { display:flex; flex-wrap:wrap; gap:2px; margin-top:3px; justify-content:center; }
-.driver-badge { display:inline-flex; align-items:center; gap:1px; padding:0px 4px; border-radius:8px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:6px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
-.driver-badge:hover { background:rgba(232,148,58,.3); }
-.driver-badge .db-bolt { font-size:7px; }
+.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border-radius:8px; background:rgba(232,148,58,.15); border:1px solid rgba(232,148,58,.3); font-size:7px; font-weight:600; color:var(--orange); cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.driver-badge:hover { background:rgba(232,148,58,.3); opacity:.7; }
+.driver-badge .db-bolt { font-size:8px; }
 /* ══ ZONE GUIDANCE (highlight correct zones during drag) ══ */
 .board-zone.guide-best { box-shadow:inset 0 0 30px rgba(45,200,94,.25); border-color:rgba(45,200,94,.4); }
 .board-zone.guide-best .hex-cell.empty .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); }
@@ -1023,7 +1024,7 @@ function renderZone(zone) {
       el.className = `board-hex ${item.type}${dim}${cm}${cs}`;
       el.draggable = !connectMode;
       el.setAttribute('data-hex-id', id);
-      const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
+      const agents = (agentAssignments[id]||[]).map(a=>`<div class="agent-badge ${a.type}" title="${a.type} agent (click to remove)" onclick="event.stopPropagation();assignAgent('${id}','${a.type}')">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
       const markers = boardMarkers.filter(m=>m.hexId===id).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'Safe to Fail Experiment':'Capability'} (click to remove)" onclick="event.stopPropagation();toggleMarker('${id}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
       const drvs = (driverAssignments[id]||[]).map(d=>`<div class="driver-badge" title="${d} (click to remove)" onclick="event.stopPropagation();assignDriver('${id}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
       el.innerHTML = `
