@@ -1844,6 +1844,8 @@ function renderDomainBoundaries(){
   const svg=document.getElementById('domainsSvg');
   if(!svg)return;
   const grid=document.getElementById('honeycombGrid');
+  // Move SVG inside honeycombGrid as last child so it paints above lane labels
+  if(grid && svg.parentElement!==grid) grid.appendChild(svg);
   if(grid){svg.setAttribute('width',grid.scrollWidth);svg.setAttribute('height',grid.scrollHeight);svg.style.width=grid.scrollWidth+'px';svg.style.height=grid.scrollHeight+'px';}
   svg.innerHTML='';
   domainDefinitions.forEach(dom=>{
