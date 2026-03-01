@@ -378,6 +378,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* ══ FITNESS PANEL (Improved Fitness — metrics dashboard) ══ */
+.fitness-panel { flex:2; background:var(--surface); border-left:1px solid var(--border); overflow-y:auto; padding:14px 12px; display:flex; flex-direction:column; gap:0; min-width:160px; max-width:320px; }
+.fp-header { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--green); font-weight:700; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; }
+.fp-section { margin-bottom:14px; }
+.fp-section h3 { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-bottom:7px; }
+.fp-empty { font-size:10px; color:var(--text-muted); opacity:.5; font-style:italic; padding:4px 0; }
+.fp-item { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 9px; margin-bottom:5px; }
+.fp-item-name { font-size:11px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.3; }
+.fp-result-input { width:100%; padding:4px 7px; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:10px; margin-top:2px; }
+.fp-result-input:focus { outline:none; border-color:var(--accent); }
+.fp-counter { display:flex; align-items:center; gap:6px; margin-top:4px; }
+.fp-counter button { width:22px; height:22px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:all .15s; }
+.fp-counter button:hover { border-color:var(--accent); color:var(--accent); }
+.fp-rep-count { font-size:16px; font-weight:700; color:var(--cyan); min-width:24px; text-align:center; }
+.fp-summary { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:8px 10px; display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+.fp-sum-item { text-align:center; }
+.fp-sum-val { font-size:20px; font-weight:700; }
+.fp-sum-lbl { font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; }
 </style>
 </head>
 <body>
@@ -518,17 +537,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <div class="board-map" id="boardMap">
         <div class="zone-headers">
           <div class="zh-spacer"></div>
-          <div class="zone-col-header hdr-current"><span class="zone-tag">◀ Current Reality</span></div>
-          <div class="zone-col-header hdr-path"><span class="zone-tag">⟷ Transformation Path</span></div>
-          <div class="zone-col-header hdr-desired"><span class="zone-tag">Improved Fitness ▶</span></div>
+          <div class="zone-col-header hdr-current" style="flex:2"><span class="zone-tag">◀ Current Reality</span></div>
+          <div class="zone-col-header hdr-path" style="flex:5"><span class="zone-tag">⟷ Transformation Path</span></div>
+          <div class="zone-col-header hdr-desired" style="flex:2"><span class="zone-tag">Improved Fitness ▶</span></div>
         </div>
-        <div style="position:relative;flex:1;overflow:auto;">
-          <div class="axis-label-left">Current Reality · Constraints</div>
-          <div class="axis-label-right">Improved Fitness · Capacity</div>
-          <svg class="domains-svg" id="domainsSvg"></svg>
-          <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
-          <div class="honeycomb-grid" id="honeycombGrid">
-            <!-- Rendered by JS: renderBoard() -->
+        <div style="display:flex;flex:1;overflow:hidden;">
+          <div id="hexBoardArea" style="position:relative;flex:7;overflow:auto;">
+            <div class="axis-label-left">Current Reality · Constraints</div>
+            <svg class="domains-svg" id="domainsSvg"></svg>
+            <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
+            <div class="honeycomb-grid" id="honeycombGrid">
+              <!-- Rendered by JS: renderBoard() -->
+            </div>
+          </div>
+          <div class="fitness-panel" id="fitnessPanel">
+            <!-- Rendered by JS: renderFitnessPanel() -->
           </div>
         </div>
       </div>
@@ -682,10 +705,11 @@ const PHASES = [{n:'Sense',i:'👁',d:'Observe signals, friction, bottlenecks'},
 // STATE
 // ══════════════════════════════════════════
 let allItems = [...PATTERNS,...ANTIPATTERNS,...TRANSITIONS];
-const ZONES = ['current_strategic','current_operational','path_strategic','path_operational','desired_strategic','desired_operational'];
+const ZONES = ['current_strategic','current_operational','path_strategic','path_operational'];
 
 // ── Honeycomb grid config ──
-const GRID_COLS = 9;  // 3 per zone column (current, path, desired)
+// Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
+const GRID_COLS = 7;  // 2 (current) + 5 (path) — Improved Fitness is a separate panel
 const GRID_ROWS = 8;  // 4 per lane (strategic, operational)
 const GRID_PAD_LEFT = 42;      // space for lane labels
 const HEX_GAP = 6;             // gap between hexes
@@ -694,10 +718,10 @@ const HEX_GAP = 6;             // gap between hexes
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
-// Columns valid per row: even rows=all 9, odd rows=skip last of each zone (2 per zone)
+// Columns valid per row: even=all 7, odd=skip last of each zone (col 1 and col 6)
 function getColsForRow(row) {
-  if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8];
-  return [0,1,3,4,6,7]; // skip cols 2,5,8
+  if (row % 2 === 0) return [0,1,2,3,4,5,6];
+  return [0,2,3,4,5]; // skip col 1 (last of current=2 cols), col 6 (last of path=5 cols)
 }
 
 function computeHexLayout() {
@@ -724,7 +748,7 @@ function hexPixelPosition(row, col) {
   };
 }
 function getZoneFromCoords(row, col) {
-  const zoneCol = col <= 2 ? 'current' : col <= 5 ? 'path' : 'desired';
+  const zoneCol = col <= 1 ? 'current' : 'path';
   const lane = row <= 3 ? 'strategic' : 'operational';
   return `${zoneCol}_${lane}`;
 }
@@ -750,6 +774,9 @@ let boardMarkers = [];
 let domainDefinitions = []; // [{id, name, color, hexIds:[]}]
 let selectedDomainId = null;
 let selectedDomainColor = null;
+// Fitness panel metrics
+let experimentResults = {}; // {hexId: {result:string}}
+let practiceRepetitions = {}; // {hexId: number}
 const DOMAIN_COLORS = ['#4a90d9','#d94a4a','#2d9d5e','#e8943a','#7b5ea7','#38b2a0','#d9a84a','#d94a8a','#5ea7a7','#8b949e'];
 // DB state
 let currentGameId = null, currentCompanyId = null;
@@ -781,7 +808,9 @@ async function saveGame() {
       fitness_score: parseInt(document.getElementById('fitnessScore').textContent)||0,
       connections: connections,
       board_markers: boardMarkers,
-      domain_definitions: domainDefinitions
+      domain_definitions: domainDefinitions,
+      experiment_results: experimentResults,
+      practice_repetitions: practiceRepetitions
     });
     showSave('saved');
   } catch(e) { showSave('error'); console.error('Save failed:',e); }
@@ -811,36 +840,43 @@ async function loadGame(gameId) {
     } else {
       oldZones = bs;
     }
-    const zoneOffsets = {current_strategic:[0,0],current_operational:[4,0],path_strategic:[0,3],path_operational:[4,3],desired_strategic:[0,6],desired_operational:[4,6]};
+    // current=cols 0-1, path=cols 2-6, desired→path tail cols 4-6
+    const zoneOffsets = {current_strategic:[0,0],current_operational:[4,0],path_strategic:[0,2],path_operational:[4,2],desired_strategic:[0,4],desired_operational:[4,4]};
+    const zoneCols = {current_strategic:2,current_operational:2,path_strategic:5,path_operational:5,desired_strategic:3,desired_operational:3};
     Object.entries(oldZones).forEach(([zone,items])=>{
       if (!Array.isArray(items)) return;
       const [rowOff,colOff] = zoneOffsets[zone]||[0,0];
+      const maxCols = zoneCols[zone]||3;
       items.forEach((hexId,idx)=>{
-        const r = rowOff + Math.floor(idx/3);
-        const c = colOff + (idx%3);
-        gridState[`${r},${c}`] = hexId;
+        const r = rowOff + Math.floor(idx/maxCols);
+        const c = colOff + (idx%maxCols);
+        if (c < GRID_COLS && r < GRID_ROWS) gridState[`${r},${c}`] = hexId;
       });
     });
   } else {
     gridState = bs;
   }
-  // Migrate: move hexes from invalid odd-row positions (cols 2,5,8 on odd rows)
+  // Migrate: remove hexes outside new 7-col grid or on invalid odd-row positions (cols 1,6)
   const migrated = {};
+  const toDelete = [];
   Object.entries(gridState).forEach(([k,v])=>{
     const [r,c] = k.split(',').map(Number);
-    if (r % 2 === 1 && (c === 2 || c === 5 || c === 8)) {
-      // Move to previous valid col (1, 4, or 7)
+    if (c >= GRID_COLS || r >= GRID_ROWS) { toDelete.push(k); return; }
+    if (r % 2 === 1 && (c === 1 || c === 6)) {
+      toDelete.push(k);
       const newKey = `${r},${c-1}`;
-      if (!gridState[newKey] && !migrated[newKey]) { migrated[newKey] = v; }
-      else { migrated[`${r-1},${c}`] = v; } // fallback: move to row above
-      delete gridState[k];
+      if (!gridState[newKey] && !migrated[newKey]) migrated[newKey] = v;
+      else migrated[`${r-1},${c}`] = v;
     }
   });
+  toDelete.forEach(k=>delete gridState[k]);
   Object.assign(gridState, migrated);
   agentAssignments = g.agent_assignments || {};
   connections = g.connections || [];
   boardMarkers = g.board_markers || [];
   domainDefinitions = g.domain_definitions || [];
+  experimentResults = g.experiment_results || {};
+  practiceRepetitions = g.practice_repetitions || {};
   const ad = g.active_drivers || {};
   if (Array.isArray(ad)) { driverAssignments = {}; } else { driverAssignments = ad; }
   cycleNumber = g.cycle_number || 1;
@@ -853,10 +889,59 @@ async function loadGame(gameId) {
   addLog('Game loaded: ' + g.name, 'success');
 }
 function renderAll() {
-  renderCategories(); renderDrivers(); renderLibrary(); renderCycleSteps(); renderBoard(); renderDomainList(); updateStats(); renderLog();
+  renderCategories(); renderDrivers(); renderLibrary(); renderCycleSteps(); renderBoard(); renderDomainList(); renderFitnessPanel(); updateStats(); renderLog();
 }
 let _resizeTimer;
 window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer=setTimeout(()=>{ if(document.getElementById('mainApp').style.display!=='none') renderBoard(); },200); });
+
+// ══════════════════════════════════════════
+// FITNESS PANEL (Improved Fitness metrics)
+// ══════════════════════════════════════════
+function renderFitnessPanel() {
+  const panel = document.getElementById('fitnessPanel');
+  if (!panel) return;
+  const allOnBoard = Object.values(gridState);
+  // Capabilities = hexes marked with 'capability'
+  const capIds = boardMarkers.filter(m=>m.type==='capability').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
+  // Experiments = hexes marked with 's2f'
+  const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
+  // Practices = transition hexes on board
+  const pracIds = allOnBoard.filter(id=>allItems.find(i=>i.id===id)?.type==='transition');
+
+  panel.innerHTML = `
+    <div class="fp-header">📊 Improved Fitness</div>
+    <div class="fp-summary">
+      <div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--cyan)">${capIds.length}</div><div class="fp-sum-lbl">Capabilities</div></div>
+      <div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--orange)">${expIds.length}</div><div class="fp-sum-lbl">Experiments</div></div>
+      <div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--purple)">${pracIds.length}</div><div class="fp-sum-lbl">Practices</div></div>
+      <div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--green)">${Object.values(practiceRepetitions).reduce((s,n)=>s+n,0)}</div><div class="fp-sum-lbl">Total Reps</div></div>
+    </div>
+    <div class="fp-section">
+      <h3>Capabilities Being Experimented</h3>
+      ${capIds.length===0?'<div class="fp-empty">Mark hexes with C to track capabilities</div>':
+        capIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div></div>`;}).join('')}
+    </div>
+    <div class="fp-section">
+      <h3>Experiments (${expIds.length})</h3>
+      ${expIds.length===0?'<div class="fp-empty">Mark hexes with S2F to track experiments</div>':
+        expIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div><input class="fp-result-input" placeholder="Result..." value="${(experimentResults[id]||{}).result||''}" oninput="setExperimentResult('${id}',this.value)"></div>`;}).join('')}
+    </div>
+    <div class="fp-section">
+      <h3>Repetitions per Practice</h3>
+      ${pracIds.length===0?'<div class="fp-empty">Add transitions to track practice repetitions</div>':
+        pracIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div><div class="fp-counter"><button onclick="adjustReps('${id}',-1)">−</button><span class="fp-rep-count">${practiceRepetitions[id]||0}</span><button onclick="adjustReps('${id}',1)">+</button></div></div>`;}).join('')}
+    </div>
+  `;
+}
+function setExperimentResult(hexId, value) {
+  if (!experimentResults[hexId]) experimentResults[hexId]={};
+  experimentResults[hexId].result = value;
+  scheduleAutoSave();
+}
+function adjustReps(hexId, delta) {
+  practiceRepetitions[hexId] = Math.max(0,(practiceRepetitions[hexId]||0)+delta);
+  renderFitnessPanel(); scheduleAutoSave();
+}
 
 // ══════════════════════════════════════════
 // GAME SELECT SCREEN
@@ -1071,16 +1156,15 @@ function renderBoard() {
   container.style.height = totalH + 'px';
   container.style.position = 'relative';
 
-  // Zone background overlays — symmetric 3 equal zones × 2 lanes
+  // Zone background overlays — current (2/7) + path (5/7)
   const gridWidth = totalW - GRID_PAD_LEFT;
-  const zoneW = gridWidth / 3;
-  [{cls:'zb-current',zi:0},{cls:'',zi:1},{cls:'zb-desired',zi:2}].forEach(z=>{
+  [{cls:'zb-current',left:0,width:gridWidth*2/7},{cls:'',left:gridWidth*2/7,width:gridWidth*5/7}].forEach(z=>{
     [0,1].forEach(li=>{
       const div = document.createElement('div');
       div.className = `zone-bg ${z.cls}`;
-      div.style.left = (GRID_PAD_LEFT + z.zi * zoneW) + 'px';
+      div.style.left = (GRID_PAD_LEFT + z.left) + 'px';
       div.style.top = (li * strategicH) + 'px';
-      div.style.width = zoneW + 'px';
+      div.style.width = z.width + 'px';
       div.style.height = (li === 0 ? strategicH : totalH - strategicH) + 'px';
       container.appendChild(div);
     });
@@ -1153,7 +1237,6 @@ function renderBoard() {
         el.className = `board-hex ${item.type}${dim}${cm}${cs}${domCls}`;
         el.draggable = !connectMode;
         el.setAttribute('data-hex-id', hexId);
-        if(hexDomain) el.style.outline = `2px solid ${hexDomain.color}`;
         const agents = (agentAssignments[hexId]||[]).map(a=>`<div class="agent-badge ${a.type}" title="${a.type} agent" onclick="event.stopPropagation();assignAgent('${hexId}','${a.type}')">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
         const markers = boardMarkers.filter(m=>m.hexId===hexId).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'S2F':'Capability'}" onclick="event.stopPropagation();toggleMarker('${hexId}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
         const drvs = (driverAssignments[hexId]||[]).map(d=>`<div class="driver-badge" title="${d}" onclick="event.stopPropagation();assignDriver('${hexId}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
@@ -1215,10 +1298,10 @@ const GUIDANCE = {
     tip:   'Anti-Patterns always start left. They cluster near bottom-left — habits, inertia, operational constraints.'
   },
   pattern: {
-    best: ['path_strategic','desired_strategic'],
-    ok:   ['path_operational','desired_operational'],
-    label: 'Center-Right (Path → Fitness)',
-    tip:   'Patterns rarely go directly to the far right. They live center-right as proven directional moves.'
+    best: ['path_strategic'],
+    ok:   ['path_operational'],
+    label: 'Transformation Path',
+    tip:   'Patterns live in the Transformation Path as proven directional moves toward improved fitness.'
   },
   transition: {
     best: ['path_strategic','path_operational'],
@@ -1278,7 +1361,7 @@ function showAgentHint() {
 // DRAG & DROP (cell-level drops handled in renderZone)
 // ══════════════════════════════════════════
 function zonePrettyName(z){
-  const map={current_strategic:'Current Reality (Strategic)',current_operational:'Current Reality (Operational)',path_strategic:'Transformation Path (Strategic)',path_operational:'Transformation Path (Operational)',desired_strategic:'Improved Fitness (Strategic)',desired_operational:'Improved Fitness (Operational)'};
+  const map={current_strategic:'Current Reality (Strategic)',current_operational:'Current Reality (Operational)',path_strategic:'Transformation Path (Strategic)',path_operational:'Transformation Path (Operational)'};
   return map[z]||z;
 }
 function removeHex(id,coordKey){
@@ -1520,7 +1603,7 @@ function toggleMarker(hexId, type) {
     boardMarkers.push({id:'mk_'+Date.now(), hexId, type});
     addLog(`Added ${type==='s2f'?'S2F Experiment':'Capability'} to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
   }
-  renderAllZones(); scheduleAutoSave();
+  renderAllZones(); renderFitnessPanel(); scheduleAutoSave();
 }
 
 // ══════════════════════════════════════════
@@ -1616,17 +1699,17 @@ function updateStats(){
   document.getElementById('sAg').textContent=ag;
   // Derive zone membership from coordinates
   let f=0;
-  const desired=[],path=[],current=[];
+  const path=[],current=[];
   for(const[key,hexId]of Object.entries(gridState)){
     const[r,c]=key.split(',').map(Number);
     const zone=getZoneFromCoords(r,c);
-    if(zone.startsWith('desired_'))desired.push(hexId);
-    else if(zone.startsWith('path_'))path.push(hexId);
+    if(zone.startsWith('path_'))path.push(hexId);
     else current.push(hexId);
   }
-  desired.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=1;if(i?.type==='antipattern')f-=3;});
-  path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=1;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
-  current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=.5;});
+  path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
+  current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=1;});
+  // Bonus: practice reps
+  f += Object.values(practiceRepetitions).reduce((s,n)=>s+n*0.5,0);
   const totalDriverLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
   f+=ag*.5+totalDriverLinks*.5+(cycleNumber-1)*2;
   f=Math.max(0,Math.min(100,Math.round(f)));
@@ -1666,11 +1749,11 @@ function addCustomPattern(){
 }
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');
@@ -1783,9 +1866,9 @@ function renderDomainBoundaries(){
     const g=document.createElementNS('http://www.w3.org/2000/svg','g');
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',d);
-    path.setAttribute('fill',dom.color);path.setAttribute('fill-opacity','0.05');
+    path.setAttribute('fill','none');
     path.setAttribute('stroke',dom.color);path.setAttribute('stroke-width','2');
-    path.setAttribute('stroke-opacity','0.4');path.setAttribute('stroke-dasharray','8,4');
+    path.setAttribute('stroke-opacity','0.7');path.setAttribute('stroke-dasharray','8,4');
     g.appendChild(path);
     // Label at centroid
     const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
