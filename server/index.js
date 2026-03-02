@@ -96,7 +96,7 @@ app.put('/api/games/:gameId', async (req, res) => {
     cycle_number, cycle_phase, completed_phases,
     log_entries, custom_items, fitness_score,
     connections, board_markers, domain_definitions,
-    experiment_results, practice_repetitions
+    experiment_results, practice_repetitions, transformation_horizons
   } = req.body;
   try {
     const { rows } = await db.query(`
@@ -106,8 +106,9 @@ app.put('/api/games/:gameId', async (req, res) => {
         log_entries = $7, custom_items = $8, fitness_score = $9,
         connections = $10, board_markers = $11, domain_definitions = $12,
         experiment_results = $13, practice_repetitions = $14,
+        transformation_horizons = $15,
         updated_at = NOW()
-      WHERE id = $15
+      WHERE id = $16
       RETURNING id, updated_at
     `, [
       JSON.stringify(board_state), JSON.stringify(agent_assignments),
@@ -117,6 +118,7 @@ app.put('/api/games/:gameId', async (req, res) => {
       JSON.stringify(connections || []), JSON.stringify(board_markers || []),
       JSON.stringify(domain_definitions || []),
       JSON.stringify(experiment_results || {}), JSON.stringify(practice_repetitions || {}),
+      JSON.stringify(transformation_horizons || {}),
       req.params.gameId
     ]);
     if (!rows.length) return res.status(404).json({ error: 'Game not found' });

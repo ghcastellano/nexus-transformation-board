@@ -397,6 +397,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .fp-sum-item { text-align:center; }
 .fp-sum-val { font-size:20px; font-weight:700; }
 .fp-sum-lbl { font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; }
+/* Transformation Horizons */
+.fp-horizon { margin-bottom:7px; }
+.fp-horizon-label { font-size:9px; text-transform:uppercase; letter-spacing:.4px; color:var(--text-muted); margin-bottom:3px; }
+.fp-horizon-input { width:100%; padding:5px 7px; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:10px; resize:none; min-height:36px; font-family:inherit; line-height:1.4; box-sizing:border-box; }
+.fp-horizon-input:focus { outline:none; border-color:var(--accent); }
+/* Experiment status select */
+.exp-status-select { width:100%; padding:3px 6px; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:10px; margin-bottom:4px; cursor:pointer; }
+.exp-status-select:focus { outline:none; border-color:var(--accent); }
+/* Fitness Breakdown Modal */
+#fitnessBreakdownModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; align-items:center; justify-content:center; }
+#fitnessBreakdownModal.open { display:flex; }
+.fbm-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px 24px; min-width:340px; max-width:500px; max-height:80vh; overflow-y:auto; }
+.fbm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.fbm-header h2 { font-size:14px; font-weight:700; margin:0; }
+.fbm-close { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); padding:3px 9px; cursor:pointer; font-size:12px; }
+.fbm-close:hover { border-color:var(--accent); color:var(--accent); }
+.fbm-total { text-align:center; margin-bottom:18px; }
+.fbm-total-score { font-size:52px; font-weight:800; line-height:1; }
+.fbm-total-label { font-size:11px; color:var(--text-muted); margin-top:4px; }
+.fbm-table { width:100%; border-collapse:collapse; font-size:11px; }
+.fbm-table th { text-align:left; padding:5px 6px; border-bottom:1px solid var(--border); color:var(--text-muted); font-size:9px; text-transform:uppercase; letter-spacing:.4px; }
+.fbm-table td { padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; }
+.fbm-table td:last-child { text-align:right; font-weight:600; white-space:nowrap; }
+.fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:13px; font-weight:700; padding-top:9px; }
+.fbm-table tr.fbm-zero td { opacity:.35; }
 </style>
 </head>
 <body>
@@ -569,7 +594,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <div class="dash-title">Dashboard</div>
       <div class="dash-section">
         <h3>Organizational Fitness</h3>
-        <div class="fitness-score" id="fitnessScore" style="color:var(--red)">0</div>
+        <div class="fitness-score" id="fitnessScore" onclick="showFitnessBreakdown()" title="Click to see breakdown" style="color:var(--red);cursor:pointer">0</div>
         <div class="fitness-gauge"><div class="fitness-fill" id="fitnessGauge" style="width:0%"></div></div>
         <div class="fitness-label" id="fitnessLabel">Fragile</div>
       </div>
@@ -780,8 +805,10 @@ let domainDefinitions = []; // [{id, name, color, hexIds:[]}]
 let selectedDomainId = null;
 let selectedDomainColor = null;
 // Fitness panel metrics
-let experimentResults = {}; // {hexId: {result:string}}
+let experimentResults = {}; // {hexId: {result:string, status:string}}
 let practiceRepetitions = {}; // {hexId: number}
+let transformationHorizons = {h3m:'', h1y:'', h2y:'', h5y:''}; // fitness goals per time horizon
+let lastBreakdown = {}; // last calcFitnessBreakdown() result, used by breakdown modal
 const DOMAIN_COLORS = ['#4a90d9','#d94a4a','#2d9d5e','#e8943a','#7b5ea7','#38b2a0','#d9a84a','#d94a8a','#5ea7a7','#8b949e'];
 // DB state
 let currentGameId = null, currentCompanyId = null;
@@ -815,7 +842,8 @@ async function saveGame() {
       board_markers: boardMarkers,
       domain_definitions: domainDefinitions,
       experiment_results: experimentResults,
-      practice_repetitions: practiceRepetitions
+      practice_repetitions: practiceRepetitions,
+      transformation_horizons: transformationHorizons
     });
     showSave('saved');
   } catch(e) { showSave('error'); console.error('Save failed:',e); }
@@ -882,6 +910,7 @@ async function loadGame(gameId) {
   domainDefinitions = g.domain_definitions || [];
   experimentResults = g.experiment_results || {};
   practiceRepetitions = g.practice_repetitions || {};
+  transformationHorizons = g.transformation_horizons || {h3m:'', h1y:'', h2y:'', h5y:''};
   const ad = g.active_drivers || {};
   if (Array.isArray(ad)) { driverAssignments = {}; } else { driverAssignments = ad; }
   cycleNumber = g.cycle_number || 1;
@@ -906,19 +935,20 @@ function renderFitnessPanel() {
   const panel = document.getElementById('fitnessPanel');
   if (!panel) return;
   const allOnBoard = Object.values(gridState);
-  // Capabilities = hexes marked with 'capability'
   const capIds = boardMarkers.filter(m=>m.type==='capability').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
-  // Experiments = hexes marked with 's2f'
   const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
-  // Practices = transition hexes on board
   const pracIds = allOnBoard.filter(id=>allItems.find(i=>i.id===id)?.type==='transition');
-
   const totalReps = Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
+  const horizons=[{key:'h3m',label:'3 months'},{key:'h1y',label:'1 year'},{key:'h2y',label:'2 years'},{key:'h5y',label:'5 years'}];
   panel.innerHTML =
     `<div class="zone-headers" style="position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.06);">` +
       `<div class="zone-col-header hdr-desired" style="flex:1;"><span class="zone-tag">Improved Fitness ▶</span></div>` +
     `</div>` +
     `<div class="fp-body">` +
+      `<div class="fp-section">` +
+        `<h3>Transformation Goals</h3>` +
+        horizons.map(h=>`<div class="fp-horizon"><div class="fp-horizon-label">${h.label}</div><textarea class="fp-horizon-input" placeholder="What does fitness look like in ${h.label}?" oninput="setHorizon('${h.key}',this.value)">${(transformationHorizons[h.key]||'').replace(/</g,'&lt;')}</textarea></div>`).join('') +
+      `</div>` +
       `<div class="fp-summary">` +
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--cyan)">${capIds.length}</div><div class="fp-sum-lbl">Capabilities</div></div>` +
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--orange)">${expIds.length}</div><div class="fp-sum-lbl">Experiments</div></div>` +
@@ -931,7 +961,21 @@ function renderFitnessPanel() {
       `</div>` +
       `<div class="fp-section"><h3>Experiments (${expIds.length})</h3>` +
         (expIds.length===0 ? `<div class="fp-empty">Mark hexes with S2F to track experiments</div>` :
-          expIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div><input class="fp-result-input" placeholder="Result..." value="${(experimentResults[id]||{}).result||''}" oninput="setExperimentResult('${id}',this.value)"></div>`;}).join('')) +
+          expIds.map(id=>{
+            const i=allItems.find(x=>x.id===id);
+            const er=experimentResults[id]||{};
+            const st=er.status||'';
+            return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div>` +
+              `<select class="exp-status-select" onchange="setExperimentStatus('${id}',this.value)">` +
+                `<option value=""${st===''?' selected':''}>— Status —</option>` +
+                `<option value="running"${st==='running'?' selected':''}>🔄 Running</option>` +
+                `<option value="passed"${st==='passed'?' selected':''}>✅ Passed</option>` +
+                `<option value="failed"${st==='failed'?' selected':''}>❌ Failed</option>` +
+                `<option value="abandoned"${st==='abandoned'?' selected':''}>⏸ Abandoned</option>` +
+              `</select>` +
+              `<input class="fp-result-input" placeholder="Notes..." value="${(er.result||'').replace(/"/g,'&quot;')}" oninput="setExperimentResult('${id}',this.value)">` +
+            `</div>`;
+          }).join('')) +
       `</div>` +
       `<div class="fp-section"><h3>Repetitions per Practice</h3>` +
         (pracIds.length===0 ? `<div class="fp-empty">Add transitions to track practice repetitions</div>` :
@@ -944,9 +988,52 @@ function setExperimentResult(hexId, value) {
   experimentResults[hexId].result = value;
   scheduleAutoSave();
 }
+function setExperimentStatus(hexId, status) {
+  if (!experimentResults[hexId]) experimentResults[hexId]={};
+  experimentResults[hexId].status = status;
+  updateStats(); scheduleAutoSave();
+}
 function adjustReps(hexId, delta) {
   practiceRepetitions[hexId] = Math.max(0,(practiceRepetitions[hexId]||0)+delta);
-  renderFitnessPanel(); scheduleAutoSave();
+  renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
+function setHorizon(key, value) {
+  transformationHorizons[key] = value;
+  scheduleAutoSave();
+}
+function showFitnessBreakdown() {
+  if(!lastBreakdown||lastBreakdown.total===undefined) updateStats();
+  const b=lastBreakdown;
+  let lbl='Fragile',col='var(--red)';
+  if(b.total>=80){lbl='Antifragile';col='var(--cyan)';}else if(b.total>=60){lbl='Resilient';col='var(--green)';}else if(b.total>=40){lbl='Stable';col='var(--orange)';}else if(b.total>=20){lbl='Emerging';col='var(--orange)';}
+  const rows=[
+    {name:'Hex Positioning',formula:`patterns×3 + transitions×2 − antipatterns`,pts:Math.round(b.hexScore*10)/10},
+    {name:'Capabilities Adopted',formula:`${b.capCount} caps × 5 pts`,pts:b.capScore},
+    {name:'Experiments Run',formula:`${b.expRan} ran × 2 pts`,pts:b.expRan*2},
+    {name:'Experiments Passed',formula:`${b.expPassed} passed × 3 pts (bonus)`,pts:b.expPassed*3},
+    {name:'Practices Active',formula:`${b.pracCount} practices × 1 pt`,pts:b.pracScore},
+    {name:'Practice Repetitions',formula:`${b.totalReps} reps × 0.5 pts`,pts:Math.round(b.repScore*10)/10},
+    {name:'Agent Assignments',formula:`${b.ag} agents × 0.5 pts`,pts:Math.round(b.agBonus*10)/10},
+    {name:'Driver Links',formula:`${b.drLinks} links × 0.5 pts`,pts:Math.round(b.drBonus*10)/10},
+    {name:'Cycle Maturity',formula:`(cycle ${cycleNumber} − 1) × 2 pts`,pts:b.cycleBonus},
+  ];
+  let modal=document.getElementById('fitnessBreakdownModal');
+  if(!modal){modal=document.createElement('div');modal.id='fitnessBreakdownModal';modal.onclick=function(e){if(e.target===modal)closeFitnessBreakdown();};document.body.appendChild(modal);}
+  modal.className='modal-overlay open';
+  modal.innerHTML=
+    `<div class="fbm-box">` +
+      `<div class="fbm-header"><h2>Fitness Score Breakdown</h2><button class="fbm-close" onclick="closeFitnessBreakdown()">✕</button></div>` +
+      `<div class="fbm-total"><div class="fbm-total-score" style="color:${col}">${b.total}</div><div class="fbm-total-label">${lbl} &nbsp;•&nbsp; out of 100</div></div>` +
+      `<table class="fbm-table">` +
+        `<tr><th>Component</th><th>Formula</th><th>Pts</th></tr>` +
+        rows.map(r=>`<tr class="${r.pts===0?'fbm-zero':''}"><td>${r.name}</td><td style="color:var(--text-muted);font-size:9px">${r.formula}</td><td>${r.pts}</td></tr>`).join('') +
+        `<tr class="fbm-total-row"><td colspan="2"><strong>Total (capped 0–100)</strong></td><td style="color:${col}">${b.total}</td></tr>` +
+      `</table>` +
+    `</div>`;
+}
+function closeFitnessBreakdown() {
+  const modal=document.getElementById('fitnessBreakdownModal');
+  if(modal) modal.classList.remove('open');
 }
 
 // ══════════════════════════════════════════
@@ -1693,6 +1780,39 @@ function advanceCycle(){
 // ══════════════════════════════════════════
 // STATS & FITNESS
 // ══════════════════════════════════════════
+function calcFitnessBreakdown(){
+  const all=Object.values(gridState);
+  // 1. Hex score by zone position
+  let hexScore=0;
+  for(const[key,hexId]of Object.entries(gridState)){
+    const[r,c]=key.split(',').map(Number);
+    const zone=getZoneFromCoords(r,c);
+    const i=allItems.find(x=>x.id===hexId);
+    if(zone.startsWith('path_')){if(i?.type==='pattern')hexScore+=3;if(i?.type==='transition')hexScore+=2;if(i?.type==='antipattern')hexScore-=1;}
+    else{if(i?.type==='antipattern')hexScore+=.5;if(i?.type==='pattern')hexScore+=1;}
+  }
+  // 2. Capabilities on board (marked with 'capability')
+  const capCount=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId)).length;
+  const capScore=capCount*5;
+  // 3. Experiments (marked with 's2f')
+  const expIds=boardMarkers.filter(m=>m.type==='s2f'&&all.includes(m.hexId)).map(m=>m.hexId);
+  const expRan=expIds.filter(id=>{const s=(experimentResults[id]||{}).status;return s&&s!=='';}).length;
+  const expPassed=expIds.filter(id=>(experimentResults[id]||{}).status==='passed').length;
+  const expScore=expRan*2+expPassed*3;
+  // 4. Practices (transition hexes on board)
+  const pracIds=all.filter(id=>allItems.find(i=>i.id===id)?.type==='transition');
+  const pracScore=pracIds.length*1;
+  const totalReps=Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
+  const repScore=totalReps*0.5;
+  // 5. Adoption bonuses
+  const ag=Object.values(agentAssignments).reduce((s,arr)=>s+arr.length,0);
+  const agBonus=ag*0.5;
+  const drLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
+  const drBonus=drLinks*0.5;
+  const cycleBonus=(cycleNumber-1)*2;
+  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus)));
+  return{total,hexScore,capCount,capScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus};
+}
 function updateStats(){
   const all=Object.values(gridState);
   const p=all.filter(id=>allItems.find(i=>i.id===id)?.type==='pattern').length;
@@ -1703,22 +1823,8 @@ function updateStats(){
   document.getElementById('sA').textContent=a;
   document.getElementById('sT').textContent=t;
   document.getElementById('sAg').textContent=ag;
-  // Derive zone membership from coordinates
-  let f=0;
-  const path=[],current=[];
-  for(const[key,hexId]of Object.entries(gridState)){
-    const[r,c]=key.split(',').map(Number);
-    const zone=getZoneFromCoords(r,c);
-    if(zone.startsWith('path_'))path.push(hexId);
-    else current.push(hexId);
-  }
-  path.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='pattern')f+=3;if(i?.type==='transition')f+=2;if(i?.type==='antipattern')f-=1;});
-  current.forEach(id=>{const i=allItems.find(x=>x.id===id);if(i?.type==='antipattern')f+=.5;if(i?.type==='pattern')f+=1;});
-  // Bonus: practice reps
-  f += Object.values(practiceRepetitions).reduce((s,n)=>s+n*0.5,0);
-  const totalDriverLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
-  f+=ag*.5+totalDriverLinks*.5+(cycleNumber-1)*2;
-  f=Math.max(0,Math.min(100,Math.round(f)));
+  lastBreakdown=calcFitnessBreakdown();
+  const f=lastBreakdown.total;
   document.getElementById('fitnessScore').textContent=f;
   document.getElementById('fitnessGauge').style.width=f+'%';
   let lbl='Fragile',col='var(--red)';
