@@ -913,7 +913,7 @@ const ZONES = ['current_strategic','current_operational','path_strategic','path_
 
 // ── Honeycomb grid config ──
 // Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
-const GRID_COLS = 7;  // path columns only — Current Reality is a separate backlog panel
+const GRID_COLS = 10; // path columns only — Current Reality is a separate backlog panel
 const GRID_ROWS = 10; // 5 per lane (strategic, operational)
 const GRID_PAD_LEFT = 42;      // space for lane labels
 const HEX_GAP = 6;             // gap between hexes
@@ -922,10 +922,10 @@ const HEX_GAP = 6;             // gap between hexes
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
-/// Columns valid per row: even=all 7 path cols, odd=skip col 1 and col 6 (honeycomb offset)
+// Columns valid per row: even=all 10 path cols, odd=skip col 1 and col 9 (honeycomb stagger)
 function getColsForRow(row) {
-  if (row % 2 === 0) return [0,1,2,3,4,5,6];
-  return [0,2,3,4,5]; // skip col 1 and col 6 (GRID_COLS-1) for honeycomb stagger
+  if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8,9];
+  return [0,2,3,4,5,6,7,8]; // skip col 1 and col 9 (GRID_COLS-1) for honeycomb offset
 }
 
 function computeHexLayout() {
