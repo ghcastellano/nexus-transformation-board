@@ -1567,8 +1567,24 @@ function renderFitnessPanel() {
   const allOnBoard = Object.values(gridState);
   const capIds = boardMarkers.filter(m=>m.type==='capability').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
   const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
-  const pracIds = allOnBoard.filter(id=>allItems.find(i=>i.id===id)?.type==='transition');
-  const totalReps = Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
+  // Collect all unique library practices linked via capability markers on board
+  const allLinkedPracs = (() => {
+    const seen = new Map();
+    boardMarkers.filter(m=>m.type==='capability'&&allOnBoard.includes(m.hexId)).forEach(mk => {
+      getCapabilityLinks(mk).forEach(link => {
+        const cap = capabilitiesLibrary.find(c=>c.id===link.capabilityId);
+        if (!cap) return;
+        (link.practiceIds||[]).forEach(pid => {
+          if (!seen.has(pid)) {
+            const prac = cap.practices.find(p=>p.id===pid);
+            if (prac) seen.set(pid, {id:pid, name:prac.name, capName:cap.name});
+          }
+        });
+      });
+    });
+    return [...seen.values()];
+  })();
+  const totalReps = allLinkedPracs.reduce((s,p)=>s+(practiceRepetitions[p.id]||0),0);
   const horizons=[{key:'h3m',label:'3 months'},{key:'h1y',label:'1 year'},{key:'h2y',label:'2 years'},{key:'h5y',label:'5 years'}];
   panel.innerHTML =
     `<div class="zone-headers" style="position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.06);">` +
@@ -1582,7 +1598,7 @@ function renderFitnessPanel() {
       `<div class="fp-summary">` +
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--cyan)">${capIds.length}</div><div class="fp-sum-lbl">Capabilities</div></div>` +
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--orange)">${expIds.length}</div><div class="fp-sum-lbl">Experiments</div></div>` +
-        `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--purple)">${pracIds.length}</div><div class="fp-sum-lbl">Practices</div></div>` +
+        `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--purple)">${allLinkedPracs.length}</div><div class="fp-sum-lbl">Practices</div></div>` +
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--green)">${totalReps}</div><div class="fp-sum-lbl">Total Reps</div></div>` +
       `</div>` +
       `<div class="fp-section"><h3>Capabilities Being Experimented</h3>` +
@@ -1636,10 +1652,16 @@ function renderFitnessPanel() {
             const er=experimentResults[id]||{};
             const st=er.status||'';
             const linkedPracId=er.practiceId||'';
-            // Build practice options grouped by capability
-            const pracOptions = capabilitiesLibrary.flatMap(cap =>
-              cap.practices.map(p => `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(cap.name)} → ${escHtml(p.name)}</option>`)
+            // Build practice options: show board-linked practices first, then divider + all others
+            const boardPracIds = new Set(allLinkedPracs.map(p=>p.id));
+            const boardPracOpts = allLinkedPracs.map(p =>
+              `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>★ ${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
             ).join('');
+            const otherPracOpts = capabilitiesLibrary.flatMap(cap =>
+              cap.practices.filter(p=>!boardPracIds.has(p.id)).map(p =>
+                `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(cap.name)} → ${escHtml(p.name)}</option>`)
+            ).join('');
+            const pracOptions = boardPracOpts + (otherPracOpts ? `<option disabled>──────────────</option>${otherPracOpts}` : '');
             const linkedPrac = linkedPracId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===linkedPracId) : null;
             const linkedCap = linkedPrac ? capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===linkedPracId)) : null;
             return`<div class="fp-item">` +
@@ -1662,8 +1684,13 @@ function renderFitnessPanel() {
           }).join('')) +
       `</div>` +
       `<div class="fp-section"><h3>Repetitions per Practice</h3>` +
-        (pracIds.length===0 ? `<div class="fp-empty">Add transitions to track practice repetitions</div>` :
-          pracIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div><div class="fp-counter"><button onclick="adjustReps('${id}',-1)">−</button><span class="fp-rep-count">${practiceRepetitions[id]||0}</span><button onclick="adjustReps('${id}',1)">+</button></div></div>`;}).join('')) +
+        (allLinkedPracs.length===0
+          ? `<div class="fp-empty">Link capabilities and select practices to track repetitions</div>`
+          : allLinkedPracs.map(p=>`<div class="fp-item">` +
+              `<div style="font-size:9px;color:var(--cyan);margin-bottom:2px;">◈ ${escHtml(p.capName)}</div>` +
+              `<div class="fp-item-name">${escHtml(p.name)}</div>` +
+              `<div class="fp-counter"><button onclick="adjustReps('${p.id}',-1)">−</button><span class="fp-rep-count">${practiceRepetitions[p.id]||0}</span><button onclick="adjustReps('${p.id}',1)">+</button></div>` +
+            `</div>`).join('')) +
       `</div>` +
     `</div>`;
 }
