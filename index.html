@@ -180,10 +180,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex cells (absolutely positioned) */
 .hex-cell { position:absolute; z-index:1; }
-.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
+.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.20); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.18); border-color:rgba(74,144,217,.5); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.12); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.28); }
 /* Guidance highlighting on individual cells */
 .hex-cell.guide-best .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); box-shadow:inset 0 0 8px rgba(45,200,94,.15); }
 .hex-cell.guide-yes .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.18); }
