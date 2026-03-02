@@ -428,6 +428,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .bvt-btn { padding:7px 14px; font-size:11px; font-weight:600; border:none; border-bottom:2px solid transparent; background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; }
 .bvt-btn.active { border-bottom-color:var(--cyan); color:var(--text); }
 .bvt-btn:hover:not(.active) { color:var(--text); background:rgba(255,255,255,.03); }
+/* ══ EXPERIMENT TRACKER (Kanban) ══ */
+.exp-tracker-page { display:flex; flex:1; flex-direction:column; overflow:hidden; min-height:0; }
+.exp-tracker-hdr { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.kanban-board { display:flex; gap:10px; padding:12px; overflow-x:auto; flex:1; min-height:0; align-items:flex-start; }
+.kanban-col { display:flex; flex-direction:column; min-width:230px; max-width:260px; flex-shrink:0; background:var(--surface); border-radius:10px; overflow:hidden; max-height:100%; }
+.kanban-col-hdr { padding:9px 12px; font-size:11px; font-weight:700; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.kanban-col-count { background:var(--surface2); color:var(--text-muted); padding:1px 7px; border-radius:8px; font-size:9px; font-weight:500; }
+.kanban-col-body { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:7px; min-height:0; }
+.kanban-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; transition:border-color .15s; }
+.kanban-card:hover { border-color:rgba(255,255,255,.15); }
+.kanban-card-name { font-size:11px; font-weight:700; margin-bottom:3px; color:var(--text); }
+.kanban-card-prac { font-size:9px; color:var(--cyan); margin-bottom:8px; line-height:1.3; }
+.kanban-card-label { font-size:9px; color:var(--text-muted); margin-bottom:2px; margin-top:6px; }
+.kanban-card-field { width:100%; box-sizing:border-box; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:5px; padding:5px 7px; font-size:10px; resize:vertical; font-family:inherit; line-height:1.4; min-height:44px; }
+.kanban-card-field:focus { outline:none; border-color:var(--accent); }
+.kanban-card-footer { display:flex; gap:4px; justify-content:space-between; margin-top:8px; align-items:center; }
+.kanban-mv-btn { background:transparent; border:1px solid var(--border); border-radius:5px; color:var(--text-muted); padding:3px 9px; font-size:9px; cursor:pointer; transition:all .15s; }
+.kanban-mv-btn:hover { border-color:var(--accent); color:var(--accent); }
+.kanban-mv-btn.primary { border-color:var(--accent); color:var(--accent); }
+.kanban-mv-btn.primary:hover { background:var(--accent); color:#fff; }
+.kanban-empty { font-size:10px; color:var(--text-muted); text-align:center; padding:18px 8px; font-style:italic; }
+.kanban-stage-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
 .cap-page { display:flex; flex:1; overflow:hidden; min-height:0; }
 .cap-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:0; }
 .cap-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; }
@@ -755,8 +777,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
     </div>
     <div class="cap-sel-body" id="capSelBody"></div>
     <div class="cap-sel-footer">
+      <button class="btn" style="color:var(--red);border-color:var(--red);margin-right:auto;" onclick="removeCapabilityMarker()">✕ Remove</button>
       <button class="btn" onclick="closeCapSelector()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCapabilityLink()">Link Capability</button>
+      <button class="btn btn-primary" onclick="saveCapabilityLink()">Save Links</button>
     </div>
   </div>
 </div>
@@ -809,8 +832,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <!-- View tabs -->
         <div class="bvt-bar">
           <button class="bvt-btn active" id="bvtBoard" onclick="switchBoardView('board')">⬡ Board</button>
+          <button class="bvt-btn" id="bvtExps" onclick="switchBoardView('experiments')">🧪 Experiments</button>
           <button class="bvt-btn" id="bvtCaps" onclick="switchBoardView('capabilities')">◈ Capabilities Library</button>
         </div>
+        <!-- Experiment Tracker page (hidden until tab active) -->
+        <div id="expTrackerPage" class="exp-tracker-page" style="display:none;"></div>
         <!-- Capabilities Library page (hidden until tab active) -->
         <div id="capLibPage" class="cap-page" style="display:none;"></div>
         <div style="display:flex;flex:1;overflow:hidden;" id="boardContent">
@@ -1217,16 +1243,153 @@ function switchBoardView(view) {
   currentView = view;
   const boardContent = document.getElementById('boardContent');
   const capPage = document.getElementById('capLibPage');
+  const expPage = document.getElementById('expTrackerPage');
   document.getElementById('bvtBoard').classList.toggle('active', view === 'board');
+  document.getElementById('bvtExps').classList.toggle('active', view === 'experiments');
   document.getElementById('bvtCaps').classList.toggle('active', view === 'capabilities');
-  if (view === 'board') {
-    boardContent.style.display = 'flex';
-    capPage.style.display = 'none';
-  } else {
-    boardContent.style.display = 'none';
-    capPage.style.display = 'flex';
-    renderCapabilitiesPage();
+  boardContent.style.display = view === 'board' ? 'flex' : 'none';
+  expPage.style.display = view === 'experiments' ? 'flex' : 'none';
+  capPage.style.display = view === 'capabilities' ? 'flex' : 'none';
+  if (view === 'capabilities') renderCapabilitiesPage();
+  if (view === 'experiments') renderExperimentsPage();
+}
+
+// ══════════════════════════════════════════
+// EXPERIMENT TRACKER (Lean Change Kanban)
+// ══════════════════════════════════════════
+const KANBAN_STAGES = [
+  {id:'pending',   label:'📋 Pending',    color:'var(--text-muted)', dot:'#6b7280'},
+  {id:'running',   label:'🔄 Running',    color:'var(--orange)',     dot:'#f59e0b'},
+  {id:'review',    label:'🔬 Review',     color:'var(--purple)',     dot:'#8b5cf6'},
+  {id:'adopted',   label:'✅ Adopted',    color:'var(--green)',      dot:'#10b981'},
+  {id:'abandoned', label:'⏸ Abandoned',  color:'var(--red)',        dot:'#ef4444'},
+];
+
+function renderExperimentsPage() {
+  const page = document.getElementById('expTrackerPage');
+  if (!page) return;
+  const allOnBoard = Object.values(gridState);
+  const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
+
+  // Collect board-linked practices for each experiment card
+  const allOnBoardCapMarkers = boardMarkers.filter(m=>m.type==='capability'&&allOnBoard.includes(m.hexId));
+  const allLinkedPracs = (() => {
+    const seen = new Map();
+    allOnBoardCapMarkers.forEach(mk => {
+      getCapabilityLinks(mk).forEach(link => {
+        const cap = capabilitiesLibrary.find(c=>c.id===link.capabilityId);
+        if (!cap) return;
+        (link.practiceIds||[]).forEach(pid => {
+          if (!seen.has(pid)) {
+            const prac = cap.practices.find(p=>p.id===pid);
+            if (prac) seen.set(pid, {id:pid, name:prac.name, capName:cap.name});
+          }
+        });
+      });
+    });
+    return [...seen.values()];
+  })();
+
+  let html = `<div class="exp-tracker-hdr">
+    <span style="font-size:13px;font-weight:700;">🧪 Experiment Tracker</span>
+    <span style="font-size:10px;color:var(--text-muted);">${expIds.length} experiment${expIds.length!==1?'s':''} · Lean Change Management</span>
+  </div>`;
+
+  if (expIds.length === 0) {
+    html += `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-muted);">
+      <div style="font-size:36px;">🧪</div>
+      <div style="font-size:13px;font-weight:600;">No experiments yet</div>
+      <div style="font-size:11px;">Mark hexes with the <strong>S2F</strong> marker to add experiments</div>
+    </div>`;
+    page.innerHTML = html;
+    return;
   }
+
+  html += `<div class="kanban-board">`;
+
+  KANBAN_STAGES.forEach((stage, stageIdx) => {
+    const stageIds = expIds.filter(id => {
+      const s = (experimentResults[id]||{}).stage || 'pending';
+      return s === stage.id;
+    });
+    const prevStageId = stageIdx > 0 ? KANBAN_STAGES[stageIdx-1].id : null;
+    const nextStageId = stageIdx < KANBAN_STAGES.length-1 ? KANBAN_STAGES[stageIdx+1].id : null;
+
+    html += `<div class="kanban-col">
+      <div class="kanban-col-hdr" style="color:${stage.color};">
+        <span><span class="kanban-stage-dot" style="background:${stage.dot};"></span>${stage.label}</span>
+        <span class="kanban-col-count">${stageIds.length}</span>
+      </div>
+      <div class="kanban-col-body">`;
+
+    if (stageIds.length === 0) {
+      html += `<div class="kanban-empty">Drop experiments here</div>`;
+    } else {
+      stageIds.forEach(id => {
+        const er = experimentResults[id]||{};
+        const cardItem = allItems.find(x=>x.id===id);
+        const cardName = cardItem?.name || id;
+        const linkedPracId = er.practiceId || '';
+        const linkedPrac = linkedPracId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===linkedPracId) : null;
+        const linkedCap = linkedPrac ? capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===linkedPracId)) : null;
+
+        // Build practice dropdown
+        const boardPracIds = new Set(allLinkedPracs.map(p=>p.id));
+        const boardPracOpts = allLinkedPracs.map(p =>
+          `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>★ ${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
+        ).join('');
+        const otherPracOpts = capabilitiesLibrary.flatMap(cap =>
+          cap.practices.filter(p=>!boardPracIds.has(p.id)).map(p =>
+            `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(cap.name)} → ${escHtml(p.name)}</option>`)
+        ).join('');
+        const pracOptions = boardPracOpts + (otherPracOpts ? `<option disabled>──────────</option>${otherPracOpts}` : '');
+
+        html += `<div class="kanban-card">
+          <div class="kanban-card-name">⬡ ${escHtml(cardName)}</div>
+          ${linkedPrac
+            ? `<div class="kanban-card-prac">◈ ${escHtml(linkedCap?.name||'')} → ${escHtml(linkedPrac.name)}</div>`
+            : `<div class="kanban-card-prac" style="color:var(--text-muted);font-style:italic;">No practice linked</div>`}
+          <select class="kanban-card-field" style="resize:none;min-height:unset;padding:4px 6px;" onchange="setExpField('${id}','practiceId',this.value)">
+            <option value="">— Link practice —</option>${pracOptions}
+          </select>
+          <div class="kanban-card-label">Hypothesis:</div>
+          <textarea class="kanban-card-field" rows="2" placeholder="If we do X, then Y will happen because Z..." oninput="setExpField('${id}','hypothesis',this.value)">${escHtml(er.hypothesis||'')}</textarea>
+          <div class="kanban-card-label">Results / Observations:</div>
+          <textarea class="kanban-card-field" rows="2" placeholder="What happened? What did we learn?" oninput="setExpField('${id}','result',this.value)">${escHtml(er.result||'')}</textarea>
+          <div class="kanban-card-footer">
+            ${prevStageId ? `<button class="kanban-mv-btn" onclick="moveExpStage('${id}','${prevStageId}')">← Back</button>` : `<span></span>`}
+            ${nextStageId ? `<button class="kanban-mv-btn primary" onclick="moveExpStage('${id}','${nextStageId}')">Next →</button>` : `<span style="font-size:9px;color:${stage.color};">● ${stage.label.replace(/^[^\w]+ ?/,'')}</span>`}
+          </div>
+        </div>`;
+      });
+    }
+
+    html += `</div></div>`;
+  });
+
+  html += `</div>`;
+  page.innerHTML = html;
+}
+
+function moveExpStage(id, stage) {
+  if (!experimentResults[id]) experimentResults[id] = {};
+  experimentResults[id].stage = stage;
+  // Sync status for fitness scoring
+  if (stage === 'adopted') experimentResults[id].status = 'passed';
+  else if (stage === 'abandoned') experimentResults[id].status = 'abandoned';
+  else if (stage === 'running') experimentResults[id].status = 'running';
+  else if (stage === 'review' && !experimentResults[id].status) experimentResults[id].status = 'running';
+  renderExperimentsPage();
+  renderFitnessPanel();
+  updateStats();
+  scheduleAutoSave();
+}
+
+function setExpField(id, field, value) {
+  if (!experimentResults[id]) experimentResults[id] = {};
+  experimentResults[id][field] = value;
+  if (field === 'practiceId') { renderExperimentsPage(); renderFitnessPanel(); }
+  scheduleAutoSave();
 }
 
 function renderCapabilitiesPage() {
@@ -1499,6 +1662,15 @@ function closeCapSelector() {
   _capSelHexId = null;
   document.getElementById('capSelectorModal').classList.remove('open');
 }
+function removeCapabilityMarker() {
+  const hexId = _capSelHexId;
+  if (!hexId) return;
+  boardMarkers = boardMarkers.filter(m => !(m.hexId === hexId && m.type === 'capability'));
+  const item = allItems.find(i => i.id === hexId);
+  addLog(`Removed capability marker from "${item?.name || hexId}"`, 'warning');
+  closeCapSelector();
+  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
 
 function saveCapabilityLink() {
   const hexId = _capSelHexId;
@@ -1562,6 +1734,7 @@ function renderCurrentBacklog() {
 // FITNESS PANEL (Improved Fitness metrics)
 // ══════════════════════════════════════════
 function renderFitnessPanel() {
+  if (currentView === 'experiments') renderExperimentsPage();
   const panel = document.getElementById('fitnessPanel');
   if (!panel) return;
   const allOnBoard = Object.values(gridState);
@@ -1705,6 +1878,11 @@ function setExperimentResult(hexId, value) {
 function setExperimentStatus(hexId, status) {
   if (!experimentResults[hexId]) experimentResults[hexId]={};
   experimentResults[hexId].status = status;
+  // Sync kanban stage when status changes
+  if (status === 'running') experimentResults[hexId].stage = 'running';
+  else if (status === 'passed') experimentResults[hexId].stage = 'adopted';
+  else if (status === 'abandoned') experimentResults[hexId].stage = 'abandoned';
+  else if (status === 'failed') experimentResults[hexId].stage = 'review';
   updateStats(); scheduleAutoSave();
 }
 function setExperimentPractice(hexId, practiceId) {
