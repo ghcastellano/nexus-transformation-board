@@ -423,6 +423,69 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:13px; font-weight:700; padding-top:9px; }
 .fbm-table tr.fbm-zero td { opacity:.35; }
 
+/* ══ CAPABILITIES LIBRARY PAGE ══ */
+.bvt-bar { display:flex; gap:0; padding:0; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+.bvt-btn { padding:7px 14px; font-size:11px; font-weight:600; border:none; border-bottom:2px solid transparent; background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; }
+.bvt-btn.active { border-bottom-color:var(--cyan); color:var(--text); }
+.bvt-btn:hover:not(.active) { color:var(--text); background:rgba(255,255,255,.03); }
+.cap-page { display:flex; flex:1; overflow:hidden; }
+.cap-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.cap-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.cap-card-hdr { padding:10px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+.cap-card-hdr:hover { background:rgba(255,255,255,.03); }
+.cap-card-chevron { font-size:10px; color:var(--text-muted); transition:transform .15s; }
+.cap-card.open .cap-card-chevron { transform:rotate(90deg); }
+.cap-card-name { font-size:12px; font-weight:700; flex:1; }
+.cap-card-count { font-size:9px; color:var(--text-muted); background:var(--surface2); padding:2px 7px; border-radius:8px; flex-shrink:0; }
+.cap-card-acts { display:flex; gap:4px; flex-shrink:0; }
+.cap-card-acts button { background:transparent; border:1px solid var(--border); border-radius:5px; color:var(--text-muted); padding:2px 8px; font-size:9px; cursor:pointer; }
+.cap-card-acts button:hover { border-color:var(--accent); color:var(--accent); }
+.cap-card-acts button.del:hover { border-color:var(--red); color:var(--red); }
+.cap-card-body { display:none; padding:0 12px 10px; border-top:1px solid var(--border); }
+.cap-card.open .cap-card-body { display:block; }
+.cap-card-desc { font-size:10px; color:var(--text-muted); margin:8px 0; line-height:1.5; }
+.prac-list { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
+.prac-item { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 10px; display:flex; align-items:flex-start; gap:8px; }
+.prac-item-text { flex:1; min-width:0; }
+.prac-item-name { font-size:11px; font-weight:600; line-height:1.3; }
+.prac-item-desc { font-size:9px; color:var(--text-muted); line-height:1.4; margin-top:2px; }
+.prac-item-acts { display:flex; gap:3px; flex-shrink:0; margin-top:1px; }
+.prac-item-acts button { background:transparent; border:1px solid var(--border); border-radius:4px; color:var(--text-muted); padding:1px 6px; font-size:9px; cursor:pointer; }
+.prac-item-acts button:hover { border-color:var(--accent); color:var(--accent); }
+.prac-item-acts button.del:hover { border-color:var(--red); color:var(--red); }
+.cap-add-form { display:flex; flex-direction:column; gap:6px; background:var(--surface2); border:1px dashed var(--border); border-radius:7px; padding:8px 10px; margin-top:6px; }
+.cap-add-form input, .cap-add-form textarea { width:100%; padding:5px 8px; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:11px; font-family:inherit; }
+.cap-add-form input:focus, .cap-add-form textarea:focus { outline:none; border-color:var(--accent); }
+.cap-add-form textarea { resize:vertical; min-height:40px; line-height:1.4; }
+.cap-add-form-row { display:flex; gap:6px; justify-content:flex-end; }
+/* Capability Selector Modal */
+#capSelectorModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; align-items:center; justify-content:center; }
+#capSelectorModal.open { display:flex; }
+.cap-sel-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:500px; max-height:80vh; display:flex; flex-direction:column; }
+.cap-sel-hdr { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; }
+.cap-sel-hdr h3 { font-size:13px; font-weight:700; flex:1; margin:0; }
+.cap-sel-hdr button { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); padding:3px 9px; cursor:pointer; font-size:12px; }
+.cap-sel-hdr button:hover { border-color:var(--accent); }
+.cap-sel-body { flex:1; overflow-y:auto; padding:10px 14px; }
+.cap-sel-item { border:1px solid var(--border); border-radius:8px; margin-bottom:6px; overflow:hidden; transition:border-color .15s; }
+.cap-sel-item.selected { border-color:var(--cyan); }
+.cap-sel-cap { padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; }
+.cap-sel-cap:hover { background:rgba(255,255,255,.03); }
+.cap-sel-cap input[type=radio] { accent-color:var(--cyan); flex-shrink:0; }
+.cap-sel-cap-name { font-size:11px; font-weight:700; flex:1; }
+.cap-sel-cap-desc { font-size:9px; color:var(--text-muted); margin-top:1px; }
+.cap-sel-pracs { display:none; padding:4px 12px 8px 36px; flex-direction:column; gap:3px; background:rgba(56,178,160,.03); border-top:1px solid rgba(56,178,160,.15); }
+.cap-sel-item.selected .cap-sel-pracs { display:flex; }
+.cap-sel-prac-row { display:flex; align-items:flex-start; gap:7px; padding:3px 0; }
+.cap-sel-prac-row input[type=checkbox] { accent-color:var(--cyan); margin-top:2px; flex-shrink:0; }
+.cap-sel-prac-text { flex:1; }
+.cap-sel-prac-name { font-size:10px; font-weight:600; }
+.cap-sel-prac-desc { font-size:9px; color:var(--text-muted); line-height:1.3; }
+.cap-sel-footer { padding:10px 14px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+/* Linked capability badge on fitness panel */
+.fp-cap-link { display:inline-block; font-size:9px; background:rgba(56,178,160,.15); border:1px solid rgba(56,178,160,.3); color:var(--cyan); border-radius:8px; padding:1px 7px; margin-bottom:3px; }
+.fp-prac-tag { display:inline-block; font-size:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:1px 6px; margin:2px 2px 0 0; color:var(--text-muted); }
+
 /* ══ HOW TO PLAY CARDS ══ */
 .htp-cards { display:flex; gap:8px; margin:8px 0 12px; }
 .htp-card { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
@@ -683,6 +746,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   </div>
 </div>
 
+<!-- Capability Selector Modal -->
+<div id="capSelectorModal">
+  <div class="cap-sel-box">
+    <div class="cap-sel-hdr">
+      <h3 id="capSelTitle">Link Capability</h3>
+      <button onclick="closeCapSelector()">✕</button>
+    </div>
+    <div class="cap-sel-body" id="capSelBody"></div>
+    <div class="cap-sel-footer">
+      <button class="btn" onclick="closeCapSelector()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCapabilityLink()">Link Capability</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MAIN APP ══ -->
 <div id="mainApp" style="display:none">
   <header class="app-header">
@@ -728,7 +806,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       </div>
       <div class="board-toast" id="boardToast"></div>
       <div class="board-map" id="boardMap">
-        <div style="display:flex;flex:1;overflow:hidden;">
+        <!-- View tabs -->
+        <div class="bvt-bar">
+          <button class="bvt-btn active" id="bvtBoard" onclick="switchBoardView('board')">⬡ Board</button>
+          <button class="bvt-btn" id="bvtCaps" onclick="switchBoardView('capabilities')">◈ Capabilities Library</button>
+        </div>
+        <!-- Capabilities Library page (hidden until tab active) -->
+        <div id="capLibPage" class="cap-page" style="display:none;"></div>
+        <div style="display:flex;flex:1;overflow:hidden;" id="boardContent">
           <!-- Hex board: has its own zone header + scrollable content -->
           <div id="hexBoardArea" style="flex:7;display:flex;flex-direction:column;overflow:hidden;">
             <!-- Header row: backlog label + path zone header -->
@@ -757,7 +842,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="fitness-panel" id="fitnessPanel">
             <!-- Rendered by JS: renderFitnessPanel() -->
           </div>
-        </div>
+        </div><!-- /boardContent -->
       </div>
       <div class="board-drivers" id="boardDrivers"><span class="driver-label"><span class="bolt">⚡</span> Drivers:</span></div>
       <div class="axis-bottom">Axis A — Horizontal: <strong>Evolution of Capability</strong> &nbsp;│&nbsp; Axis B — Vertical: <strong>Strategic Intent Gradient</strong></div>
@@ -922,10 +1007,10 @@ const HEX_GAP = 6;             // gap between hexes
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
-// Columns valid per row: even=all 10 path cols, odd=skip col 1 and col 9 (honeycomb stagger)
+// Columns valid per row: even=all 10 path cols, odd=9 cols offset by half (proper honeycomb)
 function getColsForRow(row) {
   if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8,9];
-  return [0,2,3,4,5,6,7,8]; // skip col 1 and col 9 (GRID_COLS-1) for honeycomb offset
+  return [0,1,2,3,4,5,6,7,8]; // 9 cols shifted right by ROW_OFFSET — no gap in honeycomb
 }
 
 function computeHexLayout() {
@@ -983,6 +1068,10 @@ let transformationHorizons = {h3m:'', h1y:'', h2y:'', h5y:''}; // fitness goals 
 let lastBreakdown = {}; // last calcFitnessBreakdown() result, used by breakdown modal
 let currentItems = []; // hexIds in the Current Reality backlog
 const DOMAIN_COLORS = ['#4a90d9','#d94a4a','#2d9d5e','#e8943a','#7b5ea7','#38b2a0','#d9a84a','#d94a8a','#5ea7a7','#8b949e'];
+// Capabilities Library
+let capabilitiesLibrary = []; // [{id, name, description, practices:[{id,name,description}]}]
+let currentView = 'board'; // 'board' | 'capabilities'
+let _capSelHexId = null; // hex being linked in capability selector modal
 // DB state
 let currentGameId = null, currentCompanyId = null;
 let autoSaveTimer = null;
@@ -1080,7 +1169,7 @@ async function loadGame(gameId) {
   Object.entries(gridState).forEach(([k,v])=>{
     const [r,c] = k.split(',').map(Number);
     if (c>=GRID_COLS || r>=GRID_ROWS){toDelete.push(k);return;}
-    if (r%2===1 && (c===1 || c===GRID_COLS-1)){
+    if (r%2===1 && c===GRID_COLS-1){
       toDelete.push(k);
       const nk=`${r},${c-1}`;
       if (!gridState[nk]&&!migrated[nk]) migrated[nk]=v; else migrated[`${r-1},${c}`]=v;
@@ -1111,6 +1200,311 @@ function renderAll() {
 }
 let _resizeTimer;
 window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer=setTimeout(()=>{ if(document.getElementById('mainApp').style.display!=='none') renderBoard(); },200); });
+
+// ══════════════════════════════════════════
+// CAPABILITIES LIBRARY
+// ══════════════════════════════════════════
+async function loadCapabilities() {
+  try {
+    capabilitiesLibrary = await api('GET', '/capabilities');
+  } catch(e) {
+    console.warn('Could not load capabilities library:', e);
+    capabilitiesLibrary = [];
+  }
+}
+
+function switchBoardView(view) {
+  currentView = view;
+  const boardContent = document.getElementById('boardContent');
+  const capPage = document.getElementById('capLibPage');
+  document.getElementById('bvtBoard').classList.toggle('active', view === 'board');
+  document.getElementById('bvtCaps').classList.toggle('active', view === 'capabilities');
+  if (view === 'board') {
+    boardContent.style.display = 'flex';
+    capPage.style.display = 'none';
+  } else {
+    boardContent.style.display = 'none';
+    capPage.style.display = 'flex';
+    renderCapabilitiesPage();
+  }
+}
+
+function renderCapabilitiesPage() {
+  const page = document.getElementById('capLibPage');
+  if (!page) return;
+  const caps = capabilitiesLibrary;
+  page.innerHTML =
+    `<div class="cap-list">` +
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">` +
+        `<span style="font-size:12px;font-weight:700;flex:1;">Capabilities & Practices</span>` +
+        `<button class="btn btn-sm btn-primary" onclick="showAddCapForm()">+ Add Capability</button>` +
+      `</div>` +
+      `<div id="addCapFormArea"></div>` +
+      (caps.length === 0
+        ? `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:30px;">No capabilities yet. Add one above.</div>`
+        : caps.map((cap, ci) => `
+          <div class="cap-card" id="capCard_${cap.id}">
+            <div class="cap-card-hdr" onclick="toggleCapCard('${cap.id}')">
+              <span class="cap-card-chevron">▶</span>
+              <span class="cap-card-name">${escHtml(cap.name)}</span>
+              <span class="cap-card-count">${cap.practices.length} practices</span>
+              <div class="cap-card-acts" onclick="event.stopPropagation()">
+                <button onclick="showEditCapForm('${cap.id}')">Edit</button>
+                <button class="del" onclick="deleteCap('${cap.id}')">Delete</button>
+              </div>
+            </div>
+            <div class="cap-card-body">
+              <div class="cap-card-desc">${escHtml(cap.description || '')}</div>
+              <div class="prac-list" id="pracList_${cap.id}">
+                ${cap.practices.map(p => `
+                  <div class="prac-item" id="pracItem_${p.id}">
+                    <div class="prac-item-text">
+                      <div class="prac-item-name">${escHtml(p.name)}</div>
+                      ${p.description ? `<div class="prac-item-desc">${escHtml(p.description)}</div>` : ''}
+                    </div>
+                    <div class="prac-item-acts">
+                      <button onclick="showEditPracForm('${p.id}','${cap.id}')">Edit</button>
+                      <button class="del" onclick="deletePrac('${p.id}','${cap.id}')">Del</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              <div id="addPracFormArea_${cap.id}"></div>
+              <button class="btn btn-sm" style="margin-top:4px;width:100%;" onclick="showAddPracForm('${cap.id}')">+ Add Practice</button>
+            </div>
+          </div>
+        `).join('')) +
+    `</div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleCapCard(capId) {
+  document.getElementById('capCard_' + capId)?.classList.toggle('open');
+}
+
+function showAddCapForm() {
+  const area = document.getElementById('addCapFormArea');
+  if (!area) return;
+  area.innerHTML = `
+    <div class="cap-add-form" style="margin-bottom:8px;">
+      <input id="newCapName" placeholder="Capability name" />
+      <textarea id="newCapDesc" placeholder="Description (optional)" rows="2"></textarea>
+      <div class="cap-add-form-row">
+        <button class="btn btn-sm" onclick="document.getElementById('addCapFormArea').innerHTML=''">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="createCap()">Add</button>
+      </div>
+    </div>`;
+  document.getElementById('newCapName')?.focus();
+}
+
+async function createCap() {
+  const name = document.getElementById('newCapName')?.value.trim();
+  const description = document.getElementById('newCapDesc')?.value.trim();
+  if (!name) return;
+  try {
+    const cap = await api('POST', '/capabilities', { name, description });
+    capabilitiesLibrary.push(cap);
+    renderCapabilitiesPage();
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+function showEditCapForm(capId) {
+  const cap = capabilitiesLibrary.find(c => c.id === capId);
+  if (!cap) return;
+  const card = document.getElementById('capCard_' + capId);
+  if (!card) return;
+  // Open the card first
+  card.classList.add('open');
+  // Show inline edit form at top of body
+  const body = card.querySelector('.cap-card-body');
+  const formId = 'editCapForm_' + capId;
+  if (document.getElementById(formId)) return;
+  const form = document.createElement('div');
+  form.id = formId;
+  form.className = 'cap-add-form';
+  form.style.marginBottom = '8px';
+  form.innerHTML = `
+    <input id="editCapName_${capId}" value="${escHtml(cap.name)}" placeholder="Capability name" />
+    <textarea id="editCapDesc_${capId}" rows="2" placeholder="Description">${escHtml(cap.description||'')}</textarea>
+    <div class="cap-add-form-row">
+      <button class="btn btn-sm" onclick="document.getElementById('${formId}').remove()">Cancel</button>
+      <button class="btn btn-sm btn-primary" onclick="updateCap('${capId}')">Save</button>
+    </div>`;
+  body.insertBefore(form, body.firstChild);
+}
+
+async function updateCap(capId) {
+  const name = document.getElementById('editCapName_' + capId)?.value.trim();
+  const description = document.getElementById('editCapDesc_' + capId)?.value.trim();
+  if (!name) return;
+  try {
+    await api('PUT', '/capabilities/' + capId, { name, description });
+    const cap = capabilitiesLibrary.find(c => c.id === capId);
+    if (cap) { cap.name = name; cap.description = description; }
+    renderCapabilitiesPage();
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+async function deleteCap(capId) {
+  if (!confirm('Delete this capability and all its practices?')) return;
+  try {
+    await api('DELETE', '/capabilities/' + capId);
+    capabilitiesLibrary = capabilitiesLibrary.filter(c => c.id !== capId);
+    // Remove from any boardMarkers
+    boardMarkers = boardMarkers.map(m => m.capabilityId === capId ? {...m, capabilityId: null, practiceIds: []} : m);
+    renderCapabilitiesPage();
+    renderFitnessPanel(); updateStats(); scheduleAutoSave();
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+function showAddPracForm(capId) {
+  const area = document.getElementById('addPracFormArea_' + capId);
+  if (!area) return;
+  area.innerHTML = `
+    <div class="cap-add-form" style="margin-bottom:4px;">
+      <input id="newPracName_${capId}" placeholder="Practice name" />
+      <textarea id="newPracDesc_${capId}" placeholder="Description (optional)" rows="2"></textarea>
+      <div class="cap-add-form-row">
+        <button class="btn btn-sm" onclick="document.getElementById('addPracFormArea_${capId}').innerHTML=''">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="createPrac('${capId}')">Add</button>
+      </div>
+    </div>`;
+  document.getElementById('newPracName_' + capId)?.focus();
+}
+
+async function createPrac(capId) {
+  const name = document.getElementById('newPracName_' + capId)?.value.trim();
+  const description = document.getElementById('newPracDesc_' + capId)?.value.trim();
+  if (!name) return;
+  try {
+    const prac = await api('POST', '/capabilities/' + capId + '/practices', { name, description });
+    const cap = capabilitiesLibrary.find(c => c.id === capId);
+    if (cap) cap.practices.push(prac);
+    renderCapabilitiesPage();
+    document.getElementById('capCard_' + capId)?.classList.add('open');
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+function showEditPracForm(pracId, capId) {
+  const cap = capabilitiesLibrary.find(c => c.id === capId);
+  const prac = cap?.practices.find(p => p.id === pracId);
+  if (!prac) return;
+  const item = document.getElementById('pracItem_' + pracId);
+  if (!item) return;
+  const formId = 'editPracForm_' + pracId;
+  if (document.getElementById(formId)) return;
+  item.insertAdjacentHTML('afterend', `
+    <div id="${formId}" class="cap-add-form" style="margin:4px 0;">
+      <input id="editPracName_${pracId}" value="${escHtml(prac.name)}" placeholder="Practice name" />
+      <textarea id="editPracDesc_${pracId}" rows="2" placeholder="Description">${escHtml(prac.description||'')}</textarea>
+      <div class="cap-add-form-row">
+        <button class="btn btn-sm" onclick="document.getElementById('${formId}').remove()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="updatePrac('${pracId}','${capId}')">Save</button>
+      </div>
+    </div>`);
+}
+
+async function updatePrac(pracId, capId) {
+  const name = document.getElementById('editPracName_' + pracId)?.value.trim();
+  const description = document.getElementById('editPracDesc_' + pracId)?.value.trim();
+  if (!name) return;
+  try {
+    await api('PUT', '/practices/' + pracId, { name, description });
+    const cap = capabilitiesLibrary.find(c => c.id === capId);
+    const prac = cap?.practices.find(p => p.id === pracId);
+    if (prac) { prac.name = name; prac.description = description; }
+    renderCapabilitiesPage();
+    document.getElementById('capCard_' + capId)?.classList.add('open');
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+async function deletePrac(pracId, capId) {
+  if (!confirm('Delete this practice?')) return;
+  try {
+    await api('DELETE', '/practices/' + pracId);
+    const cap = capabilitiesLibrary.find(c => c.id === capId);
+    if (cap) cap.practices = cap.practices.filter(p => p.id !== pracId);
+    // Remove from any boardMarkers
+    boardMarkers = boardMarkers.map(m => ({...m, practiceIds: (m.practiceIds||[]).filter(id => id !== pracId)}));
+    renderCapabilitiesPage();
+    document.getElementById('capCard_' + capId)?.classList.add('open');
+    renderFitnessPanel(); updateStats(); scheduleAutoSave();
+  } catch(e) { alert('Error: ' + (e.message || e)); }
+}
+
+// Capability Selector (when clicking "C" on a hex)
+function openCapSelector(hexId) {
+  _capSelHexId = hexId;
+  const item = allItems.find(i => i.id === hexId);
+  document.getElementById('capSelTitle').textContent = 'Link Capability — ' + (item?.name || hexId);
+  const existing = boardMarkers.find(m => m.hexId === hexId && m.type === 'capability');
+  const selCapId = existing?.capabilityId || null;
+  const selPracIds = existing?.practiceIds || [];
+  const body = document.getElementById('capSelBody');
+  if (!body) return;
+  if (capabilitiesLibrary.length === 0) {
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities defined yet. Go to the Capabilities Library tab to add some.</p>`;
+  } else {
+    body.innerHTML = capabilitiesLibrary.map(cap => `
+      <div class="cap-sel-item${selCapId === cap.id ? ' selected' : ''}" id="csi_${cap.id}">
+        <div class="cap-sel-cap" onclick="selectCap('${cap.id}')">
+          <input type="radio" name="capSel" value="${cap.id}" ${selCapId === cap.id ? 'checked' : ''} onchange="selectCap('${cap.id}')">
+          <div>
+            <div class="cap-sel-cap-name">${escHtml(cap.name)}</div>
+            ${cap.description ? `<div class="cap-sel-cap-desc">${escHtml(cap.description)}</div>` : ''}
+          </div>
+        </div>
+        <div class="cap-sel-pracs">
+          ${cap.practices.map(p => `
+            <div class="cap-sel-prac-row">
+              <input type="checkbox" id="csp_${p.id}" value="${p.id}" ${selPracIds.includes(p.id) ? 'checked' : ''}>
+              <label for="csp_${p.id}" class="cap-sel-prac-text">
+                <div class="cap-sel-prac-name">${escHtml(p.name)}</div>
+                ${p.description ? `<div class="cap-sel-prac-desc">${escHtml(p.description)}</div>` : ''}
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('capSelectorModal').classList.add('open');
+}
+
+function selectCap(capId) {
+  document.querySelectorAll('.cap-sel-item').forEach(el => {
+    el.classList.toggle('selected', el.id === 'csi_' + capId);
+  });
+  document.querySelectorAll('input[name=capSel]').forEach(r => { r.checked = r.value === capId; });
+}
+
+function closeCapSelector() {
+  _capSelHexId = null;
+  document.getElementById('capSelectorModal').classList.remove('open');
+}
+
+function saveCapabilityLink() {
+  const hexId = _capSelHexId;
+  if (!hexId) return;
+  const selRadio = document.querySelector('input[name=capSel]:checked');
+  const capId = selRadio?.value || null;
+  const practiceIds = capId
+    ? [...document.querySelectorAll('.cap-sel-item.selected input[type=checkbox]:checked')].map(cb => cb.value)
+    : [];
+  // Remove existing capability marker for this hex
+  boardMarkers = boardMarkers.filter(m => !(m.hexId === hexId && m.type === 'capability'));
+  if (capId) {
+    const cap = capabilitiesLibrary.find(c => c.id === capId);
+    boardMarkers.push({ id: 'mk_' + Date.now(), hexId, type: 'capability', capabilityId: capId, practiceIds });
+    const item = allItems.find(i => i.id === hexId);
+    addLog(`Linked capability "${cap?.name}" to "${item?.name}"`, 'success');
+  }
+  closeCapSelector();
+  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
 
 // ══════════════════════════════════════════
 // CURRENT REALITY BACKLOG
@@ -1179,7 +1573,18 @@ function renderFitnessPanel() {
       `</div>` +
       `<div class="fp-section"><h3>Capabilities Being Experimented</h3>` +
         (capIds.length===0 ? `<div class="fp-empty">Mark hexes with C to track capabilities</div>` :
-          capIds.map(id=>{const i=allItems.find(x=>x.id===id);return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div></div>`;}).join('')) +
+          capIds.map(id=>{
+            const i=allItems.find(x=>x.id===id);
+            const mk=boardMarkers.find(m=>m.hexId===id&&m.type==='capability');
+            const cap=mk?.capabilityId ? capabilitiesLibrary.find(c=>c.id===mk.capabilityId) : null;
+            const pracs=(mk?.practiceIds||[]).map(pid=>cap?.practices.find(p=>p.id===pid)?.name).filter(Boolean);
+            return`<div class="fp-item">` +
+              `<div class="fp-item-name">${i?.name||id}</div>` +
+              (cap ? `<div class="fp-cap-link">◈ ${cap.name}</div>` : '') +
+              (pracs.length ? `<div style="margin-top:3px">${pracs.map(pn=>`<span class="fp-prac-tag">${pn}</span>`).join('')}</div>` : '') +
+              `<button class="btn btn-sm" style="margin-top:5px;font-size:9px;padding:2px 7px;" onclick="openCapSelector('${id}')">Edit Link</button>` +
+            `</div>`;
+          }).join('')) +
       `</div>` +
       `<div class="fp-section"><h3>Experiments (${expIds.length})</h3>` +
         (expIds.length===0 ? `<div class="fp-empty">Mark hexes with S2F to track experiments</div>` :
@@ -1230,7 +1635,8 @@ function showFitnessBreakdown() {
   if(b.total>=80){lbl='Antifragile';col='var(--cyan)';}else if(b.total>=60){lbl='Resilient';col='var(--green)';}else if(b.total>=40){lbl='Stable';col='var(--orange)';}else if(b.total>=20){lbl='Emerging';col='var(--orange)';}
   const rows=[
     {name:'Hex Positioning',formula:`patterns×3 + transitions×2 − antipatterns`,pts:Math.round(b.hexScore*10)/10},
-    {name:'Capabilities Adopted',formula:`${b.capCount} caps × 5 pts`,pts:b.capScore},
+    {name:'Capabilities Linked',formula:`${b.uniqueCaps||0} unique caps × 5 pts`,pts:b.capScore},
+    {name:'Practices Selected',formula:`${b.uniquePracs||0} practices × 1 pt`,pts:b.linkedPracScore||0},
     {name:'Experiments Run',formula:`${b.expRan} ran × 2 pts`,pts:b.expRan*2},
     {name:'Experiments Passed',formula:`${b.expPassed} passed × 3 pts (bonus)`,pts:b.expPassed*3},
     {name:'Practices Active',formula:`${b.pracCount} practices × 1 pt`,pts:b.pracScore},
@@ -1407,6 +1813,8 @@ async function enterGame(gameId) {
   domainDefinitions = [];
   selectedDomainId = null;
   cyclePhase=0; cycleNumber=1; completedPhases.clear(); logEntries=[];
+  // Ensure capabilities library is loaded
+  if (capabilitiesLibrary.length === 0) await loadCapabilities();
   await loadGame(gameId);
 }
 function timeAgo(date) {
@@ -1928,13 +2336,17 @@ function selectMarker(type) {
   document.querySelector(`.marker-pal[data-marker="${type}"]`).classList.add('selected');
 }
 function toggleMarker(hexId, type) {
+  if (type === 'capability') {
+    openCapSelector(hexId);
+    return;
+  }
   const idx = boardMarkers.findIndex(m=>m.hexId===hexId && m.type===type);
   if (idx>=0) {
     boardMarkers.splice(idx,1);
-    addLog(`Removed ${type==='s2f'?'S2F Experiment':'Capability'} from "${allItems.find(i=>i.id===hexId)?.name}"`,'warning');
+    addLog(`Removed S2F Experiment from "${allItems.find(i=>i.id===hexId)?.name}"`,'warning');
   } else {
     boardMarkers.push({id:'mk_'+Date.now(), hexId, type});
-    addLog(`Added ${type==='s2f'?'S2F Experiment':'Capability'} to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
+    addLog(`Added S2F Experiment to "${allItems.find(i=>i.id===hexId)?.name}"`,'success');
   }
   renderAllZones(); renderFitnessPanel(); scheduleAutoSave();
 }
@@ -2032,9 +2444,14 @@ function calcFitnessBreakdown(){
   }
   // Current Reality backlog items: +0.5 each for recognizing current state
   hexScore += currentItems.length * 0.5;
-  // 2. Capabilities on board (marked with 'capability')
-  const capCount=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId)).length;
-  const capScore=capCount*5;
+  // 2. Capabilities on board — count unique capability IDs linked to board hexes
+  const capMarkers=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId));
+  const capCount=capMarkers.length;
+  const uniqueCapIds=new Set(capMarkers.map(m=>m.capabilityId).filter(Boolean));
+  const capScore=uniqueCapIds.size*5;
+  // Unique practices selected across all capability markers: +1 each
+  const uniquePracIds=new Set(capMarkers.flatMap(m=>m.practiceIds||[]));
+  const linkedPracScore=uniquePracIds.size*1;
   // 3. Experiments (marked with 's2f')
   const expIds=boardMarkers.filter(m=>m.type==='s2f'&&all.includes(m.hexId)).map(m=>m.hexId);
   const expRan=expIds.filter(id=>{const s=(experimentResults[id]||{}).status;return s&&s!=='';}).length;
@@ -2061,8 +2478,8 @@ function calcFitnessBreakdown(){
       if(targetEntry){const[r2,c2]=targetEntry[0].split(',').map(Number);if(getZoneFromCoords(r2,c2).startsWith('path_'))pathwayBonus+=5;}
     }
   });
-  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus+pathwayBonus)));
-  return{total,hexScore,capCount,capScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
+  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+linkedPracScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus+pathwayBonus)));
+  return{total,hexScore,capCount,uniqueCaps:uniqueCapIds.size,capScore,uniquePracs:uniquePracIds.size,linkedPracScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
 }
 function updateStats(){
   const all=Object.values(gridState);
