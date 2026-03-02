@@ -37,7 +37,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .btn-danger { background:var(--red); color:#fff; border-color:var(--red); }
 
 /* ══ INTRO SCREEN ══ */
-.intro-screen { position:fixed; inset:0; background:#0f1218; z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; overflow:hidden; transition:opacity .6s ease; }
+.intro-screen { position:fixed; inset:0; background:#0f1218; z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; overflow:hidden; transition:opacity .6s ease; color:#e8ecf1; }
 .intro-screen.hidden { opacity:0; pointer-events:none; }
 .intro-bg-canvas { position:absolute; inset:0; z-index:0; }
 .intro-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; animation:introFadeIn 1.2s ease-out; }
@@ -48,22 +48,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 @keyframes logoPulse { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:.6;transform:scale(1.05)} }
 .intro-title { font-size:36px; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--purple),var(--cyan),var(--accent)); background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center; animation:titleShimmer 4s linear infinite; letter-spacing:-.5px; }
 @keyframes titleShimmer { 0%{background-position:0% center} 100%{background-position:200% center} }
-.intro-sub { color:var(--text-muted); font-size:14px; text-align:center; max-width:440px; line-height:1.7; opacity:.8; }
+.intro-sub { color:#9aa5b8; font-size:14px; text-align:center; max-width:440px; line-height:1.7; opacity:.8; }
 .intro-menu { display:flex; flex-direction:column; gap:12px; width:320px; margin-top:16px; animation:menuSlideUp 1s ease-out .4s both; }
 @keyframes menuSlideUp { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
-.intro-menu-btn { position:relative; padding:16px 24px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-weight:600; cursor:pointer; transition:all .25s ease; display:flex; align-items:center; gap:14px; overflow:hidden; }
+.intro-menu-btn { position:relative; padding:16px 24px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#e8ecf1; font-size:15px; font-weight:600; cursor:pointer; transition:all .25s ease; display:flex; align-items:center; gap:14px; overflow:hidden; }
 .intro-menu-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(74,144,217,.05),transparent); transform:translateX(-100%); transition:transform .5s ease; }
 .intro-menu-btn:hover::before { transform:translateX(100%); }
 .intro-menu-btn:hover { border-color:var(--accent); transform:translateX(4px); box-shadow:0 4px 20px rgba(74,144,217,.15); }
 .intro-menu-btn .imb-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 .intro-menu-btn .imb-text { display:flex; flex-direction:column; gap:2px; text-align:left; }
 .intro-menu-btn .imb-label { font-size:15px; font-weight:600; }
-.intro-menu-btn .imb-desc { font-size:11px; color:var(--text-muted); font-weight:400; }
+.intro-menu-btn .imb-desc { font-size:11px; color:#8a96a8; font-weight:400; }
 .intro-menu-btn.primary { border-color:var(--accent); background:linear-gradient(135deg,rgba(74,144,217,.12),rgba(123,94,167,.08)); }
 .intro-menu-btn.primary:hover { background:linear-gradient(135deg,rgba(74,144,217,.2),rgba(123,94,167,.15)); box-shadow:0 4px 30px rgba(74,144,217,.25); }
 .intro-menu-btn.continue { border-color:rgba(56,178,160,.3); background:linear-gradient(135deg,rgba(56,178,160,.08),rgba(45,157,94,.05)); }
 .intro-menu-btn.continue:hover { border-color:var(--cyan); background:linear-gradient(135deg,rgba(56,178,160,.15),rgba(45,157,94,.1)); box-shadow:0 4px 30px rgba(56,178,160,.2); }
-.intro-footer { margin-top:32px; color:var(--text-muted); font-size:11px; opacity:.4; animation:introFadeIn 1.5s ease-out .8s both; text-align:center; line-height:1.6; }
+.intro-footer { margin-top:32px; color:#8a96a8; font-size:11px; opacity:.4; animation:introFadeIn 1.5s ease-out .8s both; text-align:center; line-height:1.6; }
 .intro-footer a { color:var(--accent); text-decoration:none; opacity:.7; }
 
 /* ══ GAME SELECT SCREEN ══ */
@@ -98,14 +98,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .gs-org-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:8px; background:rgba(74,144,217,.1); border:1px solid rgba(74,144,217,.2); font-size:12px; color:var(--accent); font-weight:500; }
 
 /* ══ HEADER ══ */
-.app-header { background:linear-gradient(135deg,#171c24,#1c2233); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.app-header { background:linear-gradient(135deg,#171c24,#1c2233); border-bottom:1px solid rgba(255,255,255,.08); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; color:#e8ecf1; }
 .logo { display:flex; align-items:center; gap:10px; flex-shrink:0; cursor:default; }
 .logo-hex { width:36px; height:31px; background:linear-gradient(135deg,var(--blue-light),var(--purple)); clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; font-weight:700; }
-.logo h1 { font-size:16px; font-weight:600; color:var(--text); }
-.logo .sub { font-size:10px; color:var(--text-muted); }
+.logo h1 { font-size:16px; font-weight:600; color:#e8ecf1; }
+.logo .sub { font-size:10px; color:#8a96a8; }
 .header-center { display:flex; align-items:center; gap:10px; }
 .game-name-tag { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 12px; font-size:12px; color:var(--cyan); }
-.save-status { font-size:11px; color:var(--text-muted); transition:color .3s; }
+.save-status { font-size:11px; color:#8a96a8; transition:color .3s; }
 .save-status.saving { color:var(--orange); }
 .save-status.saved { color:var(--green); }
 .header-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
