@@ -474,8 +474,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .cap-sel-cap input[type=radio] { accent-color:var(--cyan); flex-shrink:0; }
 .cap-sel-cap-name { font-size:11px; font-weight:700; flex:1; }
 .cap-sel-cap-desc { font-size:9px; color:var(--text-muted); margin-top:1px; }
-.cap-sel-pracs { display:none; padding:4px 12px 8px 36px; flex-direction:column; gap:3px; background:rgba(56,178,160,.03); border-top:1px solid rgba(56,178,160,.15); }
-.cap-sel-item.selected .cap-sel-pracs { display:flex; }
+.cap-sel-pracs { display:flex; padding:4px 12px 8px 36px; flex-direction:column; gap:3px; background:rgba(56,178,160,.03); border-top:1px solid rgba(56,178,160,.15); }
+.cap-sel-item:not(.selected) .cap-sel-pracs { opacity:.4; pointer-events:none; }
 .cap-sel-prac-row { display:flex; align-items:flex-start; gap:7px; padding:3px 0; }
 .cap-sel-prac-row input[type=checkbox] { accent-color:var(--cyan); margin-top:2px; flex-shrink:0; }
 .cap-sel-prac-text { flex:1; }
@@ -1436,49 +1436,63 @@ async function deletePrac(pracId, capId) {
 }
 
 // Capability Selector (when clicking "C" on a hex)
+// Normalize marker to capabilityLinks format (backward-compat with old capabilityId/practiceIds)
+function getCapabilityLinks(marker) {
+  if (!marker) return [];
+  if (marker.capabilityLinks) return marker.capabilityLinks;
+  if (marker.capabilityId) return [{ capabilityId: marker.capabilityId, practiceIds: marker.practiceIds || [] }];
+  return [];
+}
+
 function openCapSelector(hexId) {
   _capSelHexId = hexId;
   const item = allItems.find(i => i.id === hexId);
-  document.getElementById('capSelTitle').textContent = 'Link Capability — ' + (item?.name || hexId);
+  document.getElementById('capSelTitle').textContent = 'Link Capabilities — ' + (item?.name || hexId);
   const existing = boardMarkers.find(m => m.hexId === hexId && m.type === 'capability');
-  const selCapId = existing?.capabilityId || null;
-  const selPracIds = existing?.practiceIds || [];
+  const existingLinks = getCapabilityLinks(existing);
   const body = document.getElementById('capSelBody');
   if (!body) return;
   if (capabilitiesLibrary.length === 0) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities defined yet. Go to the Capabilities Library tab to add some.</p>`;
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities defined. Go to the <strong>◈ Capabilities Library</strong> tab to add some.</p>`;
   } else {
-    body.innerHTML = capabilitiesLibrary.map(cap => `
-      <div class="cap-sel-item${selCapId === cap.id ? ' selected' : ''}" id="csi_${cap.id}">
-        <div class="cap-sel-cap" onclick="selectCap('${cap.id}')">
-          <input type="radio" name="capSel" value="${cap.id}" ${selCapId === cap.id ? 'checked' : ''} onchange="selectCap('${cap.id}')">
-          <div>
-            <div class="cap-sel-cap-name">${escHtml(cap.name)}</div>
-            ${cap.description ? `<div class="cap-sel-cap-desc">${escHtml(cap.description)}</div>` : ''}
-          </div>
-        </div>
-        <div class="cap-sel-pracs">
-          ${cap.practices.map(p => `
-            <div class="cap-sel-prac-row">
-              <input type="checkbox" id="csp_${p.id}" value="${p.id}" ${selPracIds.includes(p.id) ? 'checked' : ''}>
-              <label for="csp_${p.id}" class="cap-sel-prac-text">
-                <div class="cap-sel-prac-name">${escHtml(p.name)}</div>
-                ${p.description ? `<div class="cap-sel-prac-desc">${escHtml(p.description)}</div>` : ''}
-              </label>
+    body.innerHTML = capabilitiesLibrary.map(cap => {
+      const existLink = existingLinks.find(l => l.capabilityId === cap.id);
+      const isSelected = !!existLink;
+      const selPracIds = existLink?.practiceIds || [];
+      return `
+        <div class="cap-sel-item${isSelected ? ' selected' : ''}" id="csi_${cap.id}">
+          <div class="cap-sel-cap" onclick="toggleCapCheck('${cap.id}')">
+            <input type="checkbox" id="csc_${cap.id}" ${isSelected ? 'checked' : ''}>
+            <div>
+              <div class="cap-sel-cap-name">${escHtml(cap.name)}</div>
+              ${cap.description ? `<div class="cap-sel-cap-desc">${escHtml(cap.description)}</div>` : ''}
             </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('');
+          </div>
+          <div class="cap-sel-pracs">
+            <div style="font-size:9px;color:var(--cyan);font-weight:600;margin-bottom:3px;opacity:.8;">Select practices:</div>
+            ${cap.practices.map(p => `
+              <div class="cap-sel-prac-row">
+                <input type="checkbox" id="csp_${p.id}" value="${p.id}" ${selPracIds.includes(p.id) ? 'checked' : ''}>
+                <label for="csp_${p.id}" class="cap-sel-prac-text">
+                  <div class="cap-sel-prac-name">${escHtml(p.name)}</div>
+                  ${p.description ? `<div class="cap-sel-prac-desc">${escHtml(p.description)}</div>` : ''}
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    }).join('');
   }
   document.getElementById('capSelectorModal').classList.add('open');
 }
 
-function selectCap(capId) {
-  document.querySelectorAll('.cap-sel-item').forEach(el => {
-    el.classList.toggle('selected', el.id === 'csi_' + capId);
-  });
-  document.querySelectorAll('input[name=capSel]').forEach(r => { r.checked = r.value === capId; });
+function toggleCapCheck(capId) {
+  const item = document.getElementById('csi_' + capId);
+  const checkbox = document.getElementById('csc_' + capId);
+  if (!item || !checkbox) return;
+  const newState = !item.classList.contains('selected');
+  item.classList.toggle('selected', newState);
+  checkbox.checked = newState;
 }
 
 function closeCapSelector() {
@@ -1489,18 +1503,18 @@ function closeCapSelector() {
 function saveCapabilityLink() {
   const hexId = _capSelHexId;
   if (!hexId) return;
-  const selRadio = document.querySelector('input[name=capSel]:checked');
-  const capId = selRadio?.value || null;
-  const practiceIds = capId
-    ? [...document.querySelectorAll('.cap-sel-item.selected input[type=checkbox]:checked')].map(cb => cb.value)
-    : [];
-  // Remove existing capability marker for this hex
+  const capabilityLinks = capabilitiesLibrary
+    .filter(cap => document.getElementById('csc_' + cap.id)?.checked)
+    .map(cap => ({
+      capabilityId: cap.id,
+      practiceIds: cap.practices.filter(p => document.getElementById('csp_' + p.id)?.checked).map(p => p.id)
+    }));
   boardMarkers = boardMarkers.filter(m => !(m.hexId === hexId && m.type === 'capability'));
-  if (capId) {
-    const cap = capabilitiesLibrary.find(c => c.id === capId);
-    boardMarkers.push({ id: 'mk_' + Date.now(), hexId, type: 'capability', capabilityId: capId, practiceIds });
+  if (capabilityLinks.length > 0) {
+    boardMarkers.push({ id: 'mk_' + Date.now(), hexId, type: 'capability', capabilityLinks });
     const item = allItems.find(i => i.id === hexId);
-    addLog(`Linked capability "${cap?.name}" to "${item?.name}"`, 'success');
+    const capNames = capabilityLinks.map(l => capabilitiesLibrary.find(c => c.id === l.capabilityId)?.name).filter(Boolean).join(', ');
+    addLog(`Linked capabilities "${capNames}" to "${item?.name}"`, 'success');
   }
   closeCapSelector();
   renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
@@ -1572,33 +1586,76 @@ function renderFitnessPanel() {
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--green)">${totalReps}</div><div class="fp-sum-lbl">Total Reps</div></div>` +
       `</div>` +
       `<div class="fp-section"><h3>Capabilities Being Experimented</h3>` +
-        (capIds.length===0 ? `<div class="fp-empty">Mark hexes with C to track capabilities</div>` :
-          capIds.map(id=>{
-            const i=allItems.find(x=>x.id===id);
-            const mk=boardMarkers.find(m=>m.hexId===id&&m.type==='capability');
-            const cap=mk?.capabilityId ? capabilitiesLibrary.find(c=>c.id===mk.capabilityId) : null;
-            const pracs=(mk?.practiceIds||[]).map(pid=>cap?.practices.find(p=>p.id===pid)?.name).filter(Boolean);
-            return`<div class="fp-item">` +
-              `<div class="fp-item-name">${i?.name||id}</div>` +
-              (cap ? `<div class="fp-cap-link">◈ ${cap.name}</div>` : '') +
-              (pracs.length ? `<div style="margin-top:3px">${pracs.map(pn=>`<span class="fp-prac-tag">${pn}</span>`).join('')}</div>` : '') +
-              `<button class="btn btn-sm" style="margin-top:5px;font-size:9px;padding:2px 7px;" onclick="openCapSelector('${id}')">Edit Link</button>` +
+        (capIds.length===0 ? `<div class="fp-empty">Mark hexes with C to track capabilities</div>` : (() => {
+          // Group all capability links across all marked hexes, by capability
+          const byCapId = {};
+          capIds.forEach(hexId => {
+            const mk = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
+            getCapabilityLinks(mk).forEach(link => {
+              if (!link.capabilityId) return;
+              if (!byCapId[link.capabilityId]) byCapId[link.capabilityId] = {hexIds:[], practiceIds: new Set()};
+              byCapId[link.capabilityId].hexIds.push(hexId);
+              (link.practiceIds||[]).forEach(pid => byCapId[link.capabilityId].practiceIds.add(pid));
+            });
+          });
+          const linkedCapEntries = Object.entries(byCapId);
+          // Hexes without any capability linked
+          const unlinkedHexIds = capIds.filter(hexId => {
+            const mk = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
+            return getCapabilityLinks(mk).length === 0;
+          });
+          let html = '';
+          linkedCapEntries.forEach(([capId, data]) => {
+            const cap = capabilitiesLibrary.find(c=>c.id===capId);
+            if (!cap) return;
+            const pracs = [...data.practiceIds].map(pid=>cap.practices.find(p=>p.id===pid)?.name).filter(Boolean);
+            html += `<div class="fp-item">` +
+              `<div class="fp-cap-link" style="font-size:11px;font-weight:700;margin-bottom:4px;">◈ ${escHtml(cap.name)}</div>` +
+              (pracs.length
+                ? `<div>${pracs.map(pn=>`<span class="fp-prac-tag">${escHtml(pn)}</span>`).join('')}</div>`
+                : `<div style="font-size:9px;color:var(--text-muted);font-style:italic;">No practices selected</div>`) +
+              `<div style="font-size:9px;color:var(--text-muted);margin-top:3px;">${data.hexIds.length} hex${data.hexIds.length!==1?'es':''}</div>` +
             `</div>`;
-          }).join('')) +
+          });
+          unlinkedHexIds.forEach(hexId => {
+            const i = allItems.find(x=>x.id===hexId);
+            html += `<div class="fp-item" style="opacity:.5;">` +
+              `<div class="fp-item-name" style="font-size:10px;">${escHtml(i?.name||hexId)}</div>` +
+              `<button class="btn btn-sm" style="font-size:9px;padding:2px 7px;margin-top:4px;" onclick="openCapSelector('${hexId}')">Link capability</button>` +
+            `</div>`;
+          });
+          if (!html) html = `<div class="fp-empty">No capabilities linked yet — click "Edit Link" on a hex</div>`;
+          // Add Edit link button
+          html += `<button class="btn btn-sm" style="width:100%;margin-top:6px;font-size:10px;" onclick="openCapSelector('${capIds[0]}')">+ Edit Capability Links</button>`;
+          return html;
+        })()) +
       `</div>` +
       `<div class="fp-section"><h3>Experiments (${expIds.length})</h3>` +
         (expIds.length===0 ? `<div class="fp-empty">Mark hexes with S2F to track experiments</div>` :
           expIds.map(id=>{
-            const i=allItems.find(x=>x.id===id);
             const er=experimentResults[id]||{};
             const st=er.status||'';
-            return`<div class="fp-item"><div class="fp-item-name">${i?.name||id}</div>` +
+            const linkedPracId=er.practiceId||'';
+            // Build practice options grouped by capability
+            const pracOptions = capabilitiesLibrary.flatMap(cap =>
+              cap.practices.map(p => `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(cap.name)} → ${escHtml(p.name)}</option>`)
+            ).join('');
+            const linkedPrac = linkedPracId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===linkedPracId) : null;
+            const linkedCap = linkedPrac ? capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===linkedPracId)) : null;
+            return`<div class="fp-item">` +
+              (linkedPrac
+                ? `<div class="fp-cap-link" style="font-size:11px;font-weight:700;margin-bottom:4px;">◈ ${escHtml(linkedCap?.name||'')} → ${escHtml(linkedPrac.name)}</div>`
+                : `<div style="font-size:9px;color:var(--text-muted);font-style:italic;margin-bottom:4px;">No practice linked</div>`) +
               `<select class="exp-status-select" onchange="setExperimentStatus('${id}',this.value)">` +
                 `<option value=""${st===''?' selected':''}>— Status —</option>` +
                 `<option value="running"${st==='running'?' selected':''}>🔄 Running</option>` +
                 `<option value="passed"${st==='passed'?' selected':''}>✅ Passed</option>` +
                 `<option value="failed"${st==='failed'?' selected':''}>❌ Failed</option>` +
                 `<option value="abandoned"${st==='abandoned'?' selected':''}>⏸ Abandoned</option>` +
+              `</select>` +
+              `<select class="exp-status-select" onchange="setExperimentPractice('${id}',this.value)" style="margin-top:3px;">` +
+                `<option value="">— Link practice (optional) —</option>` +
+                pracOptions +
               `</select>` +
               `<input class="fp-result-input" placeholder="Notes..." value="${(er.result||'').replace(/"/g,'&quot;')}" oninput="setExperimentResult('${id}',this.value)">` +
             `</div>`;
@@ -1619,6 +1676,11 @@ function setExperimentStatus(hexId, status) {
   if (!experimentResults[hexId]) experimentResults[hexId]={};
   experimentResults[hexId].status = status;
   updateStats(); scheduleAutoSave();
+}
+function setExperimentPractice(hexId, practiceId) {
+  if (!experimentResults[hexId]) experimentResults[hexId]={};
+  experimentResults[hexId].practiceId = practiceId;
+  scheduleAutoSave();
 }
 function adjustReps(hexId, delta) {
   practiceRepetitions[hexId] = Math.max(0,(practiceRepetitions[hexId]||0)+delta);
@@ -2444,13 +2506,14 @@ function calcFitnessBreakdown(){
   }
   // Current Reality backlog items: +0.5 each for recognizing current state
   hexScore += currentItems.length * 0.5;
-  // 2. Capabilities on board — count unique capability IDs linked to board hexes
+  // 2. Capabilities on board — count unique capability IDs and practices via capabilityLinks
   const capMarkers=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId));
   const capCount=capMarkers.length;
-  const uniqueCapIds=new Set(capMarkers.map(m=>m.capabilityId).filter(Boolean));
+  const allCapLinks=capMarkers.flatMap(m=>getCapabilityLinks(m));
+  const uniqueCapIds=new Set(allCapLinks.map(l=>l.capabilityId).filter(Boolean));
   const capScore=uniqueCapIds.size*5;
   // Unique practices selected across all capability markers: +1 each
-  const uniquePracIds=new Set(capMarkers.flatMap(m=>m.practiceIds||[]));
+  const uniquePracIds=new Set(allCapLinks.flatMap(l=>l.practiceIds||[]));
   const linkedPracScore=uniquePracIds.size*1;
   // 3. Experiments (marked with 's2f')
   const expIds=boardMarkers.filter(m=>m.type==='s2f'&&all.includes(m.hexId)).map(m=>m.hexId);
@@ -2479,7 +2542,10 @@ function calcFitnessBreakdown(){
     }
   });
   const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+linkedPracScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus+pathwayBonus)));
-  return{total,hexScore,capCount,uniqueCaps:uniqueCapIds.size,capScore,uniquePracs:uniquePracIds.size,linkedPracScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
+  // Count practices also linked through experiments
+  const expLinkedPracs=new Set(Object.values(experimentResults).map(er=>er.practiceId).filter(Boolean));
+  const allUniquePracs=new Set([...uniquePracIds,...expLinkedPracs]);
+  return{total,hexScore,capCount,uniqueCaps:uniqueCapIds.size,capScore,uniquePracs:allUniquePracs.size,linkedPracScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
 }
 function updateStats(){
   const all=Object.values(gridState);
