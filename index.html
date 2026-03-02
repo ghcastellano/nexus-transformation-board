@@ -428,9 +428,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .bvt-btn { padding:7px 14px; font-size:11px; font-weight:600; border:none; border-bottom:2px solid transparent; background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; }
 .bvt-btn.active { border-bottom-color:var(--cyan); color:var(--text); }
 .bvt-btn:hover:not(.active) { color:var(--text); background:rgba(255,255,255,.03); }
-.cap-page { display:flex; flex:1; overflow:hidden; }
-.cap-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
-.cap-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.cap-page { display:flex; flex:1; overflow:hidden; min-height:0; }
+.cap-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:0; }
+.cap-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; }
 .cap-card-hdr { padding:10px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
 .cap-card-hdr:hover { background:rgba(255,255,255,.03); }
 .cap-card-chevron { font-size:10px; color:var(--text-muted); transition:transform .15s; }
