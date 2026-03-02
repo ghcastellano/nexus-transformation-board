@@ -458,6 +458,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .pathway-transition-row { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; margin-bottom:6px; font-size:12px; }
 .pathway-add-row { display:flex; gap:8px; margin-top:8px; }
 .pathway-add-row select { flex:1; }
+
+/* ══ CURRENT REALITY BACKLOG ══ */
+.cr-backlog { width:190px; flex-shrink:0; background:rgba(217,74,74,.03); border-right:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; }
+.cr-backlog-hdr { padding:7px 10px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--red); border-bottom:1px solid var(--border); background:rgba(217,74,74,.06); display:flex; align-items:center; position:sticky; top:0; z-index:2; }
+.cr-count { margin-left:auto; background:rgba(217,74,74,.2); color:var(--red); font-size:8px; padding:1px 5px; border-radius:8px; }
+.cr-item { padding:7px 10px; border-bottom:1px solid rgba(255,255,255,.04); cursor:grab; display:flex; align-items:flex-start; gap:7px; transition:background .12s; user-select:none; }
+.cr-item:hover { background:rgba(255,255,255,.05); }
+.cr-item:active { cursor:grabbing; }
+.cr-item-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; margin-top:3px; }
+.cr-item-name { font-size:10px; font-weight:600; line-height:1.3; color:var(--text); }
+.cr-item-signal { font-size:8px; color:var(--text-muted); margin-top:1px; line-height:1.3; }
+.cr-drop-zone { margin:8px; border:1px dashed rgba(217,74,74,.2); border-radius:6px; padding:10px 8px; text-align:center; font-size:9px; color:var(--text-muted); opacity:.5; flex:1; min-height:40px; display:flex; align-items:center; justify-content:center; }
+.cr-backlog.drag-active { background:rgba(217,74,74,.06); }
+.cr-backlog.drag-active .cr-drop-zone { border-color:var(--red); opacity:1; }
+.cr-zone-hdr { width:190px; flex-shrink:0; padding:6px 10px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--red); background:rgba(217,74,74,.04); border-bottom:1px solid var(--border); border-right:1px solid var(--border); display:flex; align-items:center; }
 </style>
 </head>
 <body>
@@ -716,19 +731,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <div style="display:flex;flex:1;overflow:hidden;">
           <!-- Hex board: has its own zone header + scrollable content -->
           <div id="hexBoardArea" style="flex:7;display:flex;flex-direction:column;overflow:hidden;">
-            <div class="zone-headers">
-              <div class="zh-spacer"></div>
-              <div class="zone-col-header hdr-current" style="flex:2"><span class="zone-tag">◀ Current Reality</span></div>
-              <div class="zone-col-header hdr-path" style="flex:7"><span class="zone-tag">⟷ Transformation Path</span></div>
+            <!-- Header row: backlog label + path zone header -->
+            <div style="display:flex;flex-shrink:0;">
+              <div class="cr-zone-hdr">◀ Current Reality</div>
+              <div class="zone-headers" style="flex:1;">
+                <div class="zh-spacer"></div>
+                <div class="zone-col-header hdr-path" style="flex:1"><span class="zone-tag">⟷ Transformation Path</span></div>
+              </div>
             </div>
-            <div id="hexScrollArea" style="flex:1;overflow:auto;">
-              <div style="position:relative;">
-                <div class="axis-label-left">Current Reality · Constraints</div>
-                <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
-                <div class="honeycomb-grid" id="honeycombGrid">
-                  <!-- Rendered by JS: renderBoard() -->
+            <!-- Content row: backlog list + hex grid -->
+            <div style="display:flex;flex:1;overflow:hidden;">
+              <div class="cr-backlog" id="crBacklog"><!-- rendered by renderCurrentBacklog() --></div>
+              <div id="hexScrollArea" style="flex:1;overflow:auto;">
+                <div style="position:relative;">
+                  <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
+                  <div class="honeycomb-grid" id="honeycombGrid">
+                    <!-- Rendered by JS: renderBoard() -->
+                  </div>
+                  <svg class="domains-svg" id="domainsSvg"></svg>
                 </div>
-                <svg class="domains-svg" id="domainsSvg"></svg>
               </div>
             </div>
           </div>
@@ -892,7 +913,7 @@ const ZONES = ['current_strategic','current_operational','path_strategic','path_
 
 // ── Honeycomb grid config ──
 // Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
-const GRID_COLS = 9;  // 2 (current) + 7 (path) — Improved Fitness is a separate panel
+const GRID_COLS = 7;  // path columns only — Current Reality is a separate backlog panel
 const GRID_ROWS = 10; // 5 per lane (strategic, operational)
 const GRID_PAD_LEFT = 42;      // space for lane labels
 const HEX_GAP = 6;             // gap between hexes
@@ -901,10 +922,10 @@ const HEX_GAP = 6;             // gap between hexes
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
-/// Columns valid per row: even=all 9, odd=skip col 1 (zone boundary) and col 8 (last)
+/// Columns valid per row: even=all 7 path cols, odd=skip col 1 and col 6 (honeycomb offset)
 function getColsForRow(row) {
-  if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8];
-  return [0,2,3,4,5,6,7]; // skip col 1 (last of current 2-col zone) and col 8 (last of path)
+  if (row % 2 === 0) return [0,1,2,3,4,5,6];
+  return [0,2,3,4,5]; // skip col 1 and col 6 (GRID_COLS-1) for honeycomb stagger
 }
 
 function computeHexLayout() {
@@ -912,9 +933,9 @@ function computeHexLayout() {
   const wrapper = scroll || document.getElementById('honeycombGrid')?.parentElement?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  // Fill the full width; cap at 110px so text always fits inside hexes
+  // Fill the full width so there is no empty strip to the right
   const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
-  HEX_W = Math.max(72, Math.min(110, Math.floor(hexFromWidth)));
+  HEX_W = Math.max(72, Math.floor(hexFromWidth));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
@@ -928,9 +949,8 @@ function hexPixelPosition(row, col) {
   };
 }
 function getZoneFromCoords(row, col) {
-  const zoneCol = col <= 1 ? 'current' : 'path';
   const lane = row < GRID_ROWS / 2 ? 'strategic' : 'operational';
-  return `${zoneCol}_${lane}`;
+  return `path_${lane}`; // All hex grid cells are Transformation Path
 }
 
 // ── State ──
@@ -961,6 +981,7 @@ let experimentResults = {}; // {hexId: {result:string, status:string}}
 let practiceRepetitions = {}; // {hexId: number}
 let transformationHorizons = {h3m:'', h1y:'', h2y:'', h5y:''}; // fitness goals per time horizon
 let lastBreakdown = {}; // last calcFitnessBreakdown() result, used by breakdown modal
+let currentItems = []; // hexIds in the Current Reality backlog
 const DOMAIN_COLORS = ['#4a90d9','#d94a4a','#2d9d5e','#e8943a','#7b5ea7','#38b2a0','#d9a84a','#d94a8a','#5ea7a7','#8b949e'];
 // DB state
 let currentGameId = null, currentCompanyId = null;
@@ -981,7 +1002,7 @@ async function saveGame() {
   showSave('saving');
   try {
     await api('PUT', `/games/${currentGameId}`, {
-      board_state: gridState,
+      board_state: Object.assign({}, gridState, {__backlog: currentItems}),
       agent_assignments: agentAssignments,
       active_drivers: driverAssignments,
       cycle_number: cycleNumber,
@@ -1014,19 +1035,21 @@ async function loadGame(gameId) {
   const g = await api('GET', `/games/${gameId}`);
   currentGameId = g.id;
   currentCompanyId = g.company_id;
-  // Migrate old formats to new gridState coordinate map
+  // ── Migration pipeline ──
   const bs = g.board_state || {};
-  if ('current_strategic' in bs || 'current' in bs) {
-    // Old zone-based format — migrate to gridState
-    gridState = {};
-    let oldZones;
-    if ('current' in bs && !('current_strategic' in bs)) {
-      oldZones = {current_strategic:bs.current||[],current_operational:[],path_strategic:bs.path||[],path_operational:[],desired_strategic:bs.desired||[],desired_operational:[]};
-    } else {
-      oldZones = bs;
-    }
-    // current=cols 0-1, path=cols 2-6, desired→path tail cols 4-6
-    const zoneOffsets = {current_strategic:[0,0],current_operational:[4,0],path_strategic:[0,2],path_operational:[4,2],desired_strategic:[0,4],desired_operational:[4,4]};
+  // Step 1: Determine raw state format and extract backlog
+  let raw9col = null; // if set, needs col remapping (old 9-col system where cols 0-1 = current)
+  if ('__backlog' in bs) {
+    // New format: gridState uses 7-col system (path only), backlog is explicit
+    currentItems = bs.__backlog || [];
+    gridState = Object.fromEntries(Object.entries(bs).filter(([k])=>!k.startsWith('__')));
+  } else if ('current_strategic' in bs || 'current' in bs) {
+    // Very old zone-array format → build 9-col intermediate
+    raw9col = {};
+    const oldZones = ('current' in bs && !('current_strategic' in bs))
+      ? {current_strategic:bs.current||[],current_operational:[],path_strategic:bs.path||[],path_operational:[],desired_strategic:bs.desired||[],desired_operational:[]}
+      : bs;
+    const zoneOffsets = {current_strategic:[0,0],current_operational:[5,0],path_strategic:[0,2],path_operational:[5,2],desired_strategic:[0,6],desired_operational:[5,6]};
     const zoneCols = {current_strategic:2,current_operational:2,path_strategic:5,path_operational:5,desired_strategic:3,desired_operational:3};
     Object.entries(oldZones).forEach(([zone,items])=>{
       if (!Array.isArray(items)) return;
@@ -1035,23 +1058,32 @@ async function loadGame(gameId) {
       items.forEach((hexId,idx)=>{
         const r = rowOff + Math.floor(idx/maxCols);
         const c = colOff + (idx%maxCols);
-        if (c < GRID_COLS && r < GRID_ROWS) gridState[`${r},${c}`] = hexId;
+        raw9col[`${r},${c}`] = hexId;
       });
     });
   } else {
-    gridState = bs;
+    // Old 9-col gridState (cols 0-1 = current, cols 2-8 = path) — needs remap
+    raw9col = {...bs};
   }
-  // Migrate: remove hexes outside new 7-col grid or on invalid odd-row positions (cols 1,6)
-  const migrated = {};
-  const toDelete = [];
+  // Step 2: If raw 9-col state, split into currentItems + remapped 7-col gridState
+  if (raw9col !== null) {
+    currentItems = [];
+    gridState = {};
+    Object.entries(raw9col).forEach(([k,v])=>{
+      const [r,c] = k.split(',').map(Number);
+      if (c <= 1) { if (!currentItems.includes(v)) currentItems.push(v); }
+      else { const nc=c-2; if (nc<GRID_COLS && r<GRID_ROWS) gridState[`${r},${nc}`]=v; }
+    });
+  }
+  // Step 3: Clean up invalid positions (out of bounds or invalid odd-row cols)
+  const migrated = {}, toDelete = [];
   Object.entries(gridState).forEach(([k,v])=>{
     const [r,c] = k.split(',').map(Number);
-    if (c >= GRID_COLS || r >= GRID_ROWS) { toDelete.push(k); return; }
-    if (r % 2 === 1 && (c === 1 || c === GRID_COLS - 1)) {
+    if (c>=GRID_COLS || r>=GRID_ROWS){toDelete.push(k);return;}
+    if (r%2===1 && (c===1 || c===GRID_COLS-1)){
       toDelete.push(k);
-      const newKey = `${r},${c-1}`;
-      if (!gridState[newKey] && !migrated[newKey]) migrated[newKey] = v;
-      else migrated[`${r-1},${c}`] = v;
+      const nk=`${r},${c-1}`;
+      if (!gridState[nk]&&!migrated[nk]) migrated[nk]=v; else migrated[`${r-1},${c}`]=v;
     }
   });
   toDelete.forEach(k=>delete gridState[k]);
@@ -1075,10 +1107,48 @@ async function loadGame(gameId) {
   addLog('Game loaded: ' + g.name, 'success');
 }
 function renderAll() {
-  renderCategories(); renderDrivers(); renderLibrary(); renderCycleSteps(); renderBoard(); renderDomainList(); renderFitnessPanel(); updateStats(); renderLog();
+  renderCategories(); renderDrivers(); renderLibrary(); renderCycleSteps(); renderBoard(); renderCurrentBacklog(); renderDomainList(); renderFitnessPanel(); updateStats(); renderLog();
 }
 let _resizeTimer;
 window.addEventListener('resize', ()=>{ clearTimeout(_resizeTimer); _resizeTimer=setTimeout(()=>{ if(document.getElementById('mainApp').style.display!=='none') renderBoard(); },200); });
+
+// ══════════════════════════════════════════
+// CURRENT REALITY BACKLOG
+// ══════════════════════════════════════════
+function renderCurrentBacklog() {
+  const panel = document.getElementById('crBacklog');
+  if (!panel) return;
+  const typeColor = {antipattern:'var(--anti-hex)', pattern:'var(--pattern-hex)', transition:'var(--trans-hex)'};
+  const items = currentItems.map(hexId => {
+    const item = allItems.find(i=>i.id===hexId);
+    if (!item) return '';
+    const color = typeColor[item.type] || 'var(--gray)';
+    return `<div class="cr-item" draggable="true" data-hex-id="${hexId}"
+      ondragstart="draggedId='${hexId}';dragSource='backlog';event.dataTransfer.effectAllowed='move';showZoneGuidance('${item.type}')"
+      ondragend="clearZoneGuidance()">
+      <div class="cr-item-dot" style="background:${color}"></div>
+      <div><div class="cr-item-name">${item.name}</div>${item.signal?`<div class="cr-item-signal">${item.signal.slice(0,55)}</div>`:''}</div>
+    </div>`;
+  }).join('');
+  panel.innerHTML =
+    `<div class="cr-backlog-hdr">Backlog<span class="cr-count">${currentItems.length}</span></div>` +
+    items +
+    `<div class="cr-drop-zone">${currentItems.length===0?'Drag anti-patterns here to track current state':'Drop more here'}</div>`;
+  // Drop on backlog panel
+  panel.ondragover = e => { e.preventDefault(); panel.classList.add('drag-active'); };
+  panel.ondragleave = e => { if (!panel.contains(e.relatedTarget)) panel.classList.remove('drag-active'); };
+  panel.ondrop = e => {
+    e.preventDefault(); panel.classList.remove('drag-active');
+    if (!draggedId || currentItems.includes(draggedId)) return;
+    currentItems.push(draggedId);
+    if (dragSource && dragSource !== 'backlog') delete gridState[dragSource];
+    else for (const [k,v] of Object.entries(gridState)) { if (v===draggedId){delete gridState[k];break;} }
+    const item = allItems.find(i=>i.id===draggedId);
+    addLog(`Moved "${item?.name}" → Current Reality backlog`, 'action');
+    draggedId=null; dragSource=null;
+    renderBoard(); renderCurrentBacklog(); renderLibrary(); updateStats(); scheduleAutoSave();
+  };
+}
 
 // ══════════════════════════════════════════
 // FITNESS PANEL (Improved Fitness metrics)
@@ -1404,19 +1474,17 @@ function renderBoard() {
   container.style.height = totalH + 'px';
   container.style.position = 'relative';
 
-  // Zone background overlays — current (2/GRID_COLS) + path (rest), filling full width
+  // Zone background overlay — single Transformation Path zone, full width
   const gridWidth = totalW - GRID_PAD_LEFT;
-  const curW = gridWidth * 2 / GRID_COLS;
-  [{cls:'zb-current',left:0,width:curW},{cls:'',left:curW,width:gridWidth-curW}].forEach(z=>{
-    [0,1].forEach(li=>{
-      const div = document.createElement('div');
-      div.className = `zone-bg ${z.cls}`;
-      div.style.left = (GRID_PAD_LEFT + z.left) + 'px';
-      div.style.top = (li * strategicH) + 'px';
-      div.style.width = z.width + 'px';
-      div.style.height = (li === 0 ? strategicH : totalH - strategicH) + 'px';
-      container.appendChild(div);
-    });
+  [0,1].forEach(li=>{
+    const div = document.createElement('div');
+    div.className = 'zone-bg';
+    div.style.left = GRID_PAD_LEFT + 'px';
+    div.style.top = (li * strategicH) + 'px';
+    div.style.width = gridWidth + 'px';
+    div.style.height = (li === 0 ? strategicH : totalH - strategicH) + 'px';
+    div.style.borderRight = 'none';
+    container.appendChild(div);
   });
 
   // Lane divider
@@ -1461,12 +1529,13 @@ function renderBoard() {
         if(guide && ![...guide.best,...guide.ok].includes(zone)){showToast(`⚠️ ${guide.tip}`,'warning');}
         if(gridState[key] && gridState[key]!==draggedId){showToast('Cell occupied','warning');return;}
         // Remove from old position
-        if(dragSource){delete gridState[dragSource];}
+        if(dragSource==='backlog'){currentItems=currentItems.filter(id=>id!==draggedId);}
+        else if(dragSource){delete gridState[dragSource];}
         else{for(const[k,v]of Object.entries(gridState)){if(v===draggedId){delete gridState[k];break;}}}
         gridState[key]=draggedId;
-        addLog(`${dragSource?'Moved':'Placed'} "${itemObj?.name}" → ${zonePrettyName(zone)}`,'action');
+        addLog(`${dragSource==='backlog'?'Moved from backlog':dragSource?'Moved':'Placed'} "${itemObj?.name}" → ${zonePrettyName(zone)}`,'action');
         draggedId=null;dragSource=null;
-        renderBoard();renderLibrary();updateStats();scheduleAutoSave();
+        renderBoard();renderCurrentBacklog();renderLibrary();updateStats();scheduleAutoSave();
       });
       // Cell background
       const bg = document.createElement('div');
@@ -1953,15 +2022,16 @@ function advanceCycle(){
 // ══════════════════════════════════════════
 function calcFitnessBreakdown(){
   const all=Object.values(gridState);
-  // 1. Hex score by zone position
+  // 1. Hex score by zone position (all hex cells are path)
   let hexScore=0;
-  for(const[key,hexId]of Object.entries(gridState)){
-    const[r,c]=key.split(',').map(Number);
-    const zone=getZoneFromCoords(r,c);
+  for(const[,hexId]of Object.entries(gridState)){
     const i=allItems.find(x=>x.id===hexId);
-    if(zone.startsWith('path_')){if(i?.type==='pattern')hexScore+=3;if(i?.type==='transition')hexScore+=2;if(i?.type==='antipattern')hexScore-=1;}
-    else{if(i?.type==='antipattern')hexScore+=.5;if(i?.type==='pattern')hexScore+=1;}
+    if(i?.type==='pattern')hexScore+=3;
+    if(i?.type==='transition')hexScore+=2;
+    if(i?.type==='antipattern')hexScore-=1;
   }
+  // Current Reality backlog items: +0.5 each for recognizing current state
+  hexScore += currentItems.length * 0.5;
   // 2. Capabilities on board (marked with 'capability')
   const capCount=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId)).length;
   const capScore=capCount*5;
