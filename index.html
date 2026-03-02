@@ -1398,14 +1398,17 @@ function renderBoard() {
   container.style.setProperty('--hex-w', HEX_W + 'px');
   // Compute grid size (even rows define width)
   const laneRows = GRID_ROWS / 2;
-  const totalW = GRID_PAD_LEFT + (GRID_COLS - 1) * COL_W + HEX_W;
+  const hexGridW = GRID_PAD_LEFT + (GRID_COLS - 1) * COL_W + HEX_W;
   const strategicH = laneRows * ROW_H;
   const totalH = GRID_ROWS * ROW_H + HEX_H * 0.5;
+  // Expand to fill full scroll area so no dark empty strip to the right
+  const scrollArea = document.getElementById('hexScrollArea');
+  const totalW = Math.max(hexGridW, scrollArea ? scrollArea.clientWidth : hexGridW);
   container.style.width = totalW + 'px';
   container.style.height = totalH + 'px';
   container.style.position = 'relative';
 
-  // Zone background overlays — current (2/7) + path (5/7)
+  // Zone background overlays — current (2/7) + path (5/7), filling full width
   const gridWidth = totalW - GRID_PAD_LEFT;
   [{cls:'zb-current',left:0,width:gridWidth*2/7},{cls:'',left:gridWidth*2/7,width:gridWidth*5/7}].forEach(z=>{
     [0,1].forEach(li=>{
