@@ -6,12 +6,12 @@
 <title>Nexus Transformation Board — The Game</title>
 <style>
 :root {
-  --bg: #1a1f28;
-  --surface: #222835;
-  --surface2: #2a3040;
-  --border: #2a3140;
-  --text: #e8ecf1;
-  --text-muted: #7d8694;
+  --bg: #e8eaef;
+  --surface: #f2f4f7;
+  --surface2: #dde0e8;
+  --border: #c5cad6;
+  --text: #1a1d28;
+  --text-muted: #6b7285;
   --accent: #4a90d9;
   --blue: #2c3e6b;
   --blue-light: #3a5a9c;
@@ -37,7 +37,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .btn-danger { background:var(--red); color:#fff; border-color:var(--red); }
 
 /* ══ INTRO SCREEN ══ */
-.intro-screen { position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; overflow:hidden; transition:opacity .6s ease; }
+.intro-screen { position:fixed; inset:0; background:#0f1218; z-index:300; display:flex; align-items:center; justify-content:center; flex-direction:column; overflow:hidden; transition:opacity .6s ease; }
 .intro-screen.hidden { opacity:0; pointer-events:none; }
 .intro-bg-canvas { position:absolute; inset:0; z-index:0; }
 .intro-content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; animation:introFadeIn 1.2s ease-out; }
@@ -153,9 +153,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-map { flex:1; position:relative; background:var(--bg); display:flex; flex-direction:column; overflow:hidden; }
 
 /* Zone headers bar */
-.zone-headers { display:flex; border-bottom:1px solid rgba(255,255,255,.06); background:var(--surface); position:sticky; top:0; z-index:10; }
-.zone-headers .zh-spacer { width:36px; flex-shrink:0; border-right:1px solid rgba(255,255,255,.06); }
-.zone-col-header { flex:1; padding:6px 12px; display:flex; justify-content:center; align-items:center; border-right:1px solid rgba(255,255,255,.04); }
+.zone-headers { display:flex; border-bottom:1px solid rgba(0,0,0,.08); background:var(--surface); position:sticky; top:0; z-index:10; }
+.zone-headers .zh-spacer { width:36px; flex-shrink:0; border-right:1px solid rgba(0,0,0,.08); }
+.zone-col-header { flex:1; padding:6px 12px; display:flex; justify-content:center; align-items:center; border-right:1px solid rgba(0,0,0,.06); }
 .zone-col-header:last-child { border-right:none; }
 .zone-col-header .zone-tag { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:3px 10px; border-radius:4px; }
 .zone-col-header.hdr-current .zone-tag { color:var(--red); background:rgba(217,74,74,.1); }
@@ -166,13 +166,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .honeycomb-grid { position:relative; min-height:100%; }
 
 /* Zone background overlays */
-.zone-bg { position:absolute; pointer-events:none; z-index:0; border-right:1px solid rgba(255,255,255,.07); }
-.zone-bg.zb-current { background:linear-gradient(90deg, rgba(217,74,74,.07), rgba(217,74,74,.02)); }
-.zone-bg.zb-desired { background:linear-gradient(270deg, rgba(45,157,94,.07), rgba(45,157,94,.02)); }
+.zone-bg { position:absolute; pointer-events:none; z-index:0; border-right:1px solid rgba(0,0,0,.08); }
+.zone-bg.zb-current { background:linear-gradient(90deg, rgba(217,74,74,.10), rgba(217,74,74,.03)); }
+.zone-bg.zb-desired { background:linear-gradient(270deg, rgba(45,157,94,.10), rgba(45,157,94,.03)); }
 
 /* Lane divider and labels */
-.lane-divider { position:absolute; left:36px; right:0; height:1px; background:rgba(255,255,255,.08); z-index:1; pointer-events:none; }
-.lane-label-abs { position:absolute; left:0; width:36px; display:flex; align-items:center; justify-content:center; z-index:2; border-right:1px solid rgba(255,255,255,.06); background:var(--surface); }
+.lane-divider { position:absolute; left:36px; right:0; height:1px; background:rgba(0,0,0,.10); z-index:1; pointer-events:none; }
+.lane-label-abs { position:absolute; left:0; width:36px; display:flex; align-items:center; justify-content:center; z-index:2; border-right:1px solid rgba(0,0,0,.08); background:var(--surface); }
 .lane-label-abs .ll-text { writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; text-align:center; white-space:nowrap; }
 .lane-label-abs .ll-sub { display:block; font-size:6px; font-weight:400; opacity:.4; letter-spacing:.5px; text-transform:none; margin-top:6px; }
 .lane-label-abs.strategic .ll-text { color:var(--cyan); }
@@ -180,10 +180,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex cells (absolutely positioned) */
 .hex-cell { position:absolute; z-index:1; }
-.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
+.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(0,0,0,.04); border:1px solid rgba(0,0,0,.10); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.15); border-color:rgba(74,144,217,.4); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.12); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(0,0,0,.18); }
 /* Guidance highlighting on individual cells */
 .hex-cell.guide-best .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); box-shadow:inset 0 0 8px rgba(45,200,94,.15); }
 .hex-cell.guide-yes .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.18); }
@@ -212,7 +212,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 /* Agent badges */
 .agent-badge { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; transition:opacity .15s; }
 .agent-badge:hover { opacity:.7; }
-.agent-badge.human { background:rgba(255,255,255,.2); }
+.agent-badge.human { background:rgba(0,0,0,.15); }
 .agent-badge.systemic { background:rgba(123,94,167,.5); }
 .agent-badge.ai { background:rgba(74,144,217,.4); }
 
@@ -232,8 +232,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .driver-status { font-size:10px; color:var(--orange); margin-left:6px; animation:pulse 1.5s ease-in-out infinite; }
 /* Driver badges on hexes */
 .bh-drivers { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; justify-content:center; }
-.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:2px 7px; border-radius:8px; background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); font-size:8px; font-weight:600; color:#fff; cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
-.driver-badge:hover { background:rgba(0,0,0,.6); border-color:rgba(255,255,255,.4); }
+.driver-badge { display:inline-flex; align-items:center; gap:2px; padding:2px 7px; border-radius:8px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.25); font-size:8px; font-weight:600; color:#fff; cursor:pointer; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.driver-badge:hover { background:rgba(0,0,0,.7); border-color:rgba(255,255,255,.45); }
 .driver-badge .db-bolt { font-size:9px; color:var(--orange); }
 /* Domain boundary SVG */
 .domains-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:4; overflow:visible; }
@@ -250,7 +250,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .color-swatches { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
 .color-swatch { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all .15s; }
 .color-swatch:hover { transform:scale(1.15); }
-.color-swatch.selected { border-color:#fff; box-shadow:0 0 8px rgba(255,255,255,.3); }
+.color-swatch.selected { border-color:#333; box-shadow:0 0 8px rgba(0,0,0,.25); }
 /* Hex with domain outline */
 .board-hex.has-domain { outline-offset:-1px; }
 /* Toast notification */
@@ -418,7 +418,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .fbm-total-label { font-size:11px; color:var(--text-muted); margin-top:4px; }
 .fbm-table { width:100%; border-collapse:collapse; font-size:11px; }
 .fbm-table th { text-align:left; padding:5px 6px; border-bottom:1px solid var(--border); color:var(--text-muted); font-size:9px; text-transform:uppercase; letter-spacing:.4px; }
-.fbm-table td { padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; }
+.fbm-table td { padding:5px 6px; border-bottom:1px solid rgba(0,0,0,.06); vertical-align:top; }
 .fbm-table td:last-child { text-align:right; font-weight:600; white-space:nowrap; }
 .fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:13px; font-weight:700; padding-top:9px; }
 .fbm-table tr.fbm-zero td { opacity:.35; }
@@ -448,11 +448,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .htp-phase .htp-desc { font-size:8px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
 
 /* ══ TRANSFORMATION PATHWAYS ══ */
-.board-hex .link-hex { position:absolute; top:2px; right:24px; background:none; border:none; color:rgba(255,255,255,.5); cursor:pointer; font-size:12px; opacity:0; transition:opacity .15s; padding:0; z-index:3; }
+.board-hex .link-hex { position:absolute; top:2px; right:24px; background:none; border:none; color:rgba(255,255,255,.7); cursor:pointer; font-size:12px; opacity:0; transition:opacity .15s; padding:0; z-index:3; }
 .board-hex:hover .link-hex { opacity:1; }
 .hex-pathway-info { font-size:8px; color:var(--purple); margin-top:3px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .confirm-transition { display:inline-block; margin-top:4px; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; border:1px solid; transition:all .15s; }
-.confirm-transition.pending { color:rgba(255,255,255,.5); border-color:rgba(255,255,255,.2); }
+.confirm-transition.pending { color:rgba(0,0,0,.45); border-color:rgba(0,0,0,.2); }
 .confirm-transition.pending:hover { border-color:var(--green); color:var(--green); }
 .confirm-transition.successful { color:var(--green); border-color:var(--green); background:rgba(63,185,80,.1); cursor:default; }
 .pathway-transition-row { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; margin-bottom:6px; font-size:12px; }
@@ -550,7 +550,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <div class="htp-card" style="border-color:rgba(74,144,217,.25);background:rgba(74,144,217,.05);">
         <div class="htp-icon">🔗</div>
         <div class="htp-label" style="color:var(--accent)">Links</div>
-        <div class="htp-desc">Draw arrows between hexes. <em>Transition Path</em> (dashed) or <em>Nexus</em> (solid). Click type → source → target.</div>
+        <div class="htp-desc">Draw <em>Transition Nexus</em> arrows between hexes. Click the button → source hexagon → target hexagon.</div>
       </div>
       <div class="htp-card" style="border-color:rgba(139,148,158,.25);background:rgba(139,148,158,.05);">
         <div class="htp-icon">S2F</div>
@@ -708,7 +708,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <div class="board-domains" id="boardDomains"></div>
       <div class="connect-toolbar">
         <span class="ct-label">🔗 Links:</span>
-        <button class="connect-btn path-btn" onclick="toggleConnectMode('path')"><span class="cb-icon"></span> Transition Path</button>
         <button class="connect-btn nexus-btn" onclick="toggleConnectMode('nexus')"><span class="cb-icon"></span> Transition Nexus</button>
         <span class="connect-status" id="connectStatus" style="display:none"></span>
       </div>
@@ -913,12 +912,9 @@ function computeHexLayout() {
   const wrapper = scroll || document.getElementById('honeycombGrid')?.parentElement?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  const ah = wrapper.clientHeight || 700;
-  // Fill width fully
+  // Always fill the full width so there is no empty strip to the right
   const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
-  // Soft height cap: don't exceed 2x viewport height
-  const hexFromHeight = (ah * 2 - GRID_ROWS * HEX_GAP) / (GRID_ROWS + 0.5) / 0.866;
-  HEX_W = Math.max(80, Math.floor(Math.min(hexFromWidth, hexFromHeight)));
+  HEX_W = Math.max(80, Math.floor(hexFromWidth));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
@@ -1097,7 +1093,7 @@ function renderFitnessPanel() {
   const totalReps = Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
   const horizons=[{key:'h3m',label:'3 months'},{key:'h1y',label:'1 year'},{key:'h2y',label:'2 years'},{key:'h5y',label:'5 years'}];
   panel.innerHTML =
-    `<div class="zone-headers" style="position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.06);">` +
+    `<div class="zone-headers" style="position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(0,0,0,.08);">` +
       `<div class="zone-col-header hdr-desired" style="flex:1;"><span class="zone-tag">Improved Fitness ▶</span></div>` +
     `</div>` +
     `<div class="fp-body">` +
@@ -1684,7 +1680,7 @@ function updateConnectStatus() {
   const el=document.getElementById('connectStatus');
   if (!connectMode) { el.style.display='none'; return; }
   el.style.display='inline';
-  if (!connectFrom) el.textContent=`Click a source hexagon to start a ${connectMode==='path'?'Transition Path':'Transition Nexus'}`;
+  if (!connectFrom) el.textContent=`Click a source hexagon to start a Transition Nexus`;
   else { const item=allItems.find(i=>i.id===connectFrom); el.textContent=`"${item?.name}" selected — now click the target hexagon`; }
 }
 function handleConnectClick(hexId) {
@@ -1703,7 +1699,7 @@ function handleConnectClick(hexId) {
   connections.push({id:'conn_'+Date.now(), from:connectFrom, to:hexId, type:connectMode});
   const fromItem=allItems.find(i=>i.id===connectFrom);
   const toItem=allItems.find(i=>i.id===hexId);
-  addLog(`Connected "${fromItem?.name}" → "${toItem?.name}" (${connectMode==='path'?'Transition Path':'Transition Nexus'})`,'success');
+  addLog(`Connected "${fromItem?.name}" → "${toItem?.name}" (Transition Nexus)`,'success');
   connectFrom=null;
   updateConnectStatus();
   renderAllZones();
