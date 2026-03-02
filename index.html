@@ -166,9 +166,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .honeycomb-grid { position:relative; min-height:100%; }
 
 /* Zone background overlays */
-.zone-bg { position:absolute; pointer-events:none; z-index:0; border-right:1px solid rgba(255,255,255,.04); }
-.zone-bg.zb-current { background:linear-gradient(90deg, rgba(217,74,74,.03), transparent); }
-.zone-bg.zb-desired { background:linear-gradient(270deg, rgba(45,157,94,.03), transparent); }
+.zone-bg { position:absolute; pointer-events:none; z-index:0; border-right:1px solid rgba(255,255,255,.07); }
+.zone-bg.zb-current { background:linear-gradient(90deg, rgba(217,74,74,.07), rgba(217,74,74,.02)); }
+.zone-bg.zb-desired { background:linear-gradient(270deg, rgba(45,157,94,.07), rgba(45,157,94,.02)); }
 
 /* Lane divider and labels */
 .lane-divider { position:absolute; left:36px; right:0; height:1px; background:rgba(255,255,255,.08); z-index:1; pointer-events:none; }
@@ -180,10 +180,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex cells (absolutely positioned) */
 .hex-cell { position:absolute; z-index:1; }
-.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.015); border:1px dashed rgba(255,255,255,.035); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); transition:all .2s; display:flex; align-items:center; justify-content:center; }
 .hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.1); border-color:rgba(74,144,217,.3); }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:14px; color:rgba(255,255,255,.04); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.12); }
 /* Guidance highlighting on individual cells */
 .hex-cell.guide-best .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); box-shadow:inset 0 0 8px rgba(45,200,94,.15); }
 .hex-cell.guide-yes .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.18); }
