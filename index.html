@@ -571,11 +571,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
             <div id="hexScrollArea" style="flex:1;overflow:auto;">
               <div style="position:relative;">
                 <div class="axis-label-left">Current Reality · Constraints</div>
-                <svg class="domains-svg" id="domainsSvg"></svg>
                 <svg class="connections-svg" id="connectionsSvg"><defs><marker id="arrowPath" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow"/></marker><marker id="arrowNexus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" class="conn-arrow-nexus"/></marker></defs></svg>
                 <div class="honeycomb-grid" id="honeycombGrid">
                   <!-- Rendered by JS: renderBoard() -->
                 </div>
+                <svg class="domains-svg" id="domainsSvg"></svg>
               </div>
             </div>
           </div>
@@ -1950,8 +1950,6 @@ function renderDomainBoundaries(){
   const svg=document.getElementById('domainsSvg');
   if(!svg)return;
   const grid=document.getElementById('honeycombGrid');
-  // Move SVG inside honeycombGrid as last child so it paints above lane labels
-  if(grid && svg.parentElement!==grid) grid.appendChild(svg);
   if(grid){svg.setAttribute('width',grid.scrollWidth);svg.setAttribute('height',grid.scrollHeight);svg.style.width=grid.scrollWidth+'px';svg.style.height=grid.scrollHeight+'px';}
   svg.innerHTML='';
   domainDefinitions.forEach(dom=>{
