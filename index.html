@@ -1630,7 +1630,7 @@ function renderFitnessPanel() {
               (pracs.length
                 ? `<div>${pracs.map(pn=>`<span class="fp-prac-tag">${escHtml(pn)}</span>`).join('')}</div>`
                 : `<div style="font-size:9px;color:var(--text-muted);font-style:italic;">No practices selected</div>`) +
-              `<div style="font-size:9px;color:var(--text-muted);margin-top:3px;">${data.hexIds.length} hex${data.hexIds.length!==1?'es':''}</div>` +
+              `<div style="font-size:9px;color:var(--text-muted);margin-top:3px;">📍 ${data.hexIds.map(hid=>escHtml(allItems.find(i=>i.id===hid)?.name||hid)).join(', ')}</div>` +
             `</div>`;
           });
           unlinkedHexIds.forEach(hexId => {
@@ -1652,6 +1652,8 @@ function renderFitnessPanel() {
             const er=experimentResults[id]||{};
             const st=er.status||'';
             const linkedPracId=er.practiceId||'';
+            const cardItem = allItems.find(x=>x.id===id);
+            const cardName = cardItem?.name || id;
             // Build practice options: show board-linked practices first, then divider + all others
             const boardPracIds = new Set(allLinkedPracs.map(p=>p.id));
             const boardPracOpts = allLinkedPracs.map(p =>
@@ -1665,8 +1667,9 @@ function renderFitnessPanel() {
             const linkedPrac = linkedPracId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===linkedPracId) : null;
             const linkedCap = linkedPrac ? capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===linkedPracId)) : null;
             return`<div class="fp-item">` +
+              `<div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px;">⬡ ${escHtml(cardName)}</div>` +
               (linkedPrac
-                ? `<div class="fp-cap-link" style="font-size:11px;font-weight:700;margin-bottom:4px;">◈ ${escHtml(linkedCap?.name||'')} → ${escHtml(linkedPrac.name)}</div>`
+                ? `<div class="fp-cap-link" style="font-size:11px;font-weight:600;margin-bottom:4px;">◈ ${escHtml(linkedCap?.name||'')} → ${escHtml(linkedPrac.name)}</div>`
                 : `<div style="font-size:9px;color:var(--text-muted);font-style:italic;margin-bottom:4px;">No practice linked</div>`) +
               `<select class="exp-status-select" onchange="setExperimentStatus('${id}',this.value)">` +
                 `<option value=""${st===''?' selected':''}>— Status —</option>` +
