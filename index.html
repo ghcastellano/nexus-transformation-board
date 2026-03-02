@@ -422,6 +422,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .fbm-table td:last-child { text-align:right; font-weight:600; white-space:nowrap; }
 .fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:13px; font-weight:700; padding-top:9px; }
 .fbm-table tr.fbm-zero td { opacity:.35; }
+
+/* ══ HOW TO PLAY CARDS ══ */
+.htp-cards { display:flex; gap:8px; margin:8px 0 12px; }
+.htp-card { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.htp-card .htp-icon { font-size:18px; margin-bottom:4px; }
+.htp-card .htp-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+.htp-card .htp-desc { font-size:10px; color:var(--text-muted); line-height:1.5; }
+.htp-card.red { border-color:rgba(217,74,74,.35); background:rgba(217,74,74,.06); }
+.htp-card.red .htp-label { color:var(--red); }
+.htp-card.orange { border-color:rgba(232,148,58,.35); background:rgba(232,148,58,.06); }
+.htp-card.orange .htp-label { color:var(--orange); }
+.htp-card.green { border-color:rgba(45,157,94,.35); background:rgba(45,157,94,.06); }
+.htp-card.green .htp-label { color:var(--green); }
+.htp-card.blue { border-color:rgba(74,144,217,.35); background:rgba(74,144,217,.06); }
+.htp-card.blue .htp-label { color:var(--accent); }
+.htp-card.purple { border-color:rgba(123,94,167,.35); background:rgba(123,94,167,.06); }
+.htp-card.purple .htp-label { color:var(--purple); }
+.htp-card.cyan { border-color:rgba(56,178,160,.35); background:rgba(56,178,160,.06); }
+.htp-card.cyan .htp-label { color:var(--cyan); }
+.htp-phases { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin:8px 0 12px; }
+.htp-phase { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 6px; text-align:center; }
+.htp-phase .htp-icon { font-size:16px; }
+.htp-phase .htp-label { font-size:9px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.3px; margin-top:3px; }
+.htp-phase .htp-desc { font-size:8px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
+
+/* ══ TRANSFORMATION PATHWAYS ══ */
+.board-hex .link-hex { position:absolute; top:2px; right:24px; background:none; border:none; color:rgba(255,255,255,.5); cursor:pointer; font-size:12px; opacity:0; transition:opacity .15s; padding:0; z-index:3; }
+.board-hex:hover .link-hex { opacity:1; }
+.hex-pathway-info { font-size:8px; color:var(--purple); margin-top:3px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.confirm-transition { display:inline-block; margin-top:4px; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; border:1px solid; transition:all .15s; }
+.confirm-transition.pending { color:rgba(255,255,255,.5); border-color:rgba(255,255,255,.2); }
+.confirm-transition.pending:hover { border-color:var(--green); color:var(--green); }
+.confirm-transition.successful { color:var(--green); border-color:var(--green); background:rgba(63,185,80,.1); cursor:default; }
+.pathway-transition-row { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; margin-bottom:6px; font-size:12px; }
+.pathway-add-row { display:flex; gap:8px; margin-top:8px; }
+.pathway-add-row select { flex:1; }
 </style>
 </head>
 <body>
@@ -460,33 +496,125 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 <div class="modal-overlay" id="howToPlayModal">
   <div class="modal" style="max-width:620px;">
     <h2>How to Play the Nexus Game</h2>
-    <p>The Nexus Transformation Board is a <strong>strategic sensemaking game</strong> where participants navigate organizational transformation.</p>
-    <h3>The Board (Two Lanes)</h3>
-    <p>The board has <strong>3 zones × 2 layers</strong>:</p>
-    <p><strong style="color:var(--red)">Current Reality</strong> — Where anti-patterns live. Constraints, inertia, habits.</p>
-    <p><strong style="color:var(--orange)">Transformation Path</strong> — Transitional space. Experiments and learning.</p>
-    <p><strong style="color:var(--green)">Improved Fitness</strong> — Enabling patterns and adaptive capacity.</p>
-    <p style="margin-top:6px"><strong style="color:var(--cyan)">Top Lane — Strategic</strong>: Intent, Meaning, Investment Logic (why leadership cares).</p>
-    <p><strong style="color:var(--orange)">Bottom Lane — Operational</strong>: Execution, Habits, Daily Decisions (where change happens).</p>
+    <p>A <strong>strategic sensemaking game</strong> where participants navigate organizational transformation by mapping patterns, replacing anti-patterns, and guiding the system toward adaptive fitness.</p>
+    <h3>The Board — 3 Zones × 2 Lanes</h3>
+    <div class="htp-cards">
+      <div class="htp-card red">
+        <div class="htp-icon">◀</div>
+        <div class="htp-label">Current Reality</div>
+        <div class="htp-desc">Where anti-patterns live. Constraints, inertia, legacy habits that block progress.</div>
+      </div>
+      <div class="htp-card orange">
+        <div class="htp-icon">⟷</div>
+        <div class="htp-label">Transformation Path</div>
+        <div class="htp-desc">Transitional space for experiments, bridges, and safe-to-fail learning.</div>
+      </div>
+      <div class="htp-card green">
+        <div class="htp-icon">▶</div>
+        <div class="htp-label">Improved Fitness</div>
+        <div class="htp-desc">Enabling patterns and adaptive capacity. The direction of travel.</div>
+      </div>
+    </div>
+    <div class="htp-cards">
+      <div class="htp-card cyan">
+        <div class="htp-icon">↑</div>
+        <div class="htp-label">Strategic Lane</div>
+        <div class="htp-desc">Intent, Meaning, Investment Logic — why leadership cares.</div>
+      </div>
+      <div class="htp-card orange">
+        <div class="htp-icon">↓</div>
+        <div class="htp-label">Operational Lane</div>
+        <div class="htp-desc">Execution, Habits, Daily Decisions — where change actually happens.</div>
+      </div>
+    </div>
     <h3>The Hexagons</h3>
-    <p><span style="color:#6b8fd4">Blue Hexagons</span> — Patterns: enabling behaviors.</p>
-    <p><span style="color:var(--orange)">Orange Hexagons</span> — Anti-Patterns: constraining behaviors.</p>
-    <p><span style="color:var(--gray)">Gray Hexagons</span> — Transition Patterns: safe bridges.</p>
-    <h3>Connections (Links)</h3>
-    <p>Use the <strong>🔗 Links</strong> toolbar above the board to draw arrows between hexagons:</p>
-    <p><strong>Transition Path</strong> (dashed arrow) — Shows the transformation journey. Typically Anti-Pattern → Transition → Pattern.</p>
-    <p><strong>Transition Nexus</strong> (solid L-shaped arrow) — Shows a nexus point where multiple transitions converge or branch.</p>
-    <p style="font-size:11px;color:var(--text-muted)">Click a link type → click the source hex → click the target hex. Hover a link to see the delete button.</p>
-    <h3>Board Markers</h3>
-    <p><span style="color:#8b8b8b;font-weight:700">S2F</span> — <strong>Safe to Fail Experiment</strong>: Mark a hex as an experimental probe. Small, contained tests with clear hypotheses.</p>
-    <p><span style="color:var(--cyan);font-weight:700">C</span> — <strong>Capability</strong>: Mark organizational capabilities that need to be developed or leveraged for the transformation.</p>
-    <p style="font-size:11px;color:var(--text-muted)">Select a marker from the Dashboard, then click a hex. Click the badge on the hex to remove it.</p>
+    <div class="htp-cards">
+      <div class="htp-card blue">
+        <div class="htp-icon">⬡</div>
+        <div class="htp-label">Patterns</div>
+        <div class="htp-desc">Enabling behaviors that increase organizational fitness. Drag toward Improved Fitness.</div>
+      </div>
+      <div class="htp-card orange">
+        <div class="htp-icon">⬡</div>
+        <div class="htp-label">Anti-Patterns</div>
+        <div class="htp-desc">Constraining behaviors. Map in Current Reality, then define a pathway to replace them.</div>
+      </div>
+      <div class="htp-card" style="border-color:rgba(139,148,158,.35);background:rgba(139,148,158,.06);">
+        <div class="htp-icon">⬡</div>
+        <div class="htp-label" style="color:var(--gray)">Transitions</div>
+        <div class="htp-desc">Safe bridges between states. Place in Transformation Path and confirm when successful.</div>
+      </div>
+    </div>
+    <h3>Connections & Markers</h3>
+    <div class="htp-cards">
+      <div class="htp-card" style="border-color:rgba(74,144,217,.25);background:rgba(74,144,217,.05);">
+        <div class="htp-icon">🔗</div>
+        <div class="htp-label" style="color:var(--accent)">Links</div>
+        <div class="htp-desc">Draw arrows between hexes. <em>Transition Path</em> (dashed) or <em>Nexus</em> (solid). Click type → source → target.</div>
+      </div>
+      <div class="htp-card" style="border-color:rgba(139,148,158,.25);background:rgba(139,148,158,.05);">
+        <div class="htp-icon">S2F</div>
+        <div class="htp-label" style="color:var(--gray)">S2F Marker</div>
+        <div class="htp-desc">Safe-to-Fail Experiment. Small, contained probe with a clear hypothesis. +2 pts when run, +3 if passed.</div>
+      </div>
+      <div class="htp-card cyan">
+        <div class="htp-icon">C</div>
+        <div class="htp-label">Capability</div>
+        <div class="htp-desc">Mark organizational capabilities that need to be developed or leveraged. +5 pts each.</div>
+      </div>
+    </div>
     <h3>The Mobius Cycle</h3>
-    <p><strong>Sense → Focus → Experiment → Stabilize → Diffuse</strong>. Each phase guides your actions.</p>
+    <div class="htp-phases">
+      <div class="htp-phase"><div class="htp-icon">👁</div><div class="htp-label">Sense</div><div class="htp-desc">Observe signals & friction</div></div>
+      <div class="htp-phase"><div class="htp-icon">🎯</div><div class="htp-label">Focus</div><div class="htp-desc">Pick few habit shifts</div></div>
+      <div class="htp-phase"><div class="htp-icon">🧪</div><div class="htp-label">Experiment</div><div class="htp-desc">Safe-to-fail probes</div></div>
+      <div class="htp-phase"><div class="htp-icon">🔒</div><div class="htp-label">Stabilize</div><div class="htp-desc">Lock gains, codify</div></div>
+      <div class="htp-phase"><div class="htp-icon">🌊</div><div class="htp-label">Diffuse</div><div class="htp-desc">Storytelling & adoption</div></div>
+    </div>
     <h3>Agents of Change</h3>
-    <p>🧑 <strong>Human</strong> — Leaders who legitimize change. &nbsp; 🏛 <strong>Systemic</strong> — Governance, KPIs. &nbsp; 🤖 <strong>AI</strong> — Automation, analytics.</p>
+    <div class="htp-cards">
+      <div class="htp-card" style="border-color:rgba(200,200,200,.2);background:rgba(200,200,200,.04);">
+        <div class="htp-icon">🧑</div>
+        <div class="htp-label" style="color:var(--text)">Human</div>
+        <div class="htp-desc">Leaders who legitimize change and hold social authority.</div>
+      </div>
+      <div class="htp-card purple">
+        <div class="htp-icon">🏛</div>
+        <div class="htp-label">Systemic</div>
+        <div class="htp-desc">Governance structures, KPIs, and institutional levers.</div>
+      </div>
+      <div class="htp-card blue">
+        <div class="htp-icon">🤖</div>
+        <div class="htp-label">AI</div>
+        <div class="htp-desc">Automation, analytics, and intelligent augmentation.</div>
+      </div>
+    </div>
+    <h3>Transformation Pathways</h3>
+    <div class="htp-cards">
+      <div class="htp-card cyan">
+        <div class="htp-icon">🔗</div>
+        <div class="htp-label">Link Anti-Pattern</div>
+        <div class="htp-desc">Hover an anti-pattern on the board and click 🔗 to define its target pattern and required transition steps.</div>
+      </div>
+      <div class="htp-card green">
+        <div class="htp-icon">✓</div>
+        <div class="htp-label">Confirm Steps</div>
+        <div class="htp-desc">Each transition in a pathway shows a Confirm button. Mark it successful after the experiment is done. +1 pt each, +5 for full pathway.</div>
+      </div>
+    </div>
     <h3>Goal</h3>
-    <p>There is no end state. Success = pattern migration + rising fitness score.</p>
+    <div class="htp-cards">
+      <div class="htp-card" style="border-color:rgba(74,144,217,.25);background:rgba(74,144,217,.05);">
+        <div class="htp-icon">📈</div>
+        <div class="htp-label" style="color:var(--accent)">Rising Fitness</div>
+        <div class="htp-desc">Patterns in path zones +3. Capabilities +5. S2F experiments +2/+3. Transitions +1. Agents & drivers add bonuses.</div>
+      </div>
+      <div class="htp-card" style="border-color:rgba(56,178,160,.25);background:rgba(56,178,160,.05);">
+        <div class="htp-icon">♾️</div>
+        <div class="htp-label" style="color:var(--cyan)">No End State</div>
+        <div class="htp-desc">There is no fixed finish line. Success is pattern migration + continuously rising organizational fitness.</div>
+      </div>
+    </div>
     <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('howToPlayModal')">Got it!</button></div>
   </div>
 </div>
@@ -511,6 +639,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
     <div class="form-group"><label>Domain Name</label><input id="newDomainName" placeholder="e.g., Technology, People & Culture"></div>
     <div class="form-group"><label>Color</label><div class="color-swatches" id="domainColorPicker"></div></div>
     <div class="modal-actions"><button class="btn" onclick="closeModal('addDomainModal')">Cancel</button><button class="btn btn-primary" onclick="createDomain()">Create</button></div>
+  </div>
+</div>
+
+<!-- ══ PATHWAY MODAL ══ -->
+<div class="modal-overlay" id="pathwayModal">
+  <div class="modal" style="max-width:600px;">
+    <h2 id="pathwayModalTitle">Transformation Pathway</h2>
+    <p>Define which pattern this anti-pattern should become, and which transition steps are needed (in order).</p>
+    <input type="hidden" id="pathwayAntipatternId">
+    <div class="form-group">
+      <label>Target Pattern (desired end state)</label>
+      <select id="pathwayTargetPattern"></select>
+    </div>
+    <div class="form-group">
+      <label>Transition Steps (in order of effort)</label>
+      <div id="pathwayTransitionList"></div>
+      <div class="pathway-add-row">
+        <select id="pathwayTransitionSelect"></select>
+        <button class="btn btn-sm" onclick="addTransitionToPath()">+ Add Step</button>
+      </div>
+      <p style="font-size:10px;margin-top:6px;color:var(--text-muted);">Each step = one experiment needed. Order represents sequence of effort.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('pathwayModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePathway()">Save Pathway</button>
+    </div>
   </div>
 </div>
 
@@ -796,6 +950,8 @@ let agentAssignments = {};
 let logEntries = [];
 let draggedId = null, dragSource = null; // dragSource is now "row,col" string or null
 let activeDomain = null;
+let transformationPaths = {}; // antipatternId -> { targetPatternId, transitions: [{ id, status: 'pending'|'successful' }] }
+let _pathwayDraft = []; // temp transition IDs being built in the modal
 let connections = [];
 let connectMode = null;
 let connectFrom = null;
@@ -1334,13 +1490,28 @@ function renderBoard() {
         const markers = boardMarkers.filter(m=>m.hexId===hexId).map(m=>`<div class="marker-badge ${m.type}" title="${m.type==='s2f'?'S2F':'Capability'}" onclick="event.stopPropagation();toggleMarker('${hexId}','${m.type}')">${m.type==='s2f'?'S2F':'C'}</div>`).join('');
         const drvs = (driverAssignments[hexId]||[]).map(d=>`<div class="driver-badge" title="${d}" onclick="event.stopPropagation();assignDriver('${hexId}','${d}')"><span class="db-bolt">⚡</span>${d}</div>`).join('');
         const icons = agents + markers;
+        const pathwayInfo = item.type==='antipattern' && transformationPaths[hexId]
+          ? (()=>{ const p=transformationPaths[hexId]; const tgt=allItems.find(x=>x.id===p.targetPatternId); const done=p.transitions.filter(x=>x.status==='successful').length; return `<div class="hex-pathway-info">→ ${tgt?tgt.name:'?'} · ${done}/${p.transitions.length}</div>`; })()
+          : '';
+        const confirmBtn = (()=>{
+          if (item.type!=='transition') return '';
+          const pathEntry = Object.entries(transformationPaths).find(([,path])=>path.transitions.some(tr=>tr.id===hexId));
+          if (!pathEntry) return '';
+          const [apId, path] = pathEntry;
+          const tr = path.transitions.find(t=>t.id===hexId);
+          const st = tr.status;
+          return `<button class="confirm-transition ${st}" onclick="event.stopPropagation();${st==='pending'?`confirmTransitionSuccess('${apId}','${hexId}')`:'void(0)'}">${st==='successful'?'✓ Confirmed':'✓ Confirm'}</button>`;
+        })();
         el.innerHTML = `
+          ${item.type==='antipattern' ? `<button class="link-hex" onclick="event.stopPropagation();openPathwayModal('${hexId}')" title="Define transformation pathway">🔗</button>` : ''}
           <button class="remove-hex" onclick="event.stopPropagation();removeHex('${hexId}','${key}')">×</button>
           <div class="board-hex-shape">
             <div class="bh-text">
               <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':'TRANSITION'}</div>
               <div class="bh-name" title="${item.name}">${item.name}</div>
               <div class="bh-signal" title="${item.signal}">${item.signal}</div>
+              ${pathwayInfo}
+              ${confirmBtn}
               ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
             </div>
             ${icons?'<div class="bh-bottom">'+icons+'</div>':''}
@@ -1810,8 +1981,18 @@ function calcFitnessBreakdown(){
   const drLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
   const drBonus=drLinks*0.5;
   const cycleBonus=(cycleNumber-1)*2;
-  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus)));
-  return{total,hexScore,capCount,capScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus};
+  // 6. Transformation pathway bonuses
+  let pathwayBonus=0;
+  Object.entries(transformationPaths).forEach(([apId,path])=>{
+    const succ=path.transitions.filter(t=>t.status==='successful').length;
+    pathwayBonus+=succ*1;
+    if(path.transitions.length>0&&succ===path.transitions.length){
+      const targetEntry=Object.entries(gridState).find(([,v])=>v===path.targetPatternId);
+      if(targetEntry){const[r2,c2]=targetEntry[0].split(',').map(Number);if(getZoneFromCoords(r2,c2).startsWith('path_'))pathwayBonus+=5;}
+    }
+  });
+  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus+pathwayBonus)));
+  return{total,hexScore,capCount,capScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
 }
 function updateStats(){
   const all=Object.values(gridState);
@@ -1861,11 +2042,11 @@ function addCustomPattern(){
 }
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};transformationPaths={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,transformationPaths,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');
@@ -1994,6 +2175,71 @@ function renderDomainBoundaries(){
     g.appendChild(lbl);
     svg.appendChild(g);
   });
+}
+
+// ══════════════════════════════════════════
+// TRANSFORMATION PATHWAYS
+// ══════════════════════════════════════════
+function openPathwayModal(antipatternId){
+  const item=allItems.find(i=>i.id===antipatternId);
+  if(!item)return;
+  document.getElementById('pathwayModalTitle').textContent=`Pathway: "${item.name}"`;
+  document.getElementById('pathwayAntipatternId').value=antipatternId;
+  const existing=transformationPaths[antipatternId];
+  const sel=document.getElementById('pathwayTargetPattern');
+  sel.innerHTML=allItems.filter(i=>i.type==='pattern').map(i=>`<option value="${i.id}"${existing&&existing.targetPatternId===i.id?' selected':''}>${i.name}</option>`).join('');
+  _pathwayDraft=existing?existing.transitions.map(t=>t.id):[];
+  renderPathwayTransitionList();
+  showModal('pathwayModal');
+}
+function renderPathwayTransitionList(){
+  const list=document.getElementById('pathwayTransitionList');
+  list.innerHTML=_pathwayDraft.map((tid,idx)=>{
+    const t=allItems.find(i=>i.id===tid);
+    return `<div class="pathway-transition-row"><span style="color:var(--text-muted);min-width:16px;">${idx+1}.</span><span style="flex:1">${t?t.name:tid}</span><button class="btn btn-sm btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removeTransitionFromPath(${idx})">×</button></div>`;
+  }).join('');
+  const sel=document.getElementById('pathwayTransitionSelect');
+  const available=allItems.filter(i=>i.type==='transition'&&!_pathwayDraft.includes(i.id));
+  sel.innerHTML=available.length?available.map(i=>`<option value="${i.id}">${i.name}</option>`).join(''):'<option disabled>All transitions added</option>';
+}
+function addTransitionToPath(){
+  const sel=document.getElementById('pathwayTransitionSelect');
+  if(!sel.value||_pathwayDraft.includes(sel.value))return;
+  _pathwayDraft.push(sel.value);
+  renderPathwayTransitionList();
+}
+function removeTransitionFromPath(index){
+  _pathwayDraft.splice(index,1);
+  renderPathwayTransitionList();
+}
+function savePathway(){
+  const apId=document.getElementById('pathwayAntipatternId').value;
+  const targetPatternId=document.getElementById('pathwayTargetPattern').value;
+  const existing=transformationPaths[apId];
+  transformationPaths[apId]={
+    targetPatternId,
+    transitions:_pathwayDraft.map(id=>({id,status:existing?.transitions.find(t=>t.id===id)?.status||'pending'}))
+  };
+  const ap=allItems.find(i=>i.id===apId);
+  const tp=allItems.find(i=>i.id===targetPatternId);
+  addLog(`Pathway: "${ap?.name}" → "${tp?.name}" (${_pathwayDraft.length} steps)`,'success');
+  closeModal('pathwayModal');
+  renderBoard();renderLibrary();updateStats();
+  scheduleAutoSave();
+}
+function confirmTransitionSuccess(antipatternId,transitionId){
+  const ap=allItems.find(i=>i.id===antipatternId);
+  const tr=allItems.find(i=>i.id===transitionId);
+  const path=transformationPaths[antipatternId];
+  if(!path)return;
+  const tp=allItems.find(i=>i.id===path.targetPatternId);
+  if(!confirm(`Mark "${tr?.name}" as successful\nfor pathway: "${ap?.name}" → "${tp?.name}"?`))return;
+  path.transitions.find(t=>t.id===transitionId).status='successful';
+  addLog(`Transition "${tr?.name}" confirmed successful`,'success');
+  const allDone=path.transitions.every(t=>t.status==='successful');
+  if(allDone){addLog(`Pathway complete! "${ap?.name}" → "${tp?.name}" — Fitness +5 bonus`,'success');}
+  renderBoard();renderLibrary();updateStats();
+  scheduleAutoSave();
 }
 
 // ══════════════════════════════════════════
