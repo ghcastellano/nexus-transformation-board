@@ -1095,7 +1095,7 @@ function computeHexLayout() {
   // Use viewport width to size hexes when there is enough space; keep a minimum
   // of 90px so hexes stay readable — the board will scroll horizontally beyond the viewport
   const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
-  HEX_W = Math.max(90, Math.floor(hexFromWidth));
+  HEX_W = Math.max(120, Math.floor(hexFromWidth));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
