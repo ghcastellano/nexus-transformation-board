@@ -1071,7 +1071,7 @@ const ZONES = ['current_strategic','current_operational','path_strategic','path_
 
 // ── Honeycomb grid config ──
 // Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
-const GRID_COLS = 10; // path columns only — Current Reality is a separate backlog panel
+const GRID_COLS = 20; // path columns — wide board, scroll horizontally
 const GRID_ROWS = 20; // 10 per lane (strategic, operational) — doubled for more space
 const GRID_PAD_LEFT = 42;      // space for lane labels
 const HEX_GAP = 6;             // gap between hexes
@@ -1082,8 +1082,9 @@ let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
 // Columns valid per row: even=all 10 path cols, odd=9 cols offset by half (proper honeycomb)
 function getColsForRow(row) {
-  if (row % 2 === 0) return [0,1,2,3,4,5,6,7,8,9];
-  return [0,1,2,3,4,5,6,7,8]; // 9 cols shifted right by ROW_OFFSET — no gap in honeycomb
+  // Even rows: full GRID_COLS; odd rows: one fewer (honeycomb stagger)
+  const n = row % 2 === 0 ? GRID_COLS : GRID_COLS - 1;
+  return Array.from({length: n}, (_, i) => i);
 }
 
 function computeHexLayout() {
@@ -1091,9 +1092,10 @@ function computeHexLayout() {
   const wrapper = scroll || document.getElementById('honeycombGrid')?.parentElement?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  // Fill the full width so there is no empty strip to the right
+  // Use viewport width to size hexes when there is enough space; keep a minimum
+  // of 90px so hexes stay readable — the board will scroll horizontally beyond the viewport
   const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
-  HEX_W = Math.max(72, Math.floor(hexFromWidth));
+  HEX_W = Math.max(90, Math.floor(hexFromWidth));
   HEX_H = Math.round(HEX_W * 0.866);
   COL_W = HEX_W + HEX_GAP;
   ROW_H = HEX_H + HEX_GAP;
