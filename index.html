@@ -1344,8 +1344,8 @@ function renderExperimentsPage() {
     }
   }
 
-  // Build all-caps practice list for dropdown
-  const allPracs = capabilitiesLibrary.flatMap(cap => cap.practices.map(p => ({...p, capName: cap.name, capId: cap.id})));
+  // Flat practice list for linked practice name lookup
+  const allPracs = capabilitiesLibrary.flatMap(cap => cap.practices.map(p => ({...p, capName: cap.name})));
 
   let html = `<div class="exp-tracker-hdr">
     <span style="font-size:13px;font-weight:700;">🧪 Experiment Tracker</span>
@@ -1388,19 +1388,14 @@ function renderExperimentsPage() {
         const linkedPracId = er.practiceId || '';
         const linkedPrac   = linkedPracId ? allPracs.find(p => p.id === linkedPracId) : null;
 
-        // Build practice dropdown: show cap-linked practices first, then all others
+        // Build practice dropdown: only practices from the connected card's capabilities
         const linkedCapPracs = capIds.flatMap(cid => {
           const cap = capabilitiesLibrary.find(c => c.id === cid);
           return cap ? cap.practices.map(p => ({...p, capName: cap.name})) : [];
         });
-        const linkedPracIds = new Set(linkedCapPracs.map(p => p.id));
-        const linkedOpts = linkedCapPracs.map(p =>
-          `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>★ ${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
-        ).join('');
-        const otherOpts = allPracs.filter(p => !linkedPracIds.has(p.id)).map(p =>
-          `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
-        ).join('');
-        const pracOptions = linkedOpts + (otherOpts ? `<option disabled>──────────</option>${otherOpts}` : '');
+        const pracOptions = linkedCapPracs.length > 0
+          ? linkedCapPracs.map(p => `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(p.capName)} → ${escHtml(p.name)}</option>`).join('')
+          : `<option disabled>No capabilities on connected card</option>`;
 
         html += `<div class="kanban-card">
           <div class="kanban-card-name">${icon} ${escHtml(title)}</div>
@@ -1814,10 +1809,8 @@ function openS2FModal(connIdOrHexId) {
     const fromItem = allItems.find(i => i.id === conn.from);
     const toItem   = allItems.find(i => i.id === conn.to);
     title = `Experiment: ${fromItem?.name || '?'} → ${toItem?.name || '?'}`;
-    const toCapMarker   = boardMarkers.find(m => m.hexId === conn.to   && m.type === 'capability');
-    const fromCapMarker = boardMarkers.find(m => m.hexId === conn.from && m.type === 'capability');
+    const toCapMarker = boardMarkers.find(m => m.hexId === conn.to && m.type === 'capability');
     capIds = getCapabilityIds(toCapMarker);
-    if (capIds.length === 0) capIds = getCapabilityIds(fromCapMarker);
   } else {
     // Legacy: hex-based experiment
     const item = allItems.find(i => i.id === connIdOrHexId);
