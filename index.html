@@ -480,9 +480,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .cap-add-form input:focus, .cap-add-form textarea:focus { outline:none; border-color:var(--accent); }
 .cap-add-form textarea { resize:vertical; min-height:40px; line-height:1.4; }
 .cap-add-form-row { display:flex; gap:6px; justify-content:flex-end; }
-/* Capability Selector Modal */
-#capSelectorModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; align-items:center; justify-content:center; }
-#capSelectorModal.open { display:flex; }
+/* Shared modal overlay style */
+#capSelectorModal,#capSimpleModal,#s2fPracticeModal,#transPickerModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; align-items:center; justify-content:center; }
+#capSelectorModal.open,#capSimpleModal.open,#s2fPracticeModal.open,#transPickerModal.open { display:flex; }
 .cap-sel-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:500px; max-height:80vh; display:flex; flex-direction:column; }
 .cap-sel-hdr { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; }
 .cap-sel-hdr h3 { font-size:13px; font-weight:700; flex:1; margin:0; }
@@ -768,7 +768,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   </div>
 </div>
 
-<!-- Capability Selector Modal -->
+<!-- Simple Capability Modal (drag C → hex) -->
+<div id="capSimpleModal">
+  <div class="cap-sel-box" style="max-width:420px;">
+    <div class="cap-sel-hdr">
+      <h3 id="capSimpleTitle">Link Capabilities</h3>
+      <button onclick="closeCapSimple()">✕</button>
+    </div>
+    <div class="cap-sel-body" id="capSimpleBody"></div>
+    <div class="cap-sel-footer">
+      <button class="btn" style="color:var(--red);border-color:var(--red);margin-right:auto;" onclick="removeCapSimple()">✕ Remove</button>
+      <button class="btn" onclick="closeCapSimple()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCapSimple()">Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- S2F Practice Picker Modal (drag S2F → hex with capabilities) -->
+<div id="s2fPracticeModal">
+  <div class="cap-sel-box" style="max-width:420px;">
+    <div class="cap-sel-hdr">
+      <h3 id="s2fModalTitle">Select Practice to Experiment</h3>
+      <button onclick="closeS2FModal()">✕</button>
+    </div>
+    <div class="cap-sel-body" id="s2fModalBody"></div>
+    <div class="cap-sel-footer">
+      <button class="btn" onclick="saveS2FExperiment(null)">Skip (no practice)</button>
+      <button class="btn btn-primary" onclick="saveS2FExperiment()">Start Experiment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transition Picker Modal (click nexus badge) -->
+<div id="transPickerModal">
+  <div class="cap-sel-box" style="max-width:420px;">
+    <div class="cap-sel-hdr">
+      <h3>Assign Transition to Nexus</h3>
+      <button onclick="closeTransPicker()">✕</button>
+    </div>
+    <div class="cap-sel-body" id="transPickerBody"></div>
+    <div class="cap-sel-footer">
+      <button class="btn" style="color:var(--red);border-color:var(--red);margin-right:auto;" onclick="removeTransFromConn()">✕ Remove</button>
+      <button class="btn" onclick="closeTransPicker()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTransition()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Capability Selector Modal (edit existing C badge) -->
 <div id="capSelectorModal">
   <div class="cap-sel-box">
     <div class="cap-sel-hdr">
@@ -915,8 +962,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <h3>Board Markers</h3>
         <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Select a marker, then click a hex on the board.</p>
         <div class="marker-palette">
-          <div class="marker-pal" data-marker="s2f" onclick="selectMarker('s2f')"><div class="marker-circle s2f">S2F</div><div class="marker-label">Safe to Fail Experiment</div></div>
-          <div class="marker-pal" data-marker="capability" onclick="selectMarker('capability')"><div class="marker-circle capability">C</div><div class="marker-label">Capability</div></div>
+          <div class="marker-pal" data-marker="s2f" draggable="true" ondragstart="startMarkerDrag('s2f',event)" ondragend="draggedMarkerType=null"><div class="marker-circle s2f">S2F</div><div class="marker-label">Drag to hex</div></div>
+          <div class="marker-pal" data-marker="capability" draggable="true" ondragstart="startMarkerDrag('capability',event)" ondragend="draggedMarkerType=null"><div class="marker-circle capability">C</div><div class="marker-label">Drag to hex</div></div>
         </div>
       </div>
       <div class="dash-section">
@@ -1025,7 +1072,7 @@ const ZONES = ['current_strategic','current_operational','path_strategic','path_
 // ── Honeycomb grid config ──
 // Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
 const GRID_COLS = 10; // path columns only — Current Reality is a separate backlog panel
-const GRID_ROWS = 10; // 5 per lane (strategic, operational)
+const GRID_ROWS = 20; // 10 per lane (strategic, operational) — doubled for more space
 const GRID_PAD_LEFT = 42;      // space for lane labels
 const HEX_GAP = 6;             // gap between hexes
 
@@ -1672,6 +1719,184 @@ function removeCapabilityMarker() {
   renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
 }
 
+// ── getCapabilityIds: backward-compat helper (all marker formats) ──
+function getCapabilityIds(marker) {
+  if (!marker) return [];
+  if (marker.capabilityIds) return marker.capabilityIds; // new simple format
+  if (marker.capabilityLinks) return marker.capabilityLinks.map(l=>l.capabilityId).filter(Boolean); // old complex format
+  if (marker.capabilityId) return [marker.capabilityId]; // oldest format
+  return [];
+}
+
+// ── Simple Capability Selector (drag C → hex) ──
+let _capSimpleHexId = null;
+function openCapSimple(hexId) {
+  _capSimpleHexId = hexId;
+  const item = allItems.find(i=>i.id===hexId);
+  document.getElementById('capSimpleTitle').textContent = 'Link Capabilities — ' + (item?.name || hexId);
+  const existing = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
+  const selIds = new Set(getCapabilityIds(existing));
+  const body = document.getElementById('capSimpleBody');
+  if (!body) return;
+  if (capabilitiesLibrary.length === 0) {
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities defined. Go to the <strong>◈ Capabilities Library</strong> tab to add some.</p>`;
+  } else {
+    body.innerHTML = capabilitiesLibrary.map(cap => `
+      <div class="cap-sel-item${selIds.has(cap.id)?' selected':''}" id="csi2_${cap.id}" onclick="toggleCapSimpleCheck('${cap.id}')">
+        <div class="cap-sel-cap" style="padding:10px 12px;">
+          <input type="checkbox" id="cscc_${cap.id}" ${selIds.has(cap.id)?'checked':''} style="pointer-events:none;">
+          <div>
+            <div class="cap-sel-cap-name">${escHtml(cap.name)}</div>
+            ${cap.description?`<div class="cap-sel-cap-desc">${escHtml(cap.description)}</div>`:''}
+            <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">${cap.practices.length} practices</div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('capSimpleModal').classList.add('open');
+}
+function toggleCapSimpleCheck(capId) {
+  const item = document.getElementById('csi2_' + capId);
+  const cb = document.getElementById('cscc_' + capId);
+  if (!item || !cb) return;
+  const newState = !item.classList.contains('selected');
+  item.classList.toggle('selected', newState);
+  cb.checked = newState;
+}
+function closeCapSimple() {
+  _capSimpleHexId = null;
+  document.getElementById('capSimpleModal').classList.remove('open');
+}
+function removeCapSimple() {
+  const hexId = _capSimpleHexId;
+  if (!hexId) return;
+  boardMarkers = boardMarkers.filter(m=>!(m.hexId===hexId&&m.type==='capability'));
+  addLog(`Removed capability from "${allItems.find(i=>i.id===hexId)?.name||hexId}"`, 'warning');
+  closeCapSimple();
+  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
+function saveCapSimple() {
+  const hexId = _capSimpleHexId;
+  if (!hexId) return;
+  const capabilityIds = capabilitiesLibrary
+    .filter(cap => document.getElementById('cscc_' + cap.id)?.checked)
+    .map(cap => cap.id);
+  boardMarkers = boardMarkers.filter(m=>!(m.hexId===hexId&&m.type==='capability'));
+  if (capabilityIds.length > 0) {
+    boardMarkers.push({id:'mk_'+Date.now(), hexId, type:'capability', capabilityIds});
+    const names = capabilityIds.map(id=>capabilitiesLibrary.find(c=>c.id===id)?.name).filter(Boolean).join(', ');
+    addLog(`Linked capabilities "${names}" to "${allItems.find(i=>i.id===hexId)?.name}"`, 'success');
+  }
+  closeCapSimple();
+  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
+
+// ── S2F Practice Picker (drag S2F → hex with capabilities) ──
+let _s2fHexId = null;
+function openS2FModal(hexId) {
+  _s2fHexId = hexId;
+  const item = allItems.find(i=>i.id===hexId);
+  document.getElementById('s2fModalTitle').textContent = 'Experiment on — ' + (item?.name || hexId);
+  const capMarker = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
+  const capIds = getCapabilityIds(capMarker);
+  const body = document.getElementById('s2fModalBody');
+  if (!body) return;
+  // Gather practices from linked capabilities
+  const pracsByCapId = capIds.map(cid => {
+    const cap = capabilitiesLibrary.find(c=>c.id===cid);
+    return cap ? {cap, practices: cap.practices} : null;
+  }).filter(Boolean);
+  if (pracsByCapId.length === 0) {
+    // No capabilities linked — create empty experiment
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities linked to this card. The experiment will be created without a practice.<br><br>Link capabilities to this card first to select practices.</p>`;
+  } else {
+    const existing = experimentResults[hexId]?.practiceId || '';
+    body.innerHTML = pracsByCapId.map(({cap, practices}) => `
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);padding:6px 12px;background:var(--surface2);border-radius:4px;margin-bottom:4px;">◈ ${escHtml(cap.name)}</div>
+        ${practices.map(p => `
+          <label class="cap-sel-prac-row" style="padding:8px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;border-radius:6px;margin-bottom:2px;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+            <input type="radio" name="s2f_prac" id="s2fp_${p.id}" value="${p.id}" ${existing===p.id?'checked':''} style="margin-top:2px;flex-shrink:0;">
+            <div>
+              <div class="cap-sel-prac-name">${escHtml(p.name)}</div>
+              ${p.description?`<div class="cap-sel-prac-desc">${escHtml(p.description)}</div>`:''}
+            </div>
+          </label>`).join('')}
+      </div>`).join('');
+  }
+  document.getElementById('s2fPracticeModal').classList.add('open');
+}
+function closeS2FModal() {
+  _s2fHexId = null;
+  document.getElementById('s2fPracticeModal').classList.remove('open');
+}
+function saveS2FExperiment(forcePracticeId) {
+  const hexId = _s2fHexId;
+  if (!hexId) return;
+  // Check if S2F already exists
+  const alreadyHas = boardMarkers.some(m=>m.hexId===hexId&&m.type==='s2f');
+  if (!alreadyHas) {
+    boardMarkers.push({id:'mk_'+Date.now(), hexId, type:'s2f'});
+  }
+  // Get selected practice
+  let practiceId = forcePracticeId === null ? '' : (forcePracticeId || document.querySelector('input[name="s2f_prac"]:checked')?.value || '');
+  if (!experimentResults[hexId]) experimentResults[hexId] = {};
+  if (practiceId) experimentResults[hexId].practiceId = practiceId;
+  if (!experimentResults[hexId].stage) experimentResults[hexId].stage = 'pending';
+  const item = allItems.find(i=>i.id===hexId);
+  addLog(`Added S2F Experiment to "${item?.name||hexId}"`, 'success');
+  closeS2FModal();
+  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+}
+
+// ── Transition Picker (click nexus badge) ──
+let _transConnId = null;
+function openTransPicker(connId) {
+  _transConnId = connId;
+  const conn = connections.find(c=>c.id===connId);
+  const body = document.getElementById('transPickerBody');
+  if (!body) return;
+  const transitions = allItems.filter(i=>i.type==='transition');
+  if (transitions.length === 0) {
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No transition cards in your library. Create some in the Library tab first.</p>`;
+  } else {
+    const current = conn?.transitionId || '';
+    body.innerHTML = transitions.map(t => `
+      <label class="cap-sel-prac-row" style="padding:8px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;border-radius:6px;margin-bottom:2px;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+        <input type="radio" name="trans_pick" id="tp_${t.id}" value="${t.id}" ${current===t.id?'checked':''} style="margin-top:2px;flex-shrink:0;">
+        <div>
+          <div style="font-size:11px;font-weight:600;">${escHtml(t.name)}</div>
+          ${t.signal?`<div style="font-size:9px;color:var(--text-muted);">${escHtml(t.signal)}</div>`:''}
+        </div>
+      </label>`).join('');
+  }
+  document.getElementById('transPickerModal').classList.add('open');
+}
+function closeTransPicker() {
+  _transConnId = null;
+  document.getElementById('transPickerModal').classList.remove('open');
+}
+function removeTransFromConn() {
+  const conn = connections.find(c=>c.id===_transConnId);
+  if (conn) { conn.transitionId = null; addLog('Removed transition from Nexus line', 'warning'); }
+  closeTransPicker();
+  renderConnections();
+  scheduleAutoSave();
+}
+function saveTransition() {
+  const conn = connections.find(c=>c.id===_transConnId);
+  if (!conn) return;
+  const sel = document.querySelector('input[name="trans_pick"]:checked');
+  if (sel) {
+    conn.transitionId = sel.value;
+    const t = allItems.find(i=>i.id===sel.value);
+    addLog(`Assigned transition "${t?.name}" to Nexus line`, 'success');
+  }
+  closeTransPicker();
+  renderConnections();
+  scheduleAutoSave();
+}
+
 function saveCapabilityLink() {
   const hexId = _capSelHexId;
   if (!hexId) return;
@@ -1740,9 +1965,18 @@ function renderFitnessPanel() {
   const allOnBoard = Object.values(gridState);
   const capIds = boardMarkers.filter(m=>m.type==='capability').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
   const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
-  // Collect all unique library practices linked via capability markers on board
+  // Collect unique practices: from experiments (primary) + old capabilityLinks format (backward-compat)
   const allLinkedPracs = (() => {
     const seen = new Map();
+    // Primary: practices linked via experiments
+    Object.values(experimentResults).forEach(er => {
+      if (!er.practiceId || seen.has(er.practiceId)) return;
+      const prac = capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId);
+      if (!prac) return;
+      const cap = capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===er.practiceId));
+      seen.set(er.practiceId, {id:er.practiceId, name:prac.name, capName:cap?.name||''});
+    });
+    // Backward-compat: practices from old capabilityLinks format
     boardMarkers.filter(m=>m.type==='capability'&&allOnBoard.includes(m.hexId)).forEach(mk => {
       getCapabilityLinks(mk).forEach(link => {
         const cap = capabilitiesLibrary.find(c=>c.id===link.capabilityId);
@@ -1775,23 +2009,29 @@ function renderFitnessPanel() {
         `<div class="fp-sum-item"><div class="fp-sum-val" style="color:var(--green)">${totalReps}</div><div class="fp-sum-lbl">Total Reps</div></div>` +
       `</div>` +
       `<div class="fp-section"><h3>Capabilities Being Experimented</h3>` +
-        (capIds.length===0 ? `<div class="fp-empty">Mark hexes with C to track capabilities</div>` : (() => {
-          // Group all capability links across all marked hexes, by capability
+        (capIds.length===0 ? `<div class="fp-empty">Drag C marker to a hex to link capabilities</div>` : (() => {
+          // Group capabilities across all marked hexes — support both new (capabilityIds) and old (capabilityLinks) formats
           const byCapId = {};
           capIds.forEach(hexId => {
             const mk = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
+            // New simple format: capabilityIds[]
+            getCapabilityIds(mk).forEach(capId => {
+              if (!byCapId[capId]) byCapId[capId] = {hexIds:[], practiceIds: new Set()};
+              if (!byCapId[capId].hexIds.includes(hexId)) byCapId[capId].hexIds.push(hexId);
+            });
+            // Old format: capabilityLinks with practices (backward-compat)
             getCapabilityLinks(mk).forEach(link => {
               if (!link.capabilityId) return;
               if (!byCapId[link.capabilityId]) byCapId[link.capabilityId] = {hexIds:[], practiceIds: new Set()};
-              byCapId[link.capabilityId].hexIds.push(hexId);
+              if (!byCapId[link.capabilityId].hexIds.includes(hexId)) byCapId[link.capabilityId].hexIds.push(hexId);
               (link.practiceIds||[]).forEach(pid => byCapId[link.capabilityId].practiceIds.add(pid));
             });
           });
           const linkedCapEntries = Object.entries(byCapId);
-          // Hexes without any capability linked
+          // Hexes without any capability linked (neither format)
           const unlinkedHexIds = capIds.filter(hexId => {
             const mk = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
-            return getCapabilityLinks(mk).length === 0;
+            return getCapabilityIds(mk).length === 0 && getCapabilityLinks(mk).length === 0;
           });
           let html = '';
           linkedCapEntries.forEach(([capId, data]) => {
@@ -1904,16 +2144,9 @@ function showFitnessBreakdown() {
   let lbl='Fragile',col='var(--red)';
   if(b.total>=80){lbl='Antifragile';col='var(--cyan)';}else if(b.total>=60){lbl='Resilient';col='var(--green)';}else if(b.total>=40){lbl='Stable';col='var(--orange)';}else if(b.total>=20){lbl='Emerging';col='var(--orange)';}
   const rows=[
-    {name:'Hex Positioning',formula:`patterns×3 + transitions×2 − antipatterns`,pts:Math.round(b.hexScore*10)/10},
-    {name:'Capabilities Linked',formula:`${b.uniqueCaps||0} unique caps × 5 pts`,pts:b.capScore},
-    {name:'Practices Selected',formula:`${b.uniquePracs||0} practices × 1 pt`,pts:b.linkedPracScore||0},
-    {name:'Experiments Run',formula:`${b.expRan} ran × 2 pts`,pts:b.expRan*2},
-    {name:'Experiments Passed',formula:`${b.expPassed} passed × 3 pts (bonus)`,pts:b.expPassed*3},
-    {name:'Practices Active',formula:`${b.pracCount} practices × 1 pt`,pts:b.pracScore},
-    {name:'Practice Repetitions',formula:`${b.totalReps} reps × 0.5 pts`,pts:Math.round(b.repScore*10)/10},
-    {name:'Agent Assignments',formula:`${b.ag} agents × 0.5 pts`,pts:Math.round(b.agBonus*10)/10},
-    {name:'Driver Links',formula:`${b.drLinks} links × 0.5 pts`,pts:Math.round(b.drBonus*10)/10},
-    {name:'Cycle Maturity',formula:`(cycle ${cycleNumber} − 1) × 2 pts`,pts:b.cycleBonus},
+    {name:'Experiments Run',formula:`${b.expRan} ran × 5 pts`,pts:b.expRan*5},
+    {name:'Experiments Adopted',formula:`${b.expAdopted||0} adopted × 10 pts (bonus)`,pts:(b.expAdopted||0)*10},
+    {name:'Practice Repetitions',formula:`${b.totalReps} reps × 2 pts`,pts:b.totalReps*2},
   ];
   let modal=document.getElementById('fitnessBreakdownModal');
   if(!modal){modal=document.createElement('div');modal.id='fitnessBreakdownModal';modal.onclick=function(e){if(e.target===modal)closeFitnessBreakdown();};document.body.appendChild(modal);}
@@ -2200,9 +2433,23 @@ function renderBoard() {
       cell.addEventListener('drop', e=>{
         e.preventDefault();e.stopPropagation();cell.classList.remove('drag-over');
         clearZoneGuidance();
+        // Handle marker drag-and-drop
+        if(draggedMarkerType) {
+          const hId = gridState[key];
+          if(!hId){showToast('Place a card on this hex first','warning');draggedMarkerType=null;return;}
+          const mType = draggedMarkerType; draggedMarkerType=null;
+          if(mType==='capability'){openCapSimple(hId);return;}
+          if(mType==='s2f'){openS2FModal(hId);return;}
+          return;
+        }
         if(!draggedId) return;
         const zone = getZoneFromCoords(row,col);
         const itemObj = allItems.find(x=>x.id===draggedId);
+        // Block transition cards from being placed on hex — they go on Nexus lines
+        if(itemObj?.type==='transition'){
+          showToast('Transitions go on Nexus lines. Draw a Nexus connection and click the ⊕ badge to assign a transition.','info');
+          draggedId=null;dragSource=null;return;
+        }
         const guide = itemObj ? GUIDANCE[itemObj.type] : null;
         if(guide && ![...guide.best,...guide.ok].includes(zone)){showToast(`⚠️ ${guide.tip}`,'warning');}
         if(gridState[key] && gridState[key]!==draggedId){showToast('Cell occupied','warning');return;}
@@ -2482,64 +2729,16 @@ function getAllHexRects(excludeIds) {
   return rects;
 }
 
-function buildRoute(fromR, toR, allObstacles) {
-  // Find the top-most and bottom-most edges of ALL hexes on the board
-  // so we can route cleanly above or below everything
-  let boardTop = Infinity, boardBottom = -Infinity;
-  // Include source and target in the boundary calculation
-  const allRects = [...allObstacles, fromR, toR];
-  allRects.forEach(r => {
-    boardTop = Math.min(boardTop, r.y);
-    boardBottom = Math.max(boardBottom, r.y + r.h);
-  });
-
-  const GAP = 25; // clearance above/below all hexes
-  const fromCx = fromR.x + fromR.w / 2;
-  const fromCy = fromR.cy;
-  const toCx = toR.x + toR.w / 2;
-  const toCy = toR.cy;
-
-  // Determine if source is left or right of target
-  const goingRight = fromCx < toCx;
-
-  // Exit point: bottom or top of source hex
-  // Entry point: bottom or top of target hex
-  // Route: exit → curve down (or up) → travel horizontally → curve up (or down) → enter
-
-  // Decide above vs below:
-  // - If both hexes are in the top lane, route below
-  // - If both hexes are in the bottom lane, route above
-  // - Otherwise, route through the closest edge
-  const avgY = (fromCy + toCy) / 2;
-  const midBoard = (boardTop + boardBottom) / 2;
-  const routeBelow = avgY <= midBoard; // if hexes are in upper half, go below
-
-  const curveY = routeBelow
-    ? Math.max(fromR.y + fromR.h, toR.y + toR.h) + GAP
-    : Math.min(fromR.y, toR.y) - GAP;
-
-  // Anchor points on hex edges
-  const sx = goingRight ? fromR.x + fromR.w : fromR.x;
-  const sy = fromCy;
-  const ex = goingRight ? toR.x : toR.x + toR.w;
-  const ey = toCy;
-
-  // For adjacent hexes (close together), use a gentle curve
-  // For distant hexes, use a wider arc
-  const dist = Math.abs(toCx - fromCx);
-  const cpOffset = Math.max(dist * 0.3, 40);
-
-  // Build SVG cubic bezier: two control points push the curve above/below
-  const cp1x = sx + (goingRight ? cpOffset : -cpOffset);
-  const cp1y = curveY;
-  const cp2x = ex + (goingRight ? -cpOffset : cpOffset);
-  const cp2y = curveY;
-
+function buildRoute(fromR, toR) {
+  // Straight line center-to-center (nexus lines go directly through cards)
+  const sx = fromR.x + fromR.w / 2;
+  const sy = fromR.cy;
+  const ex = toR.x + toR.w / 2;
+  const ey = toR.cy;
   const mx = (sx + ex) / 2;
-  const my = curveY;
-
+  const my = (sy + ey) / 2;
   return {
-    d: `M${sx},${sy} C${cp1x},${cp1y} ${cp2x},${cp2y} ${ex},${ey}`,
+    d: `M${sx},${sy} L${ex},${ey}`,
     midPt: { x: mx, y: my }
   };
 }
@@ -2560,8 +2759,7 @@ function renderConnections() {
     const fromR = getHexRect(conn.from);
     const toR = getHexRect(conn.to);
     if (!fromR || !toR) return;
-    const obstacles = getAllHexRects([conn.from, conn.to]);
-    const route = buildRoute(fromR, toR, obstacles);
+    const route = buildRoute(fromR, toR);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     // Wider invisible hit area
     const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -2574,20 +2772,57 @@ function renderConnections() {
     p.setAttribute('class', conn.type === 'path' ? 'conn-path' : 'conn-nexus');
     p.setAttribute('marker-end', conn.type === 'path' ? 'url(#arrowPath)' : 'url(#arrowNexus)');
     g.appendChild(p);
-    // Delete button at midpoint
+    // Midpoint interaction
     const mp = route.midPt;
-    const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    del.setAttribute('cx', mp.x); del.setAttribute('cy', mp.y);
-    del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
-    del.addEventListener('click', () => deleteConnection(conn.id));
-    g.appendChild(del);
-    const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    delX.setAttribute('x', mp.x); delX.setAttribute('y', mp.y + 3);
-    delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
-    delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
-    delX.setAttribute('style', 'pointer-events:none');
-    delX.textContent = '×';
-    g.appendChild(delX);
+    if (conn.type === 'nexus') {
+      // Nexus: show transition badge or ⊕ add button
+      const transTxt = conn.transitionId ? allItems.find(i=>i.id===conn.transitionId)?.name : null;
+      const badgeW = transTxt ? Math.min(transTxt.length * 6 + 16, 150) : 22;
+      const badgeH = 18;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', mp.x - badgeW/2); rect.setAttribute('y', mp.y - badgeH/2);
+      rect.setAttribute('width', badgeW); rect.setAttribute('height', badgeH);
+      rect.setAttribute('rx', '9'); rect.setAttribute('ry', '9');
+      rect.setAttribute('fill', transTxt ? '#0d3a3a' : 'rgba(0,200,200,.15)');
+      rect.setAttribute('stroke', 'var(--cyan)'); rect.setAttribute('stroke-width', '1.5');
+      rect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
+      rect.addEventListener('click', (e) => { e.stopPropagation(); openTransPicker(conn.id, mp.x, mp.y); });
+      g.appendChild(rect);
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', mp.x); label.setAttribute('y', mp.y + 4);
+      label.setAttribute('text-anchor', 'middle'); label.setAttribute('font-size', '9');
+      label.setAttribute('font-weight', '600'); label.setAttribute('fill', 'var(--cyan)');
+      label.setAttribute('style', 'pointer-events:none;');
+      label.textContent = transTxt ? (transTxt.length > 20 ? transTxt.slice(0,18)+'…' : transTxt) : '⊕';
+      g.appendChild(label);
+      // Delete button (far side, on hover)
+      const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      del.setAttribute('cx', mp.x + badgeW/2 + 10); del.setAttribute('cy', mp.y);
+      del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
+      del.addEventListener('click', () => deleteConnection(conn.id));
+      g.appendChild(del);
+      const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      delX.setAttribute('x', mp.x + badgeW/2 + 10); delX.setAttribute('y', mp.y + 3);
+      delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
+      delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
+      delX.setAttribute('style', 'pointer-events:none');
+      delX.textContent = '×';
+      g.appendChild(delX);
+    } else {
+      // Path connection: plain delete button
+      const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      del.setAttribute('cx', mp.x); del.setAttribute('cy', mp.y);
+      del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
+      del.addEventListener('click', () => deleteConnection(conn.id));
+      g.appendChild(del);
+      const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      delX.setAttribute('x', mp.x); delX.setAttribute('y', mp.y + 3);
+      delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
+      delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
+      delX.setAttribute('style', 'pointer-events:none');
+      delX.textContent = '×';
+      g.appendChild(delX);
+    }
     svg.appendChild(g);
   });
 }
@@ -2596,6 +2831,13 @@ function renderConnections() {
 // MARKERS (S2F / Capabilities)
 // ══════════════════════════════════════════
 let selectedMarker = null;
+let draggedMarkerType = null;
+function startMarkerDrag(type, e) {
+  draggedMarkerType = type;
+  draggedId = null; // Clear hex card drag to avoid conflicts
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', 'marker:' + type);
+}
 function selectMarker(type) {
   if (selectedMarker===type) { selectedMarker=null; document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected')); return; }
   selectedMarker=type;
@@ -2607,7 +2849,7 @@ function selectMarker(type) {
 }
 function toggleMarker(hexId, type) {
   if (type === 'capability') {
-    openCapSelector(hexId);
+    openCapSimple(hexId); // use simple selector (click on existing badge to edit)
     return;
   }
   const idx = boardMarkers.findIndex(m=>m.hexId===hexId && m.type===type);
@@ -2704,56 +2946,21 @@ function advanceCycle(){
 // ══════════════════════════════════════════
 function calcFitnessBreakdown(){
   const all=Object.values(gridState);
-  // 1. Hex score by zone position (all hex cells are path)
-  let hexScore=0;
-  for(const[,hexId]of Object.entries(gridState)){
-    const i=allItems.find(x=>x.id===hexId);
-    if(i?.type==='pattern')hexScore+=3;
-    if(i?.type==='transition')hexScore+=2;
-    if(i?.type==='antipattern')hexScore-=1;
-  }
-  // Current Reality backlog items: +0.5 each for recognizing current state
-  hexScore += currentItems.length * 0.5;
-  // 2. Capabilities on board — count unique capability IDs and practices via capabilityLinks
-  const capMarkers=boardMarkers.filter(m=>m.type==='capability'&&all.includes(m.hexId));
-  const capCount=capMarkers.length;
-  const allCapLinks=capMarkers.flatMap(m=>getCapabilityLinks(m));
-  const uniqueCapIds=new Set(allCapLinks.map(l=>l.capabilityId).filter(Boolean));
-  const capScore=uniqueCapIds.size*5;
-  // Unique practices selected across all capability markers: +1 each
-  const uniquePracIds=new Set(allCapLinks.flatMap(l=>l.practiceIds||[]));
-  const linkedPracScore=uniquePracIds.size*1;
-  // 3. Experiments (marked with 's2f')
+  // 1. Experiments (S2F markers on board)
   const expIds=boardMarkers.filter(m=>m.type==='s2f'&&all.includes(m.hexId)).map(m=>m.hexId);
   const expRan=expIds.filter(id=>{const s=(experimentResults[id]||{}).status;return s&&s!=='';}).length;
-  const expPassed=expIds.filter(id=>(experimentResults[id]||{}).status==='passed').length;
-  const expScore=expRan*2+expPassed*3;
-  // 4. Practices (transition hexes on board)
-  const pracIds=all.filter(id=>allItems.find(i=>i.id===id)?.type==='transition');
-  const pracScore=pracIds.length*1;
+  const expAdopted=expIds.filter(id=>{const er=experimentResults[id]||{};return er.status==='passed'||er.stage==='adopted';}).length;
+  const expScore=expRan*5+expAdopted*10;
+  // 2. Practice repetitions
   const totalReps=Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
-  const repScore=totalReps*0.5;
-  // 5. Adoption bonuses
-  const ag=Object.values(agentAssignments).reduce((s,arr)=>s+arr.length,0);
-  const agBonus=ag*0.5;
-  const drLinks=Object.values(driverAssignments).reduce((s,arr)=>s+arr.length,0);
-  const drBonus=drLinks*0.5;
-  const cycleBonus=(cycleNumber-1)*2;
-  // 6. Transformation pathway bonuses
-  let pathwayBonus=0;
-  Object.entries(transformationPaths).forEach(([apId,path])=>{
-    const succ=path.transitions.filter(t=>t.status==='successful').length;
-    pathwayBonus+=succ*1;
-    if(path.transitions.length>0&&succ===path.transitions.length){
-      const targetEntry=Object.entries(gridState).find(([,v])=>v===path.targetPatternId);
-      if(targetEntry){const[r2,c2]=targetEntry[0].split(',').map(Number);if(getZoneFromCoords(r2,c2).startsWith('path_'))pathwayBonus+=5;}
-    }
-  });
-  const total=Math.max(0,Math.min(100,Math.round(hexScore+capScore+linkedPracScore+expScore+pracScore+repScore+agBonus+drBonus+cycleBonus+pathwayBonus)));
-  // Count practices also linked through experiments
+  const repScore=totalReps*2;
+  // Total (capped 0–100)
+  const total=Math.max(0,Math.min(100,Math.round(expScore+repScore)));
   const expLinkedPracs=new Set(Object.values(experimentResults).map(er=>er.practiceId).filter(Boolean));
-  const allUniquePracs=new Set([...uniquePracIds,...expLinkedPracs]);
-  return{total,hexScore,capCount,uniqueCaps:uniqueCapIds.size,capScore,uniquePracs:allUniquePracs.size,linkedPracScore,expRan,expPassed,expScore,pracCount:pracIds.length,pracScore,totalReps,repScore,ag,agBonus,drLinks,drBonus,cycleBonus,pathwayBonus};
+  // Legacy fields kept for breakdown modal compatibility
+  return{total,expRan,expAdopted,expScore,totalReps,repScore,expLinkedPracs:expLinkedPracs.size,
+    hexScore:0,capScore:0,capCount:0,uniqueCaps:0,linkedPracScore:0,pracCount:0,pracScore:0,
+    ag:0,agBonus:0,drLinks:0,drBonus:0,cycleBonus:0,pathwayBonus:0,uniquePracs:expLinkedPracs.size};
 }
 function updateStats(){
   const all=Object.values(gridState);
