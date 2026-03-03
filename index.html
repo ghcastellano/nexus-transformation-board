@@ -962,7 +962,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <h3>Board Markers</h3>
         <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Select a marker, then click a hex on the board.</p>
         <div class="marker-palette">
-          <div class="marker-pal" data-marker="s2f" draggable="true" ondragstart="startMarkerDrag('s2f',event)" ondragend="draggedMarkerType=null"><div class="marker-circle s2f">S2F</div><div class="marker-label">Drag to hex</div></div>
+          <div class="marker-pal" data-marker="s2f" draggable="true" ondragstart="startMarkerDrag('s2f',event)" ondragend="draggedMarkerType=null"><div class="marker-circle s2f">S2F</div><div class="marker-label">Drag to Nexus line</div></div>
           <div class="marker-pal" data-marker="capability" draggable="true" ondragstart="startMarkerDrag('capability',event)" ondragend="draggedMarkerType=null"><div class="marker-circle capability">C</div><div class="marker-label">Drag to hex</div></div>
         </div>
       </div>
@@ -1317,38 +1317,46 @@ const KANBAN_STAGES = [
 function renderExperimentsPage() {
   const page = document.getElementById('expTrackerPage');
   if (!page) return;
-  const allOnBoard = Object.values(gridState);
-  const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
 
-  // Collect board-linked practices for each experiment card
-  const allOnBoardCapMarkers = boardMarkers.filter(m=>m.type==='capability'&&allOnBoard.includes(m.hexId));
-  const allLinkedPracs = (() => {
-    const seen = new Map();
-    allOnBoardCapMarkers.forEach(mk => {
-      getCapabilityLinks(mk).forEach(link => {
-        const cap = capabilitiesLibrary.find(c=>c.id===link.capabilityId);
-        if (!cap) return;
-        (link.practiceIds||[]).forEach(pid => {
-          if (!seen.has(pid)) {
-            const prac = cap.practices.find(p=>p.id===pid);
-            if (prac) seen.set(pid, {id:pid, name:prac.name, capName:cap.name});
-          }
-        });
-      });
-    });
-    return [...seen.values()];
-  })();
+  // Gather all experiment keys: nexus connections with experiments + legacy boardMarker s2f
+  const nexusExpKeys  = connections.filter(c => c.type === 'nexus' && experimentResults[c.id]).map(c => c.id);
+  const allOnBoard    = Object.values(gridState);
+  const legacyExpKeys = boardMarkers.filter(m => m.type === 's2f' && allOnBoard.includes(m.hexId)).map(m => m.hexId);
+  const allExpKeys    = [...nexusExpKeys, ...legacyExpKeys];
+
+  // Helper: get display title and capIds for a key
+  function getExpMeta(key) {
+    const conn = connections.find(c => c.id === key);
+    if (conn) {
+      const fromItem = allItems.find(i => i.id === conn.from);
+      const toItem   = allItems.find(i => i.id === conn.to);
+      const title = `${fromItem?.name || '?'} → ${toItem?.name || '?'}`;
+      // capIds from forward card (conn.to), fallback conn.from
+      const toCap   = boardMarkers.find(m => m.hexId === conn.to   && m.type === 'capability');
+      const fromCap = boardMarkers.find(m => m.hexId === conn.from && m.type === 'capability');
+      let capIds = getCapabilityIds(toCap);
+      if (capIds.length === 0) capIds = getCapabilityIds(fromCap);
+      return { title, icon: '🔗', capIds, isNexus: true };
+    } else {
+      const item = allItems.find(i => i.id === key);
+      const capMk = boardMarkers.find(m => m.hexId === key && m.type === 'capability');
+      return { title: item?.name || key, icon: '⬡', capIds: getCapabilityIds(capMk), isNexus: false };
+    }
+  }
+
+  // Build all-caps practice list for dropdown
+  const allPracs = capabilitiesLibrary.flatMap(cap => cap.practices.map(p => ({...p, capName: cap.name, capId: cap.id})));
 
   let html = `<div class="exp-tracker-hdr">
     <span style="font-size:13px;font-weight:700;">🧪 Experiment Tracker</span>
-    <span style="font-size:10px;color:var(--text-muted);">${expIds.length} experiment${expIds.length!==1?'s':''} · Lean Change Management</span>
+    <span style="font-size:10px;color:var(--text-muted);">${allExpKeys.length} experiment${allExpKeys.length!==1?'s':''} · Lean Change Management</span>
   </div>`;
 
-  if (expIds.length === 0) {
+  if (allExpKeys.length === 0) {
     html += `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-muted);">
       <div style="font-size:36px;">🧪</div>
       <div style="font-size:13px;font-weight:600;">No experiments yet</div>
-      <div style="font-size:11px;">Mark hexes with the <strong>S2F</strong> marker to add experiments</div>
+      <div style="font-size:11px;">Drag the <strong>S2F</strong> marker onto a <strong>Nexus line</strong> to add an experiment</div>
     </div>`;
     page.innerHTML = html;
     return;
@@ -1357,8 +1365,8 @@ function renderExperimentsPage() {
   html += `<div class="kanban-board">`;
 
   KANBAN_STAGES.forEach((stage, stageIdx) => {
-    const stageIds = expIds.filter(id => {
-      const s = (experimentResults[id]||{}).stage || 'pending';
+    const stageKeys = allExpKeys.filter(key => {
+      const s = (experimentResults[key]||{}).stage || 'pending';
       return s === stage.id;
     });
     const prevStageId = stageIdx > 0 ? KANBAN_STAGES[stageIdx-1].id : null;
@@ -1367,47 +1375,48 @@ function renderExperimentsPage() {
     html += `<div class="kanban-col">
       <div class="kanban-col-hdr" style="color:${stage.color};">
         <span><span class="kanban-stage-dot" style="background:${stage.dot};"></span>${stage.label}</span>
-        <span class="kanban-col-count">${stageIds.length}</span>
+        <span class="kanban-col-count">${stageKeys.length}</span>
       </div>
       <div class="kanban-col-body">`;
 
-    if (stageIds.length === 0) {
+    if (stageKeys.length === 0) {
       html += `<div class="kanban-empty">Drop experiments here</div>`;
     } else {
-      stageIds.forEach(id => {
-        const er = experimentResults[id]||{};
-        const cardItem = allItems.find(x=>x.id===id);
-        const cardName = cardItem?.name || id;
+      stageKeys.forEach(key => {
+        const er = experimentResults[key]||{};
+        const { title, icon, capIds } = getExpMeta(key);
         const linkedPracId = er.practiceId || '';
-        const linkedPrac = linkedPracId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===linkedPracId) : null;
-        const linkedCap = linkedPrac ? capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===linkedPracId)) : null;
+        const linkedPrac   = linkedPracId ? allPracs.find(p => p.id === linkedPracId) : null;
 
-        // Build practice dropdown
-        const boardPracIds = new Set(allLinkedPracs.map(p=>p.id));
-        const boardPracOpts = allLinkedPracs.map(p =>
+        // Build practice dropdown: show cap-linked practices first, then all others
+        const linkedCapPracs = capIds.flatMap(cid => {
+          const cap = capabilitiesLibrary.find(c => c.id === cid);
+          return cap ? cap.practices.map(p => ({...p, capName: cap.name})) : [];
+        });
+        const linkedPracIds = new Set(linkedCapPracs.map(p => p.id));
+        const linkedOpts = linkedCapPracs.map(p =>
           `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>★ ${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
         ).join('');
-        const otherPracOpts = capabilitiesLibrary.flatMap(cap =>
-          cap.practices.filter(p=>!boardPracIds.has(p.id)).map(p =>
-            `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(cap.name)} → ${escHtml(p.name)}</option>`)
+        const otherOpts = allPracs.filter(p => !linkedPracIds.has(p.id)).map(p =>
+          `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(p.capName)} → ${escHtml(p.name)}</option>`
         ).join('');
-        const pracOptions = boardPracOpts + (otherPracOpts ? `<option disabled>──────────</option>${otherPracOpts}` : '');
+        const pracOptions = linkedOpts + (otherOpts ? `<option disabled>──────────</option>${otherOpts}` : '');
 
         html += `<div class="kanban-card">
-          <div class="kanban-card-name">⬡ ${escHtml(cardName)}</div>
+          <div class="kanban-card-name">${icon} ${escHtml(title)}</div>
           ${linkedPrac
-            ? `<div class="kanban-card-prac">◈ ${escHtml(linkedCap?.name||'')} → ${escHtml(linkedPrac.name)}</div>`
+            ? `<div class="kanban-card-prac">◈ ${escHtml(linkedPrac.capName||'')} → ${escHtml(linkedPrac.name)}</div>`
             : `<div class="kanban-card-prac" style="color:var(--text-muted);font-style:italic;">No practice linked</div>`}
-          <select class="kanban-card-field" style="resize:none;min-height:unset;padding:4px 6px;" onchange="setExpField('${id}','practiceId',this.value)">
+          <select class="kanban-card-field" style="resize:none;min-height:unset;padding:4px 6px;" onchange="setExpField('${escHtml(key)}','practiceId',this.value)">
             <option value="">— Link practice —</option>${pracOptions}
           </select>
           <div class="kanban-card-label">Hypothesis:</div>
-          <textarea class="kanban-card-field" rows="2" placeholder="If we do X, then Y will happen because Z..." oninput="setExpField('${id}','hypothesis',this.value)">${escHtml(er.hypothesis||'')}</textarea>
+          <textarea class="kanban-card-field" rows="2" placeholder="If we do X, then Y will happen because Z..." oninput="setExpField('${escHtml(key)}','hypothesis',this.value)">${escHtml(er.hypothesis||'')}</textarea>
           <div class="kanban-card-label">Results / Observations:</div>
-          <textarea class="kanban-card-field" rows="2" placeholder="What happened? What did we learn?" oninput="setExpField('${id}','result',this.value)">${escHtml(er.result||'')}</textarea>
+          <textarea class="kanban-card-field" rows="2" placeholder="What happened? What did we learn?" oninput="setExpField('${escHtml(key)}','result',this.value)">${escHtml(er.result||'')}</textarea>
           <div class="kanban-card-footer">
-            ${prevStageId ? `<button class="kanban-mv-btn" onclick="moveExpStage('${id}','${prevStageId}')">← Back</button>` : `<span></span>`}
-            ${nextStageId ? `<button class="kanban-mv-btn primary" onclick="moveExpStage('${id}','${nextStageId}')">Next →</button>` : `<span style="font-size:9px;color:${stage.color};">● ${stage.label.replace(/^[^\w]+ ?/,'')}</span>`}
+            ${prevStageId ? `<button class="kanban-mv-btn" onclick="moveExpStage('${escHtml(key)}','${prevStageId}')">← Back</button>` : `<span></span>`}
+            ${nextStageId ? `<button class="kanban-mv-btn primary" onclick="moveExpStage('${escHtml(key)}','${nextStageId}')">Next →</button>` : `<span style="font-size:9px;color:${stage.color};">● ${stage.label.replace(/^[^\w]+ ?/,'')}</span>`}
           </div>
         </div>`;
       });
@@ -1794,25 +1803,39 @@ function saveCapSimple() {
 }
 
 // ── S2F Practice Picker (drag S2F → hex with capabilities) ──
-let _s2fHexId = null;
-function openS2FModal(hexId) {
-  _s2fHexId = hexId;
-  const item = allItems.find(i=>i.id===hexId);
-  document.getElementById('s2fModalTitle').textContent = 'Experiment on — ' + (item?.name || hexId);
-  const capMarker = boardMarkers.find(m=>m.hexId===hexId&&m.type==='capability');
-  const capIds = getCapabilityIds(capMarker);
+// _s2fKey: connection id (nexus line experiment) or hex id (legacy)
+let _s2fKey = null;
+function openS2FModal(connIdOrHexId) {
+  _s2fKey = connIdOrHexId;
+  const conn = connections.find(c => c.id === connIdOrHexId);
+  let title, capIds = [];
+  if (conn) {
+    // Nexus line experiment — practices come from the forward card (conn.to)
+    const fromItem = allItems.find(i => i.id === conn.from);
+    const toItem   = allItems.find(i => i.id === conn.to);
+    title = `Experiment: ${fromItem?.name || '?'} → ${toItem?.name || '?'}`;
+    const toCapMarker   = boardMarkers.find(m => m.hexId === conn.to   && m.type === 'capability');
+    const fromCapMarker = boardMarkers.find(m => m.hexId === conn.from && m.type === 'capability');
+    capIds = getCapabilityIds(toCapMarker);
+    if (capIds.length === 0) capIds = getCapabilityIds(fromCapMarker);
+  } else {
+    // Legacy: hex-based experiment
+    const item = allItems.find(i => i.id === connIdOrHexId);
+    title = 'Experiment on — ' + (item?.name || connIdOrHexId);
+    const capMarker = boardMarkers.find(m => m.hexId === connIdOrHexId && m.type === 'capability');
+    capIds = getCapabilityIds(capMarker);
+  }
+  document.getElementById('s2fModalTitle').textContent = title;
   const body = document.getElementById('s2fModalBody');
   if (!body) return;
-  // Gather practices from linked capabilities
   const pracsByCapId = capIds.map(cid => {
-    const cap = capabilitiesLibrary.find(c=>c.id===cid);
+    const cap = capabilitiesLibrary.find(c => c.id === cid);
     return cap ? {cap, practices: cap.practices} : null;
   }).filter(Boolean);
   if (pracsByCapId.length === 0) {
-    // No capabilities linked — create empty experiment
-    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities linked to this card. The experiment will be created without a practice.<br><br>Link capabilities to this card first to select practices.</p>`;
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities linked to the connected card. The experiment will be created without a practice.<br><br>Link capabilities to the forward card first to select a practice.</p>`;
   } else {
-    const existing = experimentResults[hexId]?.practiceId || '';
+    const existing = (experimentResults[_s2fKey] || {}).practiceId || '';
     body.innerHTML = pracsByCapId.map(({cap, practices}) => `
       <div style="margin-bottom:10px;">
         <div style="font-size:10px;font-weight:700;color:var(--cyan);padding:6px 12px;background:var(--surface2);border-radius:4px;margin-bottom:4px;">◈ ${escHtml(cap.name)}</div>
@@ -1829,26 +1852,30 @@ function openS2FModal(hexId) {
   document.getElementById('s2fPracticeModal').classList.add('open');
 }
 function closeS2FModal() {
-  _s2fHexId = null;
+  _s2fKey = null;
   document.getElementById('s2fPracticeModal').classList.remove('open');
 }
 function saveS2FExperiment(forcePracticeId) {
-  const hexId = _s2fHexId;
-  if (!hexId) return;
-  // Check if S2F already exists
-  const alreadyHas = boardMarkers.some(m=>m.hexId===hexId&&m.type==='s2f');
-  if (!alreadyHas) {
-    boardMarkers.push({id:'mk_'+Date.now(), hexId, type:'s2f'});
-  }
-  // Get selected practice
+  const key = _s2fKey;
+  if (!key) return;
+  const conn = connections.find(c => c.id === key);
   let practiceId = forcePracticeId === null ? '' : (forcePracticeId || document.querySelector('input[name="s2f_prac"]:checked')?.value || '');
-  if (!experimentResults[hexId]) experimentResults[hexId] = {};
-  if (practiceId) experimentResults[hexId].practiceId = practiceId;
-  if (!experimentResults[hexId].stage) experimentResults[hexId].stage = 'pending';
-  const item = allItems.find(i=>i.id===hexId);
-  addLog(`Added S2F Experiment to "${item?.name||hexId}"`, 'success');
+  if (!experimentResults[key]) experimentResults[key] = {};
+  if (practiceId) experimentResults[key].practiceId = practiceId;
+  if (!experimentResults[key].stage) experimentResults[key].stage = 'pending';
+  if (conn) {
+    const fromItem = allItems.find(i => i.id === conn.from);
+    const toItem   = allItems.find(i => i.id === conn.to);
+    addLog(`S2F Experiment added: ${fromItem?.name||'?'} → ${toItem?.name||'?'}`, 'success');
+  } else {
+    // Legacy: also add boardMarker so it shows in fitness panel hex view
+    const alreadyHas = boardMarkers.some(m => m.hexId === key && m.type === 's2f');
+    if (!alreadyHas) boardMarkers.push({id:'mk_'+Date.now(), hexId:key, type:'s2f'});
+    const item = allItems.find(i => i.id === key);
+    addLog(`Added S2F Experiment to "${item?.name||key}"`, 'success');
+  }
   closeS2FModal();
-  renderAllZones(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
+  renderConnections(); renderAllZones(); renderExperimentsPage(); renderFitnessPanel(); updateStats(); scheduleAutoSave();
 }
 
 // ── Transition Picker (click nexus badge) ──
@@ -2441,7 +2468,7 @@ function renderBoard() {
           if(!hId){showToast('Place a card on this hex first','warning');draggedMarkerType=null;return;}
           const mType = draggedMarkerType; draggedMarkerType=null;
           if(mType==='capability'){openCapSimple(hId);return;}
-          if(mType==='s2f'){openS2FModal(hId);return;}
+          if(mType==='s2f'){showToast('Drag S2F onto a Nexus line (the arrow connecting hexes)','info');return;}
           return;
         }
         if(!draggedId) return;
@@ -2737,12 +2764,11 @@ function buildRoute(fromR, toR) {
   const sy = fromR.cy;
   const ex = toR.x + toR.w / 2;
   const ey = toR.cy;
-  const mx = (sx + ex) / 2;
-  const my = (sy + ey) / 2;
-  return {
-    d: `M${sx},${sy} L${ex},${ey}`,
-    midPt: { x: mx, y: my }
-  };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const transPt = { x: lerp(sx, ex, 0.38), y: lerp(sy, ey, 0.38) };
+  const s2fPt   = { x: lerp(sx, ex, 0.62), y: lerp(sy, ey, 0.62) };
+  const midPt   = { x: lerp(sx, ex, 0.5),  y: lerp(sy, ey, 0.5)  };
+  return { d: `M${sx},${sy} L${ex},${ey}`, transPt, s2fPt, midPt };
 }
 
 function renderConnections() {
@@ -2777,34 +2803,78 @@ function renderConnections() {
     // Midpoint interaction
     const mp = route.midPt;
     if (conn.type === 'nexus') {
-      // Nexus: show transition badge or ⊕ add button
+      // Hit path accepts S2F drag-drop
+      hit.addEventListener('dragover', e => {
+        if (draggedMarkerType === 's2f') { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+      });
+      hit.addEventListener('drop', e => {
+        if (draggedMarkerType !== 's2f') return;
+        e.preventDefault(); e.stopPropagation();
+        draggedMarkerType = null;
+        openS2FModal(conn.id);
+      });
+
+      // === Transition badge at transPt (38%) ===
+      const tp = route.transPt;
       const transTxt = conn.transitionId ? allItems.find(i=>i.id===conn.transitionId)?.name : null;
-      const badgeW = transTxt ? Math.min(transTxt.length * 6 + 16, 150) : 22;
-      const badgeH = 18;
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', mp.x - badgeW/2); rect.setAttribute('y', mp.y - badgeH/2);
-      rect.setAttribute('width', badgeW); rect.setAttribute('height', badgeH);
-      rect.setAttribute('rx', '9'); rect.setAttribute('ry', '9');
-      rect.setAttribute('fill', transTxt ? '#0d3a3a' : 'rgba(0,200,200,.15)');
-      rect.setAttribute('stroke', 'var(--cyan)'); rect.setAttribute('stroke-width', '1.5');
-      rect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
-      rect.addEventListener('click', (e) => { e.stopPropagation(); openTransPicker(conn.id, mp.x, mp.y); });
-      g.appendChild(rect);
-      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      label.setAttribute('x', mp.x); label.setAttribute('y', mp.y + 4);
-      label.setAttribute('text-anchor', 'middle'); label.setAttribute('font-size', '9');
-      label.setAttribute('font-weight', '600'); label.setAttribute('fill', 'var(--cyan)');
-      label.setAttribute('style', 'pointer-events:none;');
-      label.textContent = transTxt ? (transTxt.length > 20 ? transTxt.slice(0,18)+'…' : transTxt) : '⊕';
-      g.appendChild(label);
-      // Delete button (far side, on hover)
+      const transBadgeW = transTxt ? Math.min(transTxt.length * 6 + 16, 150) : 22;
+      const transBadgeH = 18;
+      const transRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      transRect.setAttribute('x', tp.x - transBadgeW/2); transRect.setAttribute('y', tp.y - transBadgeH/2);
+      transRect.setAttribute('width', transBadgeW); transRect.setAttribute('height', transBadgeH);
+      transRect.setAttribute('rx', '9'); transRect.setAttribute('ry', '9');
+      transRect.setAttribute('fill', transTxt ? '#0d3a3a' : 'rgba(0,200,200,.15)');
+      transRect.setAttribute('stroke', 'var(--cyan)'); transRect.setAttribute('stroke-width', '1.5');
+      transRect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
+      transRect.addEventListener('click', (e) => { e.stopPropagation(); openTransPicker(conn.id); });
+      g.appendChild(transRect);
+      const transLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      transLabel.setAttribute('x', tp.x); transLabel.setAttribute('y', tp.y + 4);
+      transLabel.setAttribute('text-anchor', 'middle'); transLabel.setAttribute('font-size', '9');
+      transLabel.setAttribute('font-weight', '600'); transLabel.setAttribute('fill', 'var(--cyan)');
+      transLabel.setAttribute('style', 'pointer-events:none;');
+      transLabel.textContent = transTxt ? (transTxt.length > 20 ? transTxt.slice(0,18)+'…' : transTxt) : '⊕';
+      g.appendChild(transLabel);
+
+      // === S2F badge at s2fPt (62%) ===
+      const sp = route.s2fPt;
+      const er = experimentResults[conn.id];
+      const S2F_STAGE_COLORS = { pending:'#8b8b8b', running:'#e8943a', review:'#4a90d9', adopted:'#2d9d5e', abandoned:'#555' };
+      const stagKey = er?.stage || 'pending';
+      const stageColor = er ? (S2F_STAGE_COLORS[stagKey] || '#8b8b8b') : null;
+      const pracName = er?.practiceId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId)?.name : null;
+      const s2fTxt = pracName ? (pracName.length > 13 ? pracName.slice(0,12)+'…' : pracName) : null;
+      const s2fBadgeW = s2fTxt ? Math.min(s2fTxt.length * 6 + 44, 130) : 44;
+      const s2fBadgeH = 18;
+      const s2fRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      s2fRect.setAttribute('x', sp.x - s2fBadgeW/2); s2fRect.setAttribute('y', sp.y - s2fBadgeH/2);
+      s2fRect.setAttribute('width', s2fBadgeW); s2fRect.setAttribute('height', s2fBadgeH);
+      s2fRect.setAttribute('rx', '9'); s2fRect.setAttribute('ry', '9');
+      s2fRect.setAttribute('fill', er ? stageColor + '33' : 'rgba(255,255,255,.04)');
+      s2fRect.setAttribute('stroke', er ? stageColor : 'rgba(255,255,255,.2)');
+      s2fRect.setAttribute('stroke-width', er ? '1.5' : '1');
+      s2fRect.setAttribute('stroke-dasharray', er ? '' : '3,2');
+      s2fRect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
+      s2fRect.addEventListener('click', (e) => { e.stopPropagation(); openS2FModal(conn.id); });
+      g.appendChild(s2fRect);
+      const s2fLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      s2fLabel.setAttribute('x', sp.x); s2fLabel.setAttribute('y', sp.y + 4);
+      s2fLabel.setAttribute('text-anchor', 'middle'); s2fLabel.setAttribute('font-size', '9');
+      s2fLabel.setAttribute('font-weight', '600');
+      s2fLabel.setAttribute('fill', er ? stageColor : 'rgba(255,255,255,.35)');
+      s2fLabel.setAttribute('style', 'pointer-events:none;');
+      s2fLabel.textContent = er ? (s2fTxt ? `🧪 ${s2fTxt}` : `🧪 ${stagKey}`) : '+ S2F';
+      g.appendChild(s2fLabel);
+
+      // Delete button (right of S2F badge, visible on hover)
+      const delCx = sp.x + s2fBadgeW/2 + 10;
       const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      del.setAttribute('cx', mp.x + badgeW/2 + 10); del.setAttribute('cy', mp.y);
+      del.setAttribute('cx', delCx); del.setAttribute('cy', sp.y);
       del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
       del.addEventListener('click', () => deleteConnection(conn.id));
       g.appendChild(del);
       const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      delX.setAttribute('x', mp.x + badgeW/2 + 10); delX.setAttribute('y', mp.y + 3);
+      delX.setAttribute('x', delCx); delX.setAttribute('y', sp.y + 3);
       delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
       delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
       delX.setAttribute('style', 'pointer-events:none');
@@ -2947,22 +3017,26 @@ function advanceCycle(){
 // STATS & FITNESS
 // ══════════════════════════════════════════
 function calcFitnessBreakdown(){
-  const all=Object.values(gridState);
-  // 1. Experiments (S2F markers on board)
-  const expIds=boardMarkers.filter(m=>m.type==='s2f'&&all.includes(m.hexId)).map(m=>m.hexId);
-  const expRan=expIds.filter(id=>{const s=(experimentResults[id]||{}).status;return s&&s!=='';}).length;
-  const expAdopted=expIds.filter(id=>{const er=experimentResults[id]||{};return er.status==='passed'||er.stage==='adopted';}).length;
-  const expScore=expRan*5+expAdopted*10;
-  // 2. Practice repetitions
-  const totalReps=Object.values(practiceRepetitions).reduce((s,n)=>s+n,0);
-  const repScore=totalReps*2;
-  // Total (capped 0–100)
-  const total=Math.max(0,Math.min(100,Math.round(expScore+repScore)));
-  const expLinkedPracs=new Set(Object.values(experimentResults).map(er=>er.practiceId).filter(Boolean));
-  // Legacy fields kept for breakdown modal compatibility
-  return{total,expRan,expAdopted,expScore,totalReps,repScore,expLinkedPracs:expLinkedPracs.size,
-    hexScore:0,capScore:0,capCount:0,uniqueCaps:0,linkedPracScore:0,pracCount:0,pracScore:0,
-    ag:0,agBonus:0,drLinks:0,drBonus:0,cycleBonus:0,pathwayBonus:0,uniquePracs:expLinkedPracs.size};
+  // 1. Nexus line experiments (new: keyed by conn.id)
+  const nexusConns = connections.filter(c => c.type === 'nexus');
+  const nexusExpRan     = nexusConns.filter(c => { const er = experimentResults[c.id]; return er && er.stage && er.stage !== 'pending'; }).length;
+  const nexusExpAdopted = nexusConns.filter(c => { const er = experimentResults[c.id]||{}; return er.stage === 'adopted'; }).length;
+  // 2. Legacy hex-based experiments (boardMarkers s2f, backward compat)
+  const all = Object.values(gridState);
+  const legacyIds = boardMarkers.filter(m => m.type === 's2f' && all.includes(m.hexId)).map(m => m.hexId);
+  const legacyRan     = legacyIds.filter(id => { const s = (experimentResults[id]||{}).status; return s && s !== ''; }).length;
+  const legacyAdopted = legacyIds.filter(id => { const er = experimentResults[id]||{}; return er.status === 'passed' || er.stage === 'adopted'; }).length;
+  const expRan     = nexusExpRan     + legacyRan;
+  const expAdopted = nexusExpAdopted + legacyAdopted;
+  const expScore   = expRan * 5 + expAdopted * 10;
+  // 3. Practice repetitions
+  const totalReps = Object.values(practiceRepetitions).reduce((s,n) => s+n, 0);
+  const repScore  = totalReps * 2;
+  const total = Math.max(0, Math.min(100, Math.round(expScore + repScore)));
+  const expLinkedPracs = new Set(Object.values(experimentResults).map(er => er.practiceId).filter(Boolean));
+  return { total, expRan, expAdopted, expScore, totalReps, repScore, expLinkedPracs: expLinkedPracs.size,
+    hexScore:0, capScore:0, capCount:0, uniqueCaps:0, linkedPracScore:0, pracCount:0, pracScore:0,
+    ag:0, agBonus:0, drLinks:0, drBonus:0, cycleBonus:0, pathwayBonus:0, uniquePracs: expLinkedPracs.size };
 }
 function updateStats(){
   const all=Object.values(gridState);
