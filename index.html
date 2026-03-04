@@ -2478,7 +2478,7 @@ function renderBoard() {
       cell.style.width = HEX_W + 'px'; cell.style.height = HEX_H + 'px';
       cell.dataset.row = row; cell.dataset.col = col;
       // Drag-drop
-      cell.addEventListener('dragover', e=>{e.preventDefault();e.dataTransfer.dropEffect='move';cell.classList.add('drag-over');});
+      cell.addEventListener('dragover', e=>{e.preventDefault();e.dataTransfer.dropEffect=draggedMarkerType?'copy':'move';cell.classList.add('drag-over');});
       cell.addEventListener('dragleave', ()=>cell.classList.remove('drag-over'));
       cell.addEventListener('drop', e=>{
         e.preventDefault();e.stopPropagation();cell.classList.remove('drag-over');
@@ -2568,7 +2568,7 @@ function renderBoard() {
           if(selectedMarker){toggleMarker(hexId,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
           if(selectedAgent){assignAgent(hexId,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
         });
-        el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+        el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect=draggedMarkerType?'copy':'move';});
         el.addEventListener('dragstart',e=>{
           if(connectMode){e.preventDefault();return;}
           draggedId=hexId;dragSource=key;e.dataTransfer.effectAllowed='move';
