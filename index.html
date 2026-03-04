@@ -723,7 +723,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 <div class="modal-overlay" id="addPatternModal">
   <div class="modal">
     <h2>Add Custom Pattern</h2>
-    <div class="form-group"><label>Type</label><select id="newType"><option value="pattern">Pattern</option><option value="antipattern">Anti-Pattern</option><option value="transition">Transition</option></select></div>
+    <div class="form-group"><label>Type</label><select id="newType"><option value="pattern">Pattern</option><option value="antipattern">Anti-Pattern</option></select></div>
     <div class="form-group"><label>Name</label><input id="newName" placeholder="e.g., Decentralized Decisions"></div>
     <div class="form-group"><label>Signal</label><input id="newSignal" placeholder="How you recognize it"></div>
     <div class="form-group"><label>Impact</label><input id="newImpact" placeholder="What it enables or blocks"></div>
@@ -801,10 +801,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 <!-- Transition Picker Modal (click nexus badge) -->
 <div id="transPickerModal">
-  <div class="cap-sel-box" style="max-width:420px;">
+  <div class="cap-sel-box" style="max-width:440px;">
     <div class="cap-sel-hdr">
       <h3>Assign Transition to Nexus</h3>
       <button onclick="closeTransPicker()">✕</button>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+      <input id="transSearchInput" type="text" placeholder="Search or create transition…"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;outline:none;"
+        oninput="filterTransPicker(this.value)" autocomplete="off">
     </div>
     <div class="cap-sel-body" id="transPickerBody"></div>
     <div class="cap-sel-footer">
@@ -861,7 +866,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <div class="filter-tab active" onclick="setFilter('all',this)">All</div>
         <div class="filter-tab" onclick="setFilter('pattern',this)">Patterns</div>
         <div class="filter-tab" onclick="setFilter('antipattern',this)">Anti</div>
-        <div class="filter-tab" onclick="setFilter('transition',this)">Trans</div>
       </div>
       <div class="hex-list" id="libraryList"></div>
     </div>
@@ -1875,24 +1879,47 @@ function saveS2FExperiment(forcePracticeId) {
 let _transConnId = null;
 function openTransPicker(connId) {
   _transConnId = connId;
-  const conn = connections.find(c=>c.id===connId);
+  const inp = document.getElementById('transSearchInput');
+  if (inp) inp.value = '';
+  filterTransPicker('');
+  document.getElementById('transPickerModal').classList.add('open');
+  setTimeout(() => inp?.focus(), 50);
+}
+function filterTransPicker(q) {
+  const conn = connections.find(c=>c.id===_transConnId);
+  const current = conn?.transitionId || '';
   const body = document.getElementById('transPickerBody');
   if (!body) return;
-  const transitions = allItems.filter(i=>i.type==='transition');
-  if (transitions.length === 0) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No transition cards in your library. Create some in the Library tab first.</p>`;
-  } else {
-    const current = conn?.transitionId || '';
-    body.innerHTML = transitions.map(t => `
-      <label class="cap-sel-prac-row" style="padding:8px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;border-radius:6px;margin-bottom:2px;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
-        <input type="radio" name="trans_pick" id="tp_${t.id}" value="${t.id}" ${current===t.id?'checked':''} style="margin-top:2px;flex-shrink:0;">
-        <div>
-          <div style="font-size:11px;font-weight:600;">${escHtml(t.name)}</div>
-          ${t.signal?`<div style="font-size:9px;color:var(--text-muted);">${escHtml(t.signal)}</div>`:''}
-        </div>
-      </label>`).join('');
+  const ql = q.toLowerCase().trim();
+  const all = allItems.filter(i=>i.type==='transition');
+  const matched = ql ? all.filter(t=>t.name.toLowerCase().includes(ql)||t.signal.toLowerCase().includes(ql)) : all;
+  const exactMatch = all.some(t=>t.name.toLowerCase()===ql);
+  let html = matched.map(t => `
+    <label class="cap-sel-prac-row" style="padding:8px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;border-radius:6px;margin-bottom:2px;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+      <input type="radio" name="trans_pick" value="${t.id}" ${current===t.id?'checked':''} style="margin-top:2px;flex-shrink:0;">
+      <div>
+        <div style="font-size:11px;font-weight:600;">${escHtml(t.name)}</div>
+        ${t.signal?`<div style="font-size:9px;color:var(--text-muted);">${escHtml(t.signal)}</div>`:''}
+      </div>
+    </label>`).join('');
+  if (matched.length === 0 && !ql) {
+    html = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No transitions yet. Type a name above to create one.</p>`;
   }
-  document.getElementById('transPickerModal').classList.add('open');
+  if (ql && !exactMatch) {
+    html += `<div style="padding:8px 12px;margin-top:4px;border-top:1px solid var(--border);">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="createAndAssignTransition('${escHtml(q).replace(/'/g,"\\'")}')">
+        ＋ Create &amp; assign "${escHtml(q)}"
+      </button>
+    </div>`;
+  }
+  body.innerHTML = html;
+}
+function createAndAssignTransition(name) {
+  const newT = {id:'t_'+Date.now(), type:'transition', name:name.trim(), signal:'', impact:'', domain:'People, Culture & Governance'};
+  allItems.push(newT);
+  const conn = connections.find(c=>c.id===_transConnId);
+  if (conn) { conn.transitionId = newT.id; addLog(`Created & assigned transition "${newT.name}"`, 'success'); }
+  closeTransPicker(); renderConnections(); scheduleAutoSave();
 }
 function closeTransPicker() {
   _transConnId = null;
@@ -2354,6 +2381,7 @@ function renderLibrary() {
   list.innerHTML = '';
   const q = searchQuery.toLowerCase();
   allItems.filter(item => {
+    if (item.type === 'transition') return false; // transitions live on nexus lines only
     if (currentFilter!=='all' && item.type!==currentFilter) return false;
     if (activeDomain && item.domain!==activeDomain) return false;
     if (q) return item.name.toLowerCase().includes(q)||item.signal.toLowerCase().includes(q)||item.domain.toLowerCase().includes(q);
