@@ -2831,60 +2831,63 @@ function renderConnections() {
         openS2FModal(conn.id);
       });
 
-      // === Transition badge at transPt (38%) ===
-      const tp = route.transPt;
-      const transTxt = conn.transitionId ? allItems.find(i=>i.id===conn.transitionId)?.name : null;
-      const transBadgeW = transTxt ? Math.min(transTxt.length * 6 + 16, 150) : 22;
-      const transBadgeH = 18;
-      const transRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      transRect.setAttribute('x', tp.x - transBadgeW/2); transRect.setAttribute('y', tp.y - transBadgeH/2);
-      transRect.setAttribute('width', transBadgeW); transRect.setAttribute('height', transBadgeH);
-      transRect.setAttribute('rx', '9'); transRect.setAttribute('ry', '9');
-      transRect.setAttribute('fill', transTxt ? '#0d3a3a' : 'rgba(0,200,200,.15)');
-      transRect.setAttribute('stroke', 'var(--cyan)'); transRect.setAttribute('stroke-width', '1.5');
-      transRect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
-      transRect.addEventListener('click', (e) => { e.stopPropagation(); openTransPicker(conn.id); });
-      g.appendChild(transRect);
-      const transLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      transLabel.setAttribute('x', tp.x); transLabel.setAttribute('y', tp.y + 4);
-      transLabel.setAttribute('text-anchor', 'middle'); transLabel.setAttribute('font-size', '9');
-      transLabel.setAttribute('font-weight', '600'); transLabel.setAttribute('fill', 'var(--cyan)');
-      transLabel.setAttribute('style', 'pointer-events:none;');
-      transLabel.textContent = transTxt ? (transTxt.length > 20 ? transTxt.slice(0,18)+'…' : transTxt) : '⊕';
-      g.appendChild(transLabel);
+      // Helper: draw a small circular dot icon on the nexus line
+      const makeDot = (cx, cy, fillColor, strokeColor, letter, tooltip, onClick, dashed) => {
+        const R = 9;
+        const dotG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        dotG.setAttribute('style', 'pointer-events:all;cursor:pointer;');
+        dotG.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = tooltip;
+        dotG.appendChild(title);
+        const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circ.setAttribute('cx', cx); circ.setAttribute('cy', cy); circ.setAttribute('r', R);
+        circ.setAttribute('fill', fillColor); circ.setAttribute('stroke', strokeColor);
+        circ.setAttribute('stroke-width', '1.5');
+        if (dashed) circ.setAttribute('stroke-dasharray', '3,2');
+        dotG.appendChild(circ);
+        const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        lbl.setAttribute('x', cx); lbl.setAttribute('y', cy + 4);
+        lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '8');
+        lbl.setAttribute('font-weight', '700'); lbl.setAttribute('fill', strokeColor);
+        lbl.setAttribute('style', 'pointer-events:none;');
+        lbl.textContent = letter;
+        dotG.appendChild(lbl);
+        return dotG;
+      };
 
-      // === S2F badge at s2fPt (62%) ===
+      // === Transition dot at transPt (38%) ===
+      const tp = route.transPt;
+      const transItem = conn.transitionId ? allItems.find(i=>i.id===conn.transitionId) : null;
+      const transTooltip = transItem ? transItem.name : 'Click to assign a Transition';
+      g.appendChild(makeDot(
+        tp.x, tp.y,
+        transItem ? 'rgba(56,178,160,.25)' : 'rgba(56,178,160,.06)',
+        transItem ? '#38b2a0' : 'rgba(56,178,160,.4)',
+        'T', transTooltip,
+        () => openTransPicker(conn.id),
+        !transItem
+      ));
+
+      // === S2F dot at s2fPt (62%) ===
       const sp = route.s2fPt;
       const er = experimentResults[conn.id];
       const S2F_STAGE_COLORS = { pending:'#8b8b8b', running:'#e8943a', review:'#4a90d9', adopted:'#2d9d5e', abandoned:'#555' };
       const stagKey = er?.stage || 'pending';
       const stageColor = er ? (S2F_STAGE_COLORS[stagKey] || '#8b8b8b') : null;
       const pracName = er?.practiceId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId)?.name : null;
-      const s2fTxt = pracName ? (pracName.length > 13 ? pracName.slice(0,12)+'…' : pracName) : null;
-      const s2fBadgeW = s2fTxt ? Math.min(s2fTxt.length * 6 + 44, 130) : 44;
-      const s2fBadgeH = 18;
-      const s2fRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      s2fRect.setAttribute('x', sp.x - s2fBadgeW/2); s2fRect.setAttribute('y', sp.y - s2fBadgeH/2);
-      s2fRect.setAttribute('width', s2fBadgeW); s2fRect.setAttribute('height', s2fBadgeH);
-      s2fRect.setAttribute('rx', '9'); s2fRect.setAttribute('ry', '9');
-      s2fRect.setAttribute('fill', er ? stageColor + '33' : 'rgba(255,255,255,.04)');
-      s2fRect.setAttribute('stroke', er ? stageColor : 'rgba(255,255,255,.2)');
-      s2fRect.setAttribute('stroke-width', er ? '1.5' : '1');
-      s2fRect.setAttribute('stroke-dasharray', er ? '' : '3,2');
-      s2fRect.setAttribute('style', 'pointer-events:all;cursor:pointer;');
-      s2fRect.addEventListener('click', (e) => { e.stopPropagation(); openS2FModal(conn.id); });
-      g.appendChild(s2fRect);
-      const s2fLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      s2fLabel.setAttribute('x', sp.x); s2fLabel.setAttribute('y', sp.y + 4);
-      s2fLabel.setAttribute('text-anchor', 'middle'); s2fLabel.setAttribute('font-size', '9');
-      s2fLabel.setAttribute('font-weight', '600');
-      s2fLabel.setAttribute('fill', er ? stageColor : 'rgba(255,255,255,.35)');
-      s2fLabel.setAttribute('style', 'pointer-events:none;');
-      s2fLabel.textContent = er ? (s2fTxt ? `🧪 ${s2fTxt}` : `🧪 ${stagKey}`) : '+ S2F';
-      g.appendChild(s2fLabel);
+      const s2fTooltip = er ? `S2F: ${pracName||stagKey}` : 'Drag S2F here or click to add experiment';
+      g.appendChild(makeDot(
+        sp.x, sp.y,
+        er ? stageColor + '44' : 'rgba(255,255,255,.05)',
+        er ? stageColor : 'rgba(255,255,255,.25)',
+        'S', s2fTooltip,
+        () => openS2FModal(conn.id),
+        !er
+      ));
 
-      // Delete button (right of S2F badge, visible on hover)
-      const delCx = sp.x + s2fBadgeW/2 + 10;
+      // Delete button (right of midpoint, visible on hover)
+      const delCx = mp.x + 22;
       const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       del.setAttribute('cx', delCx); del.setAttribute('cy', sp.y);
       del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
