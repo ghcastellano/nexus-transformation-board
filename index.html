@@ -2025,29 +2025,18 @@ function renderFitnessPanel() {
   const allOnBoard = Object.values(gridState);
   const capIds = boardMarkers.filter(m=>m.type==='capability').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
   const expIds = boardMarkers.filter(m=>m.type==='s2f').map(m=>m.hexId).filter(id=>allOnBoard.includes(id));
-  // Collect unique practices: from experiments (primary) + old capabilityLinks format (backward-compat)
+  // Collect unique practices: only from S2F experiments that have a practice selected
   const allLinkedPracs = (() => {
     const seen = new Map();
-    // Primary: practices linked via experiments
-    Object.values(experimentResults).forEach(er => {
-      if (!er.practiceId || seen.has(er.practiceId)) return;
-      const prac = capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId);
+    const nexusExpKeys  = connections.filter(c => c.type === 'nexus' && experimentResults[c.id]).map(c => c.id);
+    const legacyExpKeys = boardMarkers.filter(m => m.type === 's2f' && allOnBoard.includes(m.hexId)).map(m => m.hexId);
+    [...nexusExpKeys, ...legacyExpKeys].forEach(key => {
+      const er = experimentResults[key];
+      if (!er?.practiceId || seen.has(er.practiceId)) return;
+      const prac = capabilitiesLibrary.flatMap(c => c.practices).find(p => p.id === er.practiceId);
       if (!prac) return;
-      const cap = capabilitiesLibrary.find(c=>c.practices.some(p=>p.id===er.practiceId));
-      seen.set(er.practiceId, {id:er.practiceId, name:prac.name, capName:cap?.name||''});
-    });
-    // Backward-compat: practices from old capabilityLinks format
-    boardMarkers.filter(m=>m.type==='capability'&&allOnBoard.includes(m.hexId)).forEach(mk => {
-      getCapabilityLinks(mk).forEach(link => {
-        const cap = capabilitiesLibrary.find(c=>c.id===link.capabilityId);
-        if (!cap) return;
-        (link.practiceIds||[]).forEach(pid => {
-          if (!seen.has(pid)) {
-            const prac = cap.practices.find(p=>p.id===pid);
-            if (prac) seen.set(pid, {id:pid, name:prac.name, capName:cap.name});
-          }
-        });
-      });
+      const cap = capabilitiesLibrary.find(c => c.practices.some(p => p.id === er.practiceId));
+      seen.set(er.practiceId, {id: er.practiceId, name: prac.name, capName: cap?.name || ''});
     });
     return [...seen.values()];
   })();
@@ -2579,6 +2568,7 @@ function renderBoard() {
           if(selectedMarker){toggleMarker(hexId,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
           if(selectedAgent){assignAgent(hexId,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
         });
+        el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
         el.addEventListener('dragstart',e=>{
           if(connectMode){e.preventDefault();return;}
           draggedId=hexId;dragSource=key;e.dataTransfer.effectAllowed='move';
@@ -2901,15 +2891,17 @@ function renderConnections() {
         !er
       ));
 
-      // Delete button (right of midpoint, visible on hover)
-      const delCx = mp.x + 22;
+      // Delete button at ~15% of line (near source hex, away from T and S dots)
+      const fsx = fromR.x+fromR.w/2, fsy = fromR.cy, tex = toR.x+toR.w/2, tey = toR.cy;
+      const delPt = { x: fsx + (tex - fsx)*0.15, y: fsy + (tey - fsy)*0.15 };
+      const delCx = delPt.x;
       const del = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      del.setAttribute('cx', delCx); del.setAttribute('cy', sp.y);
+      del.setAttribute('cx', delCx); del.setAttribute('cy', delPt.y);
       del.setAttribute('r', '7'); del.setAttribute('class', 'conn-delete');
       del.addEventListener('click', () => deleteConnection(conn.id));
       g.appendChild(del);
       const delX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      delX.setAttribute('x', delCx); delX.setAttribute('y', sp.y + 3);
+      delX.setAttribute('x', delCx); delX.setAttribute('y', delPt.y + 3);
       delX.setAttribute('text-anchor', 'middle'); delX.setAttribute('font-size', '9');
       delX.setAttribute('fill', '#fff'); delX.setAttribute('class', 'conn-delete');
       delX.setAttribute('style', 'pointer-events:none');
