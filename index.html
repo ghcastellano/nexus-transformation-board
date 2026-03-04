@@ -435,8 +435,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .kanban-col { display:flex; flex-direction:column; min-width:230px; max-width:260px; flex-shrink:0; background:var(--surface); border-radius:10px; overflow:hidden; max-height:100%; }
 .kanban-col-hdr { padding:9px 12px; font-size:11px; font-weight:700; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
 .kanban-col-count { background:var(--surface2); color:var(--text-muted); padding:1px 7px; border-radius:8px; font-size:9px; font-weight:500; }
-.kanban-col-body { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:7px; min-height:0; }
-.kanban-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; transition:border-color .15s; }
+.kanban-col-body { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:7px; min-height:0; transition:background .15s; }
+.kanban-col-body.kanban-drop-over { background:rgba(74,144,217,.08); border-radius:8px; outline:2px dashed rgba(74,144,217,.4); outline-offset:-4px; }
+.kanban-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; transition:border-color .15s; cursor:grab; }
+.kanban-card:active { cursor:grabbing; opacity:.7; }
 .kanban-card:hover { border-color:rgba(255,255,255,.15); }
 .kanban-card-name { font-size:11px; font-weight:700; margin-bottom:3px; color:var(--text); }
 .kanban-card-prac { font-size:9px; color:var(--cyan); margin-bottom:8px; line-height:1.3; }
@@ -964,10 +966,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       </div>
       <div class="dash-section marker-section">
         <h3>Board Markers</h3>
-        <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Select a marker, then click a hex on the board.</p>
+        <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Click or drag to a hex.</p>
         <div class="marker-palette">
-          <div class="marker-pal" data-marker="s2f" draggable="true" ondragstart="startMarkerDrag('s2f',event)" ondragend="draggedMarkerType=null"><div class="marker-circle s2f">S2F</div><div class="marker-label">Drag to Nexus line</div></div>
-          <div class="marker-pal" data-marker="capability" draggable="true" ondragstart="startMarkerDrag('capability',event)" ondragend="draggedMarkerType=null"><div class="marker-circle capability">C</div><div class="marker-label">Drag to hex</div></div>
+          <div class="marker-pal" data-marker="capability" draggable="true" onclick="selectMarker('capability')" ondragstart="startMarkerDrag('capability',event)" ondragend="draggedMarkerType=null"><div class="marker-circle capability">C</div><div class="marker-label">Capability</div></div>
         </div>
       </div>
       <div class="dash-section">
@@ -1310,6 +1311,7 @@ function switchBoardView(view) {
 // ══════════════════════════════════════════
 // EXPERIMENT TRACKER (Lean Change Kanban)
 // ══════════════════════════════════════════
+let _draggedExpKey = null;
 const KANBAN_STAGES = [
   {id:'pending',   label:'📋 Pending',    color:'var(--text-muted)', dot:'#6b7280'},
   {id:'running',   label:'🔄 Running',    color:'var(--orange)',     dot:'#f59e0b'},
@@ -1381,7 +1383,10 @@ function renderExperimentsPage() {
         <span><span class="kanban-stage-dot" style="background:${stage.dot};"></span>${stage.label}</span>
         <span class="kanban-col-count">${stageKeys.length}</span>
       </div>
-      <div class="kanban-col-body">`;
+      <div class="kanban-col-body"
+        ondragover="event.preventDefault();this.classList.add('kanban-drop-over')"
+        ondragleave="if(!this.contains(event.relatedTarget))this.classList.remove('kanban-drop-over')"
+        ondrop="event.preventDefault();this.classList.remove('kanban-drop-over');if(_draggedExpKey)moveExpStage(_draggedExpKey,'${stage.id}')">`;
 
     if (stageKeys.length === 0) {
       html += `<div class="kanban-empty">Drop experiments here</div>`;
@@ -1401,21 +1406,26 @@ function renderExperimentsPage() {
           ? linkedCapPracs.map(p => `<option value="${p.id}"${linkedPracId===p.id?' selected':''}>${escHtml(p.capName)} → ${escHtml(p.name)}</option>`).join('')
           : `<option disabled>No capabilities on connected card</option>`;
 
-        html += `<div class="kanban-card">
+        const canResults = ['review','adopted','abandoned'].includes(stage.id);
+        const safeKey = escHtml(key);
+        html += `<div class="kanban-card" draggable="true"
+          ondragstart="_draggedExpKey='${safeKey}';event.dataTransfer.setData('text/plain','${safeKey}')"
+          ondragend="_draggedExpKey=null">
           <div class="kanban-card-name">${icon} ${escHtml(title)}</div>
           ${linkedPrac
             ? `<div class="kanban-card-prac">◈ ${escHtml(linkedPrac.capName||'')} → ${escHtml(linkedPrac.name)}</div>`
             : `<div class="kanban-card-prac" style="color:var(--text-muted);font-style:italic;">No practice linked</div>`}
-          <select class="kanban-card-field" style="resize:none;min-height:unset;padding:4px 6px;" onchange="setExpField('${escHtml(key)}','practiceId',this.value)">
+          <select class="kanban-card-field" style="resize:none;min-height:unset;padding:4px 6px;" onchange="setExpField('${safeKey}','practiceId',this.value)">
             <option value="">— Link practice —</option>${pracOptions}
           </select>
           <div class="kanban-card-label">Hypothesis:</div>
-          <textarea class="kanban-card-field" rows="2" placeholder="If we do X, then Y will happen because Z..." oninput="setExpField('${escHtml(key)}','hypothesis',this.value)">${escHtml(er.hypothesis||'')}</textarea>
-          <div class="kanban-card-label">Results / Observations:</div>
-          <textarea class="kanban-card-field" rows="2" placeholder="What happened? What did we learn?" oninput="setExpField('${escHtml(key)}','result',this.value)">${escHtml(er.result||'')}</textarea>
+          <textarea class="kanban-card-field" rows="2" placeholder="If we do X, then Y will happen because Z..." oninput="setExpField('${safeKey}','hypothesis',this.value)">${escHtml(er.hypothesis||'')}</textarea>
+          <div class="kanban-card-label" style="opacity:${canResults?1:.45};">Results / Observations: ${canResults?'':'<span style="font-size:9px;color:var(--text-muted);">(available from Review)</span>'}</div>
+          <textarea class="kanban-card-field" rows="2" placeholder="What happened? What did we learn?" oninput="setExpField('${safeKey}','result',this.value)" ${canResults?'':'disabled'}
+            style="${canResults?'':'opacity:.4;cursor:not-allowed;'}">${escHtml(er.result||'')}</textarea>
           <div class="kanban-card-footer">
-            ${prevStageId ? `<button class="kanban-mv-btn" onclick="moveExpStage('${escHtml(key)}','${prevStageId}')">← Back</button>` : `<span></span>`}
-            ${nextStageId ? `<button class="kanban-mv-btn primary" onclick="moveExpStage('${escHtml(key)}','${nextStageId}')">Next →</button>` : `<span style="font-size:9px;color:${stage.color};">● ${stage.label.replace(/^[^\w]+ ?/,'')}</span>`}
+            ${prevStageId ? `<button class="kanban-mv-btn" onclick="moveExpStage('${safeKey}','${prevStageId}')">← Back</button>` : `<span></span>`}
+            ${nextStageId ? `<button class="kanban-mv-btn primary" onclick="moveExpStage('${safeKey}','${nextStageId}')">Next →</button>` : `<span style="font-size:9px;color:${stage.color};">● ${stage.label.replace(/^[^\w]+ ?/,'')}</span>`}
           </div>
         </div>`;
       });
@@ -1430,6 +1440,11 @@ function renderExperimentsPage() {
 
 function moveExpStage(id, stage) {
   if (!experimentResults[id]) experimentResults[id] = {};
+  // Hypothesis required before moving to Running
+  if (stage === 'running' && !experimentResults[id].hypothesis?.trim()) {
+    showToast('✍️ First write your Hypothesis! "If we do X, then Y will happen because Z..." — a good experiment starts with a clear prediction! 🚀', 'info');
+    return;
+  }
   experimentResults[id].stage = stage;
   // Sync status for fitness scoring
   if (stage === 'adopted') experimentResults[id].status = 'passed';
