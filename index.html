@@ -795,8 +795,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
     </div>
     <div class="cap-sel-body" id="s2fModalBody"></div>
     <div class="cap-sel-footer">
-      <button class="btn" onclick="saveS2FExperiment(null)">Skip (no practice)</button>
-      <button class="btn btn-primary" onclick="saveS2FExperiment()">Start Experiment</button>
+      <button class="btn btn-primary" onclick="saveS2FExperiment()">Add to Kanban</button>
     </div>
   </div>
 </div>
@@ -1142,7 +1141,12 @@ let domainDefinitions = []; // [{id, name, color, hexIds:[]}]
 let selectedDomainId = null;
 let selectedDomainColor = null;
 // Fitness panel metrics
-let experimentResults = {}; // {hexId: {result:string, status:string}}
+let experimentResults = {}; // {key: {stage, practiceId, hypothesis, result}}
+// Key format: connId::pracId (nexus+practice), connId (nexus no-practice), hexId (legacy)
+function getConnExpKeys(connId) {
+  const prefix = connId + '::';
+  return Object.keys(experimentResults).filter(k => k === connId || k.startsWith(prefix));
+}
 let practiceRepetitions = {}; // {hexId: number}
 let transformationHorizons = {h3m:'', h1y:'', h2y:'', h5y:''}; // fitness goals per time horizon
 let lastBreakdown = {}; // last calcFitnessBreakdown() result, used by breakdown modal
@@ -1325,19 +1329,20 @@ function renderExperimentsPage() {
   if (!page) return;
 
   // Gather all experiment keys: nexus connections with experiments + legacy boardMarker s2f
-  const nexusExpKeys  = connections.filter(c => c.type === 'nexus' && experimentResults[c.id]).map(c => c.id);
+  const nexusExpKeys  = connections.filter(c => c.type === 'nexus').flatMap(c => getConnExpKeys(c.id).filter(k => experimentResults[k]));
   const allOnBoard    = Object.values(gridState);
   const legacyExpKeys = boardMarkers.filter(m => m.type === 's2f' && allOnBoard.includes(m.hexId)).map(m => m.hexId);
   const allExpKeys    = [...nexusExpKeys, ...legacyExpKeys];
 
-  // Helper: get display title and capIds for a key
+  // Helper: get display title and capIds for a key (handles connId::pracId format)
   function getExpMeta(key) {
-    const conn = connections.find(c => c.id === key);
+    const colonIdx = key.indexOf('::');
+    const connId = colonIdx >= 0 ? key.substring(0, colonIdx) : key;
+    const conn = connections.find(c => c.id === connId);
     if (conn) {
       const fromItem = allItems.find(i => i.id === conn.from);
       const toItem   = allItems.find(i => i.id === conn.to);
       const title = `${fromItem?.name || '?'} → ${toItem?.name || '?'}`;
-      // capIds from forward card (conn.to), fallback conn.from
       const toCap   = boardMarkers.find(m => m.hexId === conn.to   && m.type === 'capability');
       const fromCap = boardMarkers.find(m => m.hexId === conn.from && m.type === 'capability');
       let capIds = getCapabilityIds(toCap);
@@ -1844,21 +1849,26 @@ function openS2FModal(connIdOrHexId) {
     const cap = capabilitiesLibrary.find(c => c.id === cid);
     return cap ? {cap, practices: cap.practices} : null;
   }).filter(Boolean);
+  // Which practices already have experiments on this connection?
+  const existingPracIds = conn
+    ? new Set(getConnExpKeys(conn.id).map(k => k.includes('::') ? k.split('::')[1] : null).filter(Boolean))
+    : new Set();
   if (pracsByCapId.length === 0) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities linked to the connected card. The experiment will be created without a practice.<br><br>Link capabilities to the forward card first to select a practice.</p>`;
+    body.innerHTML = `<p style="font-size:12px;color:var(--text-muted);padding:12px;">No capabilities linked to the connected card.<br><br>Link capabilities to the forward card first to select a practice.</p>`;
   } else {
-    const existing = (experimentResults[_s2fKey] || {}).practiceId || '';
     body.innerHTML = pracsByCapId.map(({cap, practices}) => `
       <div style="margin-bottom:10px;">
         <div style="font-size:10px;font-weight:700;color:var(--cyan);padding:6px 12px;background:var(--surface2);border-radius:4px;margin-bottom:4px;">◈ ${escHtml(cap.name)}</div>
-        ${practices.map(p => `
+        ${practices.map(p => {
+          const alreadyIn = existingPracIds.has(p.id);
+          return `
           <label class="cap-sel-prac-row" style="padding:8px 12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;border-radius:6px;margin-bottom:2px;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
-            <input type="radio" name="s2f_prac" id="s2fp_${p.id}" value="${p.id}" ${existing===p.id?'checked':''} style="margin-top:2px;flex-shrink:0;">
+            <input type="checkbox" name="s2f_prac" id="s2fp_${p.id}" value="${p.id}" ${alreadyIn?'checked disabled':''} style="margin-top:2px;flex-shrink:0;">
             <div>
-              <div class="cap-sel-prac-name">${escHtml(p.name)}</div>
+              <div class="cap-sel-prac-name">${escHtml(p.name)}${alreadyIn?' <span style="font-size:9px;color:var(--cyan);">✓ in Kanban</span>':''}</div>
               ${p.description?`<div class="cap-sel-prac-desc">${escHtml(p.description)}</div>`:''}
             </div>
-          </label>`).join('')}
+          </label>`;}).join('')}
       </div>`).join('');
   }
   document.getElementById('s2fPracticeModal').classList.add('open');
@@ -1867,20 +1877,27 @@ function closeS2FModal() {
   _s2fKey = null;
   document.getElementById('s2fPracticeModal').classList.remove('open');
 }
-function saveS2FExperiment(forcePracticeId) {
+function saveS2FExperiment() {
   const key = _s2fKey;
   if (!key) return;
   const conn = connections.find(c => c.id === key);
-  let practiceId = forcePracticeId === null ? '' : (forcePracticeId || document.querySelector('input[name="s2f_prac"]:checked')?.value || '');
-  if (!experimentResults[key]) experimentResults[key] = {};
-  if (practiceId) experimentResults[key].practiceId = practiceId;
-  if (!experimentResults[key].stage) experimentResults[key].stage = 'pending';
   if (conn) {
+    // Nexus line: multi-practice mode — each checked practice → one kanban card
+    const checked = [...document.querySelectorAll('input[name="s2f_prac"]:checked:not([disabled])')].map(i => i.value);
+    if (checked.length === 0) { showToast('Select at least one practice to add to Kanban', 'info'); return; }
+    checked.forEach(pracId => {
+      const expKey = key + '::' + pracId;
+      if (!experimentResults[expKey]) experimentResults[expKey] = { stage: 'pending', practiceId: pracId };
+    });
     const fromItem = allItems.find(i => i.id === conn.from);
     const toItem   = allItems.find(i => i.id === conn.to);
-    addLog(`S2F Experiment added: ${fromItem?.name||'?'} → ${toItem?.name||'?'}`, 'success');
+    addLog(`S2F Experiment added: ${fromItem?.name||'?'} → ${toItem?.name||'?'} (${checked.length} practice${checked.length>1?'s':''})`, 'success');
   } else {
-    // Legacy: also add boardMarker so it shows in fitness panel hex view
+    // Legacy: hex-based experiment (single practice)
+    const practiceId = document.querySelector('input[name="s2f_prac"]:checked')?.value || '';
+    if (!experimentResults[key]) experimentResults[key] = {};
+    if (practiceId) experimentResults[key].practiceId = practiceId;
+    if (!experimentResults[key].stage) experimentResults[key].stage = 'pending';
     const alreadyHas = boardMarkers.some(m => m.hexId === key && m.type === 's2f');
     if (!alreadyHas) boardMarkers.push({id:'mk_'+Date.now(), hexId:key, type:'s2f'});
     const item = allItems.find(i => i.id === key);
@@ -2028,15 +2045,17 @@ function renderFitnessPanel() {
   // Collect unique practices: only from S2F experiments that have a practice selected
   const allLinkedPracs = (() => {
     const seen = new Map();
-    const nexusExpKeys  = connections.filter(c => c.type === 'nexus' && experimentResults[c.id]).map(c => c.id);
+    const nexusExpKeys  = connections.filter(c => c.type === 'nexus').flatMap(c => getConnExpKeys(c.id).filter(k => experimentResults[k]));
     const legacyExpKeys = boardMarkers.filter(m => m.type === 's2f' && allOnBoard.includes(m.hexId)).map(m => m.hexId);
     [...nexusExpKeys, ...legacyExpKeys].forEach(key => {
-      const er = experimentResults[key];
-      if (!er?.practiceId || seen.has(er.practiceId)) return;
-      const prac = capabilitiesLibrary.flatMap(c => c.practices).find(p => p.id === er.practiceId);
+      const er = experimentResults[key] || {};
+      // practiceId embedded in key suffix (connId::pracId) or stored in er
+      const pracId = er.practiceId || (key.includes('::') ? key.split('::')[1] : null);
+      if (!pracId || seen.has(pracId)) return;
+      const prac = capabilitiesLibrary.flatMap(c => c.practices).find(p => p.id === pracId);
       if (!prac) return;
-      const cap = capabilitiesLibrary.find(c => c.practices.some(p => p.id === er.practiceId));
-      seen.set(er.practiceId, {id: er.practiceId, name: prac.name, capName: cap?.name || ''});
+      const cap = capabilitiesLibrary.find(c => c.practices.some(p => p.id === pracId));
+      seen.set(pracId, {id: pracId, name: prac.name, capName: cap?.name || ''});
     });
     return [...seen.values()];
   })();
@@ -2876,19 +2895,24 @@ function renderConnections() {
 
       // === S2F dot at s2fPt (62%) ===
       const sp = route.s2fPt;
-      const er = experimentResults[conn.id];
       const S2F_STAGE_COLORS = { pending:'#8b8b8b', running:'#e8943a', review:'#4a90d9', adopted:'#2d9d5e', abandoned:'#555' };
+      const connExpKeys = getConnExpKeys(conn.id).filter(k => experimentResults[k]);
+      const hasExp = connExpKeys.length > 0;
+      const er = hasExp ? experimentResults[connExpKeys[0]] : null;
       const stagKey = er?.stage || 'pending';
-      const stageColor = er ? (S2F_STAGE_COLORS[stagKey] || '#8b8b8b') : null;
-      const pracName = er?.practiceId ? capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId)?.name : null;
-      const s2fTooltip = er ? `S2F: ${pracName||stagKey}` : 'Drag S2F here or click to add experiment';
+      const stageColor = hasExp ? (S2F_STAGE_COLORS[stagKey] || '#8b8b8b') : null;
+      const s2fTooltip = hasExp
+        ? (connExpKeys.length === 1
+            ? `S2F: ${er?.practiceId ? (capabilitiesLibrary.flatMap(c=>c.practices).find(p=>p.id===er.practiceId)?.name || stagKey) : stagKey}`
+            : `S2F: ${connExpKeys.length} experiments`)
+        : 'Click to add S2F experiment';
       g.appendChild(makeDot(
         sp.x, sp.y,
-        er ? stageColor + '44' : 'rgba(255,255,255,.05)',
-        er ? stageColor : 'rgba(255,255,255,.25)',
+        hasExp ? stageColor + '44' : 'rgba(255,255,255,.05)',
+        hasExp ? stageColor : 'rgba(255,255,255,.25)',
         'S', s2fTooltip,
         () => openS2FModal(conn.id),
-        !er
+        !hasExp
       ));
 
       // Delete button at ~15% of line (near source hex, away from T and S dots)
@@ -3044,10 +3068,11 @@ function advanceCycle(){
 // STATS & FITNESS
 // ══════════════════════════════════════════
 function calcFitnessBreakdown(){
-  // 1. Nexus line experiments (new: keyed by conn.id)
+  // 1. Nexus line experiments (keyed as connId::pracId or connId)
   const nexusConns = connections.filter(c => c.type === 'nexus');
-  const nexusExpRan     = nexusConns.filter(c => { const er = experimentResults[c.id]; return er && er.stage && er.stage !== 'pending'; }).length;
-  const nexusExpAdopted = nexusConns.filter(c => { const er = experimentResults[c.id]||{}; return er.stage === 'adopted'; }).length;
+  const allNexusExpKeys = nexusConns.flatMap(c => getConnExpKeys(c.id).filter(k => experimentResults[k]));
+  const nexusExpRan     = allNexusExpKeys.filter(k => { const s = experimentResults[k]?.stage; return s && s !== 'pending'; }).length;
+  const nexusExpAdopted = allNexusExpKeys.filter(k => experimentResults[k]?.stage === 'adopted').length;
   // 2. Legacy hex-based experiments (boardMarkers s2f, backward compat)
   const all = Object.values(gridState);
   const legacyIds = boardMarkers.filter(m => m.type === 's2f' && all.includes(m.hexId)).map(m => m.hexId);
