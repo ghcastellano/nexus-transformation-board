@@ -129,7 +129,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .hex-card { position:relative; display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; cursor:grab; transition:all .15s; font-size:11px; }
 .hex-card:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.3); }
 .hex-card:active { cursor:grabbing; }
-.hex-card.on-board { opacity:.35; pointer-events:none; }
+.hex-card.on-board { opacity:.6; }
+.hex-card.on-board::after { content:'✓'; position:absolute; top:4px; right:6px; font-size:9px; color:var(--cyan); font-weight:700; }
 .hex-mini { width:32px; height:28px; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; flex-shrink:0; }
 .hex-mini.pattern { background:var(--pattern-hex); }
 .hex-mini.antipattern { background:var(--anti-hex); }
@@ -180,10 +181,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex cells (absolutely positioned) */
 .hex-cell { position:absolute; z-index:1; }
-.hex-cell-bg { position:absolute; inset:2px; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.20); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.18); border-color:rgba(74,144,217,.5); }
+.hex-cell-bg { position:absolute; inset:0; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.07); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell[data-parity="1"] .hex-cell-bg { background:rgba(255,255,255,.11); }
+.hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.25) !important; }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
-.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.28); }
+.hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.22); }
+.add-row-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:12px; border:1px dashed var(--border); background:var(--surface2); color:var(--text-muted); font-size:10px; cursor:pointer; transition:all .15s; }
+.add-row-btn:hover { border-color:var(--accent); color:var(--accent); }
 /* Guidance highlighting on individual cells */
 .hex-cell.guide-best .hex-cell-bg { background:rgba(45,200,94,.12); border-color:rgba(45,200,94,.35); box-shadow:inset 0 0 8px rgba(45,200,94,.15); }
 .hex-cell.guide-yes .hex-cell-bg { background:rgba(45,157,94,.06); border-color:rgba(45,157,94,.18); }
@@ -326,6 +330,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* ══ CONNECTION MODE ══ */
 .connect-toolbar { display:flex; align-items:center; gap:6px; padding:6px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+.domain-toolbar { display:flex; align-items:center; gap:6px; padding:5px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; min-height:34px; }
+.domain-toolbar .dt-label { font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-right:2px; }
+.domain-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; border:1px solid; font-size:10px; cursor:pointer; transition:all .15s; }
+.domain-chip:hover { opacity:.85; }
+.domain-chip.selected { box-shadow:0 0 8px rgba(255,255,255,.2); }
+.domain-chip .dc-del { margin-left:2px; opacity:.5; font-size:9px; cursor:pointer; }
+.domain-chip .dc-del:hover { opacity:1; }
+.domain-add-btn { padding:3px 8px; border-radius:12px; border:1px dashed var(--border); background:none; color:var(--text-muted); font-size:10px; cursor:pointer; transition:all .15s; }
+.domain-add-btn:hover { border-color:var(--accent); color:var(--accent); }
 .ct-sep { width:1px; height:22px; background:var(--border); margin:0 4px; flex-shrink:0; }
 .ct-agent { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; transition:all .15s; }
 .ct-agent:hover { transform:scale(1.08); }
@@ -891,13 +904,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <button class="connect-btn nexus-btn" onclick="toggleConnectMode('nexus')"><span class="cb-icon"></span> Transition Nexus</button>
         <div class="ct-sep"></div>
         <span class="ct-label">Agents:</span>
-        <div class="ct-agent agent-pal" data-agent="human" onclick="selectAgent('human')" title="Human Agent — select then click a hex"><div class="agent-circle human">🧑</div><div class="agent-label">Human</div></div>
-        <div class="ct-agent agent-pal" data-agent="systemic" onclick="selectAgent('systemic')" title="Systemic Agent"><div class="agent-circle systemic">🏛</div><div class="agent-label">Systemic</div></div>
-        <div class="ct-agent agent-pal" data-agent="ai" onclick="selectAgent('ai')" title="AI Agent"><div class="agent-circle ai">🤖</div><div class="agent-label">AI</div></div>
+        <div class="ct-agent agent-pal" data-agent="human" draggable="true" onclick="selectAgent('human')" ondragstart="startAgentDrag('human',event)" ondragend="draggedAgentType=null" title="Drag to hex or click to select"><div class="agent-circle human">🧑</div><div class="agent-label">Human</div></div>
+        <div class="ct-agent agent-pal" data-agent="systemic" draggable="true" onclick="selectAgent('systemic')" ondragstart="startAgentDrag('systemic',event)" ondragend="draggedAgentType=null" title="Drag to hex or click to select"><div class="agent-circle systemic">🏛</div><div class="agent-label">Systemic</div></div>
+        <div class="ct-agent agent-pal" data-agent="ai" draggable="true" onclick="selectAgent('ai')" ondragstart="startAgentDrag('ai',event)" ondragend="draggedAgentType=null" title="Drag to hex or click to select"><div class="agent-circle ai">🤖</div><div class="agent-label">AI</div></div>
         <div class="ct-sep"></div>
         <span class="ct-label">Markers:</span>
         <div class="ct-marker marker-pal" data-marker="capability" draggable="true" onclick="selectMarker('capability')" ondragstart="startMarkerDrag('capability',event)" ondragend="draggedMarkerType=null" title="Capability — drag to hex or click then click hex"><div class="marker-circle capability">C</div><div class="marker-label">Capability</div></div>
+        <div class="ct-sep"></div>
+        <button class="add-row-btn" onclick="addBoardRow()" title="Add 2 rows">＋ Rows</button>
+        <button class="add-row-btn" onclick="addBoardCol()" title="Add 2 columns">＋ Cols</button>
         <span class="connect-status" id="connectStatus" style="display:none"></span>
+      </div>
+      <div class="domain-toolbar" id="domainToolbar">
+        <span class="dt-label">Domains:</span>
+        <button class="domain-add-btn" onclick="showModal('addDomainModal')">＋ Add Domain</button>
       </div>
       <div class="board-toast" id="boardToast"></div>
       <div class="board-map" id="boardMap">
@@ -968,12 +988,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <h3>Mobius Cycle — <span id="cycleCount">Cycle 1</span></h3>
         <div id="cycleSteps"></div>
       </div>
-      <div class="dash-section">
-        <h3>Organizational Domains</h3>
-        <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;text-align:center;">Group hexes visually. Select domain, then click hexes.</p>
-        <div id="domainList"></div>
-        <button class="btn btn-sm" onclick="showModal('addDomainModal')" style="width:100%;margin-top:6px;">+ Add Domain</button>
-      </div>
+      <div id="domainList" style="display:none"></div>
       <div class="dash-section">
         <h3>Activity Log</h3>
         <div id="activityLog" style="max-height:180px;overflow-y:auto;"></div>
@@ -1079,20 +1094,19 @@ const ZONES = ['current_strategic','current_operational','path_strategic','path_
 
 // ── Honeycomb grid config ──
 // Layout: Current Reality (2 cols) | Transformation Path (5 cols) | Improved Fitness = metrics panel
-const GRID_COLS = 20; // path columns — wide board, scroll horizontally
-const GRID_ROWS = 20; // 10 per lane (strategic, operational) — doubled for more space
+let GRID_COLS = 20; // path columns — wide board, scroll horizontally
+let GRID_ROWS = 20; // 10 per lane (strategic, operational) — doubled for more space
 const GRID_PAD_LEFT = 42;      // space for lane labels
-const HEX_GAP = 6;             // gap between hexes
+const HEX_GAP = 0;             // no gap — hexes tile flush
 
 // Dynamic hex dimensions (computed by computeHexLayout)
 let HEX_W = 100, HEX_H = 87;
 let ROW_H = 93, COL_W = 106, ROW_OFFSET = 53;
 
-// Columns valid per row: even=all 10 path cols, odd=9 cols offset by half (proper honeycomb)
+// Column-stagger layout: all rows have the same number of columns,
+// odd columns are offset DOWN by HEX_H/2 for perfect flat-top hex tiling.
 function getColsForRow(row) {
-  // Even rows: full GRID_COLS; odd rows: one fewer (honeycomb stagger)
-  const n = row % 2 === 0 ? GRID_COLS : GRID_COLS - 1;
-  return Array.from({length: n}, (_, i) => i);
+  return Array.from({length: GRID_COLS}, (_, i) => i);
 }
 
 function computeHexLayout() {
@@ -1100,20 +1114,21 @@ function computeHexLayout() {
   const wrapper = scroll || document.getElementById('honeycombGrid')?.parentElement?.parentElement;
   if (!wrapper) return;
   const aw = wrapper.clientWidth || 900;
-  // Use viewport width to size hexes when there is enough space; keep a minimum
-  // of 90px so hexes stay readable — the board will scroll horizontally beyond the viewport
-  const hexFromWidth = (aw - GRID_PAD_LEFT - (GRID_COLS - 1) * HEX_GAP) / GRID_COLS;
+  // Flat-top hex column-stagger: cols spaced at W*0.75
+  // Total width = W*0.75*(GRID_COLS-1) + W = W*(0.75*GRID_COLS + 0.25)
+  const hexFromWidth = (aw - GRID_PAD_LEFT) / (0.75 * GRID_COLS + 0.25);
   HEX_W = Math.max(120, Math.floor(hexFromWidth));
   HEX_H = Math.round(HEX_W * 0.866);
-  COL_W = HEX_W + HEX_GAP;
-  ROW_H = HEX_H + HEX_GAP;
-  ROW_OFFSET = COL_W / 2;
+  COL_W = Math.round(HEX_W * 0.75);  // column-to-column spacing (no gap)
+  ROW_H = HEX_H;                      // row-to-row spacing (no gap)
+  ROW_OFFSET = 0;                     // no row offset; odd COLS stagger down instead
 }
 
+// Flat-top hexagon column-stagger: odd cols shift down by HEX_H/2
 function hexPixelPosition(row, col) {
   return {
-    x: GRID_PAD_LEFT + col * COL_W + (row % 2 === 1 ? ROW_OFFSET : 0),
-    y: row * ROW_H
+    x: GRID_PAD_LEFT + col * COL_W,
+    y: row * ROW_H + (col % 2 === 1 ? Math.round(HEX_H / 2) : 0)
   };
 }
 function getZoneFromCoords(row, col) {
@@ -2416,7 +2431,7 @@ function renderLibrary() {
     const onBoard = isOnBoard(item.id);
     const card = document.createElement('div');
     card.className = `hex-card${onBoard?' on-board':''}`;
-    card.draggable = !onBoard;
+    card.draggable = true;
     card.innerHTML = `
       <div class="hex-mini ${item.type}">${item.type==='pattern'?'P':item.type==='antipattern'?'A':'T'}</div>
       <div class="hex-info">
@@ -2445,11 +2460,11 @@ function renderBoard() {
   computeHexLayout();
   // Set CSS custom properties for text scaling
   container.style.setProperty('--hex-w', HEX_W + 'px');
-  // Compute grid size (even rows define width)
+  // Compute grid size (col-stagger: odd cols shift down by HEX_H/2)
   const laneRows = GRID_ROWS / 2;
   const hexGridW = GRID_PAD_LEFT + (GRID_COLS - 1) * COL_W + HEX_W;
   const strategicH = laneRows * ROW_H;
-  const totalH = GRID_ROWS * ROW_H + HEX_H * 0.5;
+  const totalH = GRID_ROWS * ROW_H + Math.round(HEX_H * 0.5) + 4; // +HEX_H/2 for staggered odd cols
   // Expand to fill full scroll area so no dark empty strip to the right
   const scrollArea = document.getElementById('hexScrollArea');
   const totalW = Math.max(hexGridW, scrollArea ? scrollArea.clientWidth : hexGridW);
@@ -2499,12 +2514,20 @@ function renderBoard() {
       cell.style.left = pos.x + 'px'; cell.style.top = pos.y + 'px';
       cell.style.width = HEX_W + 'px'; cell.style.height = HEX_H + 'px';
       cell.dataset.row = row; cell.dataset.col = col;
+      cell.setAttribute('data-parity', (row + col) % 2);
       // Drag-drop
-      cell.addEventListener('dragover', e=>{e.preventDefault();e.dataTransfer.dropEffect=draggedMarkerType?'copy':'move';cell.classList.add('drag-over');});
+      cell.addEventListener('dragover', e=>{e.preventDefault();e.dataTransfer.dropEffect=(draggedMarkerType||draggedAgentType)?'copy':'move';cell.classList.add('drag-over');});
       cell.addEventListener('dragleave', ()=>cell.classList.remove('drag-over'));
       cell.addEventListener('drop', e=>{
         e.preventDefault();e.stopPropagation();cell.classList.remove('drag-over');
         clearZoneGuidance();
+        // Handle agent drag-and-drop
+        if(draggedAgentType) {
+          const hId = gridState[key];
+          const aType = draggedAgentType; draggedAgentType = null;
+          if(!hId){showToast('Place a card on this hex first','warning');return;}
+          assignAgent(hId, aType); return;
+        }
         // Handle marker drag-and-drop
         if(draggedMarkerType) {
           const hId = gridState[key];
@@ -2523,7 +2546,7 @@ function renderBoard() {
         // Remove from old position
         if(dragSource==='backlog'){currentItems=currentItems.filter(id=>id!==draggedId);}
         else if(dragSource){delete gridState[dragSource];}
-        else{for(const[k,v]of Object.entries(gridState)){if(v===draggedId){delete gridState[k];break;}}}
+        // If dragging from library (no dragSource): keep existing instances, allow duplicates
         gridState[key]=draggedId;
         addLog(`${dragSource==='backlog'?'Moved from backlog':dragSource?'Moved':'Placed'} "${itemObj?.name}" → ${zonePrettyName(zone)}`,'action');
         draggedId=null;dragSource=null;
@@ -2585,7 +2608,7 @@ function renderBoard() {
           if(selectedMarker){toggleMarker(hexId,selectedMarker);selectedMarker=null;document.querySelectorAll('.marker-pal').forEach(m=>m.classList.remove('selected'));return;}
           if(selectedAgent){assignAgent(hexId,selectedAgent);selectedAgent=null;document.querySelectorAll('.agent-pal').forEach(a=>a.classList.remove('selected'));}
         });
-        el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect=draggedMarkerType?'copy':'move';});
+        el.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect=(draggedMarkerType||draggedAgentType)?'copy':'move';});
         el.addEventListener('dragstart',e=>{
           if(connectMode){e.preventDefault();return;}
           draggedId=hexId;dragSource=key;e.dataTransfer.effectAllowed='move';
@@ -2606,6 +2629,8 @@ function renderBoard() {
   requestAnimationFrame(()=>{renderConnections();renderDomainBoundaries();});
 }
 function renderAllZones(){renderBoard();renderLibrary();updateStats();}
+function addBoardRow(){GRID_ROWS+=2;computeHexLayout();renderAllZones();}
+function addBoardCol(){GRID_COLS+=2;computeHexLayout();renderAllZones();}
 
 // ══════════════════════════════════════════
 // PLACEMENT GUIDANCE
@@ -2940,6 +2965,12 @@ function renderConnections() {
 // ══════════════════════════════════════════
 let selectedMarker = null;
 let draggedMarkerType = null;
+let draggedAgentType = null;
+function startAgentDrag(type, e) {
+  draggedAgentType = type;
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', type);
+}
 function startMarkerDrag(type, e) {
   draggedMarkerType = type;
   draggedId = null; // Clear hex card drag to avoid conflicts
@@ -3137,6 +3168,21 @@ function exportSession(){
 // ORGANIZATIONAL DOMAINS
 // ══════════════════════════════════════════
 function renderDomainList(){
+  // Render domain chips in the top toolbar
+  const toolbar = document.getElementById('domainToolbar');
+  if (toolbar) {
+    toolbar.innerHTML = `<span class="dt-label">Domains:</span>
+      <button class="domain-add-btn" onclick="showModal('addDomainModal')">＋ Add Domain</button>
+      ${domainDefinitions.map(d=>`
+        <div class="domain-chip${selectedDomainId===d.id?' selected':''}"
+          style="background:${d.color}22;border-color:${d.color};color:${d.color};"
+          onclick="selectDomainForAssignment('${d.id}')">
+          <span style="width:7px;height:7px;border-radius:50%;background:${d.color};display:inline-block;"></span>
+          ${escHtml(d.name)}
+          <span class="dc-del" onclick="event.stopPropagation();deleteDomain('${d.id}')">×</span>
+        </div>`).join('')}`;
+  }
+  // Also update sidebar list if present
   const c=document.getElementById('domainList');
   if(!c)return;
   c.innerHTML=domainDefinitions.map(d=>`
