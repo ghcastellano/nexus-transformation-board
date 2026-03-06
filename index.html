@@ -2517,11 +2517,6 @@ function renderBoard() {
         if(!draggedId) return;
         const zone = getZoneFromCoords(row,col);
         const itemObj = allItems.find(x=>x.id===draggedId);
-        // Block transition cards from being placed on hex — they go on Nexus lines
-        if(itemObj?.type==='transition'){
-          showToast('Transitions go on Nexus lines. Draw a Nexus connection and click the ⊕ badge to assign a transition.','info');
-          draggedId=null;dragSource=null;return;
-        }
         const guide = itemObj ? GUIDANCE[itemObj.type] : null;
         if(guide && ![...guide.best,...guide.ok].includes(zone)){showToast(`⚠️ ${guide.tip}`,'warning');}
         if(gridState[key] && gridState[key]!==draggedId){showToast('Cell occupied','warning');return;}
@@ -2882,19 +2877,6 @@ function renderConnections() {
         dotG.appendChild(lbl);
         return dotG;
       };
-
-      // === Transition dot at transPt (38%) ===
-      const tp = route.transPt;
-      const transItem = conn.transitionId ? allItems.find(i=>i.id===conn.transitionId) : null;
-      const transTooltip = transItem ? transItem.name : 'Click to assign a Transition';
-      g.appendChild(makeDot(
-        tp.x, tp.y,
-        transItem ? 'rgba(56,178,160,.25)' : 'rgba(56,178,160,.06)',
-        transItem ? '#38b2a0' : 'rgba(56,178,160,.4)',
-        'T', transTooltip,
-        () => openTransPicker(conn.id),
-        !transItem
-      ));
 
       // === S2F dot at s2fPt (62%) ===
       const sp = route.s2fPt;
