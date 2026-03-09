@@ -21,9 +21,9 @@
   --purple: #7b5ea7;
   --cyan: #38b2a0;
   --gray: #8b949e;
-  --pattern-hex: #3a3f4a;
-  --anti-hex: #252a33;
-  --trans-hex: #4a5060;
+  --pattern-hex: #2c3e6b;
+  --anti-hex: #d97a2a;
+  --trans-hex: #7b8794;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -181,8 +181,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Hex cells (absolutely positioned) */
 .hex-cell { position:absolute; z-index:1; }
-.hex-cell-bg { position:absolute; inset:0; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.05); transition:all .2s; display:flex; align-items:center; justify-content:center; }
-.hex-cell[data-parity="1"] .hex-cell-bg { background:rgba(255,255,255,.13); }
+.hex-cell-bg { position:absolute; inset:0; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); background:rgba(255,255,255,.07); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.hex-cell[data-parity="1"] .hex-cell-bg { background:rgba(255,255,255,.11); }
 .hex-cell.drag-over .hex-cell-bg { background:rgba(74,144,217,.25) !important; }
 .hex-cell.empty .hex-cell-bg { cursor:default; }
 .hex-cell.empty .hex-cell-bg::after { content:'⬡'; font-size:16px; color:rgba(255,255,255,.22); }
