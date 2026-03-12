@@ -802,38 +802,71 @@ const SEED_CAPABILITIES = [
   },
 ];
 
-async function seedCapabilitiesIfEmpty() {
+async function seedCapabilitiesIfEmpty(force = false) {
   try {
+    // Ensure domain/source/level columns exist (idempotent migrations)
+    await db.query('ALTER TABLE capabilities ADD COLUMN IF NOT EXISTS domain TEXT');
+    await db.query('ALTER TABLE capabilities ADD COLUMN IF NOT EXISTS source TEXT');
+    await db.query('ALTER TABLE practices ADD COLUMN IF NOT EXISTS level TEXT');
+
     const { rows } = await db.query('SELECT COUNT(*) FROM capabilities');
     const count = parseInt(rows[0].count);
-    // Re-seed if empty OR if using the old generic library (< 58 capabilities)
-    if (count >= SEED_CAPABILITIES.length) return;
-    if (count > 0) {
-      // Clear old generic data before inserting NTT DATA library
-      await db.query('DELETE FROM practices');
-      await db.query('DELETE FROM capabilities');
-      console.log('Cleared old capabilities library — replacing with NTT DATA Nexus library');
-    }
-    for (let i = 0; i < SEED_CAPABILITIES.length; i++) {
-      const cap = SEED_CAPABILITIES[i];
-      const { rows: cr } = await db.query(
-        'INSERT INTO capabilities (name, description, sort_order) VALUES ($1, $2, $3) RETURNING id',
-        [cap.name, cap.description, i + 1]
-      );
-      const capId = cr[0].id;
-      for (let j = 0; j < cap.practices.length; j++) {
-        const p = cap.practices[j];
-        await db.query(
-          'INSERT INTO practices (capability_id, name, description, sort_order) VALUES ($1, $2, $3, $4)',
-          [capId, p.name, p.description, j + 1]
-        );
-      }
-    }
-    console.log('NTT DATA Nexus Capabilities Library seeded:', SEED_CAPABILITIES.length, 'capabilities,', SEED_CAPABILITIES.reduce((s,c)=>s+c.practices.length,0), 'practices');
+    if (!force && count >= SEED_CAPABILITIES.length) return;
+
+    // Bulk delete + re-insert inside a single transaction (avoids Vercel timeout)
+    await db.query('BEGIN');
+    await db.query('DELETE FROM practices');
+    await db.query('DELETE FROM capabilities');
+
+    // ── Bulk INSERT capabilities ─────────────────────────────────────────
+    const cNames   = SEED_CAPABILITIES.map(c => c.name);
+    const cDescs   = SEED_CAPABILITIES.map(c => c.description);
+    const cDomains = SEED_CAPABILITIES.map(c => c.domain);
+    const cSources = SEED_CAPABILITIES.map(c => c.source);
+    const cOrders  = SEED_CAPABILITIES.map((_, i) => i + 1);
+    const { rows: capRows } = await db.query(
+      `INSERT INTO capabilities (name, description, domain, source, sort_order)
+       SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::int[])
+       RETURNING id, sort_order`,
+      [cNames, cDescs, cDomains, cSources, cOrders]
+    );
+    capRows.sort((a, b) => a.sort_order - b.sort_order);
+
+    // ── Bulk INSERT practices ────────────────────────────────────────────
+    const pCapIds = [], pNames = [], pDescs = [], pLevels = [], pOrders = [];
+    SEED_CAPABILITIES.forEach((cap, i) => {
+      const capId = capRows[i].id;
+      cap.practices.forEach((p, j) => {
+        pCapIds.push(capId);
+        pNames.push(p.name);
+        pDescs.push(p.description);
+        pLevels.push(p.level || null);
+        pOrders.push(j + 1);
+      });
+    });
+    await db.query(
+      `INSERT INTO practices (capability_id, name, description, level, sort_order)
+       SELECT * FROM unnest($1::uuid[], $2::text[], $3::text[], $4::text[], $5::int[])`,
+      [pCapIds, pNames, pDescs, pLevels, pOrders]
+    );
+
+    await db.query('COMMIT');
+    console.log(`NTT DATA Nexus Capabilities Library seeded: ${SEED_CAPABILITIES.length} capabilities, ${pNames.length} practices`);
   } catch (err) {
+    await db.query('ROLLBACK').catch(() => {});
     console.error('Seed error:', err.message);
   }
 }
+
+// Force-reseed the capabilities library (call when DB is out of sync)
+app.post('/api/admin/seed-capabilities', async (req, res) => {
+  try {
+    await seedCapabilitiesIfEmpty(true);
+    const { rows } = await db.query('SELECT COUNT(*) FROM capabilities');
+    const { rows: pr } = await db.query('SELECT COUNT(*) FROM practices');
+    res.json({ ok: true, capabilities: parseInt(rows[0].count), practices: parseInt(pr[0].count) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 app.get('/api/capabilities', async (req, res) => {
   try {

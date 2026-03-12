@@ -42,15 +42,23 @@ CREATE TABLE IF NOT EXISTS capabilities (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    domain      TEXT,
+    source      TEXT,
     sort_order  INTEGER NOT NULL DEFAULT 0,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE capabilities ADD COLUMN IF NOT EXISTS domain TEXT;
+ALTER TABLE capabilities ADD COLUMN IF NOT EXISTS source TEXT;
 
 CREATE TABLE IF NOT EXISTS practices (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     capability_id  UUID NOT NULL REFERENCES capabilities(id) ON DELETE CASCADE,
     name           VARCHAR(255) NOT NULL,
     description    TEXT,
+    level          TEXT,
     sort_order     INTEGER NOT NULL DEFAULT 0,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE practices ADD COLUMN IF NOT EXISTS level TEXT;
