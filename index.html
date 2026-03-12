@@ -662,6 +662,55 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .rp-empty { font-size:11px; color:var(--text-muted); padding:16px 0; text-align:center; font-style:italic; }
 /* Refresh badge */
 .rp-refresh-badge { font-size:9px; color:var(--green); padding:1px 7px; border:1px solid var(--green); border-radius:10px; margin-left:auto; opacity:.7; }
+/* Milestone & Timeline */
+.rp-timeline { display:flex; align-items:stretch; gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.rp-cycle-node { flex:1; display:flex; flex-direction:column; align-items:center; padding:12px 6px; gap:5px; border-right:1px solid var(--border); background:var(--surface); }
+.rp-cycle-node:last-child { border-right:none; }
+.rp-cycle-node.active { background:rgba(74,144,217,.07); }
+.rp-cycle-node.done   { background:rgba(45,157,94,.04); }
+.rp-cycle-dot { width:12px; height:12px; border-radius:50%; background:var(--border); flex-shrink:0; }
+.rp-cycle-dot.done   { background:var(--green); }
+.rp-cycle-dot.active { background:var(--accent); width:16px; height:16px; box-shadow:0 0 8px rgba(74,144,217,.5); }
+.rp-cycle-num  { font-size:10px; font-weight:700; }
+.rp-cycle-phase-label { font-size:8px; color:var(--text-muted); text-align:center; }
+.rp-cycle-badge { font-size:8px; font-weight:700; padding:1px 6px; border-radius:8px; }
+.rp-cycle-badge.done    { background:rgba(45,157,94,.15); color:var(--green); }
+.rp-cycle-badge.active  { background:rgba(74,144,217,.15); color:var(--accent); }
+.rp-cycle-badge.planned { background:rgba(255,255,255,.06); color:var(--text-muted); }
+.rp-milestone-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.rp-milestone-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.rp-milestone-hdr { display:flex; align-items:center; gap:8px; padding:9px 12px; background:rgba(255,255,255,.02); border-bottom:1px solid rgba(255,255,255,.05); }
+.rp-milestone-date { font-size:9px; font-weight:700; color:var(--accent); background:rgba(74,144,217,.12); border-radius:4px; padding:2px 7px; white-space:nowrap; flex-shrink:0; }
+.rp-milestone-title { font-size:11px; font-weight:700; color:var(--text); flex:1; }
+.rp-milestone-del { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:0 2px; opacity:.5; line-height:1; }
+.rp-milestone-del:hover { opacity:1; color:var(--red); }
+.rp-milestone-desc { font-size:10px; color:var(--text-muted); line-height:1.5; padding:8px 12px; }
+/* Risks & Blockers */
+.rp-risk-list { display:flex; flex-direction:column; gap:8px; }
+.rp-risk-card { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:0 8px 8px 0; display:grid; grid-template-columns:90px 1fr 1fr; gap:12px; padding:12px 14px; }
+.rp-risk-card.at-risk { border-left-color:var(--red); }
+.rp-risk-card.watch   { border-left-color:var(--orange); }
+.rp-risk-id { font-size:10px; font-weight:700; color:var(--text-muted); font-family:monospace; margin-bottom:4px; }
+.rp-risk-sev-badge { display:inline-flex; font-size:8px; font-weight:700; padding:2px 7px; border-radius:8px; }
+.badge-at-risk-fill { background:rgba(217,74,74,.18); color:var(--red); }
+.badge-watch-fill   { background:rgba(232,148,58,.18); color:var(--orange); }
+.rp-risk-domain-tag { font-size:9px; color:var(--text-muted); background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 6px; margin-top:5px; display:inline-block; }
+.rp-risk-title { font-size:11px; font-weight:700; color:var(--text); margin-bottom:4px; flex:1; }
+.rp-risk-desc  { font-size:10px; color:var(--text-muted); line-height:1.4; }
+.rp-risk-del { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:0 2px; opacity:.5; line-height:1; }
+.rp-risk-del:hover { opacity:1; color:var(--red); }
+.rp-mitigation-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-bottom:3px; }
+.rp-mitigation-text  { font-size:10px; color:var(--text); line-height:1.4; margin-bottom:5px; }
+.rp-risk-owner { font-size:9px; color:var(--text-muted); }
+.rp-risk-owner strong { color:var(--text); font-weight:600; }
+/* Add forms */
+.rp-add-form { background:rgba(74,144,217,.05); border:1px solid rgba(74,144,217,.2); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.rp-add-form input, .rp-add-form textarea, .rp-add-form select { background:var(--surface2); border:1px solid var(--border); border-radius:4px; color:var(--text); padding:5px 8px; font-size:11px; width:100%; box-sizing:border-box; font-family:inherit; }
+.rp-add-form textarea { resize:vertical; min-height:46px; }
+.rp-add-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.rp-add-btns { display:flex; gap:6px; }
+.rp-add-btn-save   { background:var(--accent); color:#fff; font-weight:700; font-size:11px; padding:5px 14px; border-radius:4px; border:none; cursor:pointer; }
+.rp-add-btn-cancel { background:rgba(255,255,255,.07); color:var(--text-muted); font-size:11px; padding:5px 12px; border-radius:4px; border:none; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -1209,6 +1258,10 @@ function getConnExpKeys(connId) {
 }
 let practiceRepetitions = {}; // {hexId: number}
 let transformationHorizons = {h3m:'', h1y:'', h2y:'', h5y:''}; // fitness goals per time horizon
+let boardMilestones = []; // [{id, title, date, description}]
+let boardRisks = [];      // [{id, title, domain, severity, description, mitigation, owner}]
+let _rpMilestoneForm = false;
+let _rpRiskForm = false;
 let lastBreakdown = {}; // last calcFitnessBreakdown() result, used by breakdown modal
 let currentItems = []; // hexIds in the Current Reality backlog
 const DOMAIN_COLORS = ['#4a90d9','#d94a4a','#2d9d5e','#e8943a','#7b5ea7','#38b2a0','#d9a84a','#d94a8a','#5ea7a7','#8b949e'];
@@ -1249,7 +1302,9 @@ async function saveGame() {
       domain_definitions: domainDefinitions,
       experiment_results: experimentResults,
       practice_repetitions: practiceRepetitions,
-      transformation_horizons: transformationHorizons
+      transformation_horizons: transformationHorizons,
+      board_milestones: boardMilestones,
+      board_risks: boardRisks
     });
     showSave('saved');
   } catch(e) { showSave('error'); console.error('Save failed:',e); }
@@ -1328,6 +1383,8 @@ async function loadGame(gameId) {
   experimentResults = g.experiment_results || {};
   practiceRepetitions = g.practice_repetitions || {};
   transformationHorizons = g.transformation_horizons || {h3m:'', h1y:'', h2y:'', h5y:''};
+  boardMilestones = g.board_milestones || [];
+  boardRisks = g.board_risks || [];
   const ad = g.active_drivers || {};
   if (Array.isArray(ad)) { driverAssignments = {}; } else { driverAssignments = ad; }
   cycleNumber = g.cycle_number || 1;
@@ -3185,11 +3242,11 @@ function addCustomPattern(){
 }
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];
+  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];boardMilestones=[];boardRisks=[];
   renderAll();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,boardMilestones,boardRisks,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');
@@ -3338,6 +3395,31 @@ function renderDomainBoundaries(){
 
 // ══════════════════════════════════════════
 // CYCLE REPORT
+// ── Milestone CRUD ──────────────────────────────────────────────────────────
+function saveNewMilestone() {
+  const title = document.getElementById('rpMsTitle')?.value?.trim();
+  if (!title) return;
+  boardMilestones.push({ id:'ms_'+Date.now(), title, date:document.getElementById('rpMsDate')?.value?.trim()||'', description:document.getElementById('rpMsDesc')?.value?.trim()||'' });
+  _rpMilestoneForm = false;
+  scheduleAutoSave(); renderReportPage();
+}
+function deleteMilestone(id) {
+  boardMilestones = boardMilestones.filter(m => m.id !== id);
+  scheduleAutoSave(); renderReportPage();
+}
+// ── Risk CRUD ────────────────────────────────────────────────────────────────
+function saveNewRisk() {
+  const title = document.getElementById('rpRkTitle')?.value?.trim();
+  if (!title) return;
+  boardRisks.push({ id:'rk_'+Date.now(), title, severity:document.getElementById('rpRkSeverity')?.value||'watch', domain:document.getElementById('rpRkDomain')?.value||'', description:document.getElementById('rpRkDesc')?.value?.trim()||'', mitigation:document.getElementById('rpRkMit')?.value?.trim()||'', owner:document.getElementById('rpRkOwner')?.value?.trim()||'' });
+  _rpRiskForm = false;
+  scheduleAutoSave(); renderReportPage();
+}
+function deleteRisk(id) {
+  boardRisks = boardRisks.filter(r => r.id !== id);
+  scheduleAutoSave(); renderReportPage();
+}
+
 // ══════════════════════════════════════════
 function renderReportPage() {
   const page = document.getElementById('reportPage');
@@ -3453,6 +3535,94 @@ function renderReportPage() {
 
   // Max fitness possible (rough)
   const maxF = 100;
+
+  // ── Milestones & Timeline ─────────────────────────────────────────────────
+  const numCycles = Math.max(cycleNumber + 2, 5);
+  const cycleNodesHtml = Array.from({length: numCycles}, (_, i) => {
+    const cn = i + 1;
+    const isDone = cn < cycleNumber, isAct = cn === cycleNumber;
+    const cls = isDone ? 'done' : isAct ? 'active' : '';
+    const badgeCls = isDone ? 'done' : isAct ? 'active' : 'planned';
+    const badgeTxt = isDone ? '✓ Done' : isAct ? '● Active' : '○ Planned';
+    const phaseName = isAct ? phase.n : isDone ? (PHASES[4]?.n||'') : '';
+    const numColor = isAct ? 'var(--accent)' : isDone ? 'var(--green)' : 'var(--text-muted)';
+    return `<div class="rp-cycle-node ${cls}">
+      <div class="rp-cycle-dot ${cls}"></div>
+      <div class="rp-cycle-num" style="color:${numColor}">Cycle ${cn}</div>
+      <div class="rp-cycle-phase-label">${phaseName}</div>
+      <span class="rp-cycle-badge ${badgeCls}">${badgeTxt}</span>
+    </div>`;
+  }).join('');
+
+  const milestonesHtml = boardMilestones.length === 0
+    ? `<div class="rp-empty">No milestones added yet. Click + Add Milestone to begin.</div>`
+    : `<div class="rp-milestone-grid">${boardMilestones.map(m=>`
+        <div class="rp-milestone-card">
+          <div class="rp-milestone-hdr">
+            <span class="rp-milestone-date">${escHtml(m.date||'TBD')}</span>
+            <span class="rp-milestone-title">${escHtml(m.title)}</span>
+            <button class="rp-milestone-del" onclick="deleteMilestone('${m.id}')">×</button>
+          </div>
+          <div class="rp-milestone-desc">${escHtml(m.description||'')}</div>
+        </div>`).join('')}</div>`;
+
+  const milestoneFormHtml = `<div class="rp-add-form">
+    <div class="rp-add-form-row">
+      <input id="rpMsTitle" placeholder="Milestone title *" />
+      <input id="rpMsDate" placeholder="Date (e.g. Apr 4)" />
+    </div>
+    <textarea id="rpMsDesc" placeholder="Description (optional)"></textarea>
+    <div class="rp-add-btns">
+      <button class="rp-add-btn-save" onclick="saveNewMilestone()">Save Milestone</button>
+      <button class="rp-add-btn-cancel" onclick="_rpMilestoneForm=false;renderReportPage()">Cancel</button>
+    </div>
+  </div>`;
+
+  // ── Risks & Blockers ──────────────────────────────────────────────────────
+  const risksHtml = boardRisks.length === 0
+    ? `<div class="rp-empty">No risks logged yet. Click + Add Risk to begin.</div>`
+    : `<div class="rp-risk-list">${boardRisks.map((r,i)=>`
+        <div class="rp-risk-card ${r.severity||'watch'}">
+          <div>
+            <div class="rp-risk-id">R-${String(i+1).padStart(2,'0')}</div>
+            <span class="rp-risk-sev-badge ${r.severity==='at-risk'?'badge-at-risk-fill':'badge-watch-fill'}">${r.severity==='at-risk'?'AT RISK':'WATCH'}</span>
+            <div class="rp-risk-domain-tag">${escHtml(r.domain||'—')}</div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:flex-start;gap:6px;">
+              <div class="rp-risk-title">${escHtml(r.title)}</div>
+              <button class="rp-risk-del" onclick="deleteRisk('${r.id}')">×</button>
+            </div>
+            <div class="rp-risk-desc">${escHtml(r.description||'')}</div>
+          </div>
+          <div>
+            <div class="rp-mitigation-label">Mitigation</div>
+            <div class="rp-mitigation-text">${escHtml(r.mitigation||'—')}</div>
+            <div class="rp-risk-owner">Owner: <strong>${escHtml(r.owner||'—')}</strong></div>
+          </div>
+        </div>`).join('')}</div>`;
+
+  const riskFormHtml = `<div class="rp-add-form">
+    <div class="rp-add-form-row">
+      <input id="rpRkTitle" placeholder="Risk title *" />
+      <select id="rpRkSeverity"><option value="watch">WATCH</option><option value="at-risk">AT RISK</option></select>
+    </div>
+    <div class="rp-add-form-row">
+      <select id="rpRkDomain">
+        <option value="">Domain (optional)</option>
+        <option>Strategy &amp; Portfolio</option><option>Product &amp; Delivery</option>
+        <option>Technology &amp; Architecture</option><option>People, Culture &amp; Governance</option>
+        <option>Operations</option>
+      </select>
+      <input id="rpRkOwner" placeholder="Owner (optional)" />
+    </div>
+    <textarea id="rpRkDesc" placeholder="Description *"></textarea>
+    <textarea id="rpRkMit" placeholder="Mitigation strategy"></textarea>
+    <div class="rp-add-btns">
+      <button class="rp-add-btn-save" onclick="saveNewRisk()">Save Risk</button>
+      <button class="rp-add-btn-cancel" onclick="_rpRiskForm=false;renderReportPage()">Cancel</button>
+    </div>
+  </div>`;
 
   page.innerHTML = `
   <!-- ── Header ── -->
@@ -3636,6 +3806,29 @@ function renderReportPage() {
       <div class="rp-card">${logHtml}</div>
     </div>
 
+    <!-- ── Milestones & Timeline ── -->
+    <div class="rp-section">
+      <div class="rp-section-hdr">
+        <div class="rp-section-title">Milestones &amp; Timeline</div>
+        <div class="rp-section-sub">Transformation journey across Möbius cycles — past, present, and ahead</div>
+        <button onclick="_rpMilestoneForm=!_rpMilestoneForm;renderReportPage()" style="margin-left:auto;background:var(--accent);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">+ Add Milestone</button>
+      </div>
+      <div class="rp-timeline">${cycleNodesHtml}</div>
+      ${_rpMilestoneForm ? milestoneFormHtml : ''}
+      ${milestonesHtml}
+    </div>
+
+    <!-- ── Risks & Blockers ── -->
+    <div class="rp-section">
+      <div class="rp-section-hdr">
+        <div class="rp-section-title">Risks &amp; Blockers</div>
+        <div class="rp-section-sub">Current impediments to transformation progress and recommended mitigations</div>
+        <button onclick="_rpRiskForm=!_rpRiskForm;renderReportPage()" style="margin-left:auto;background:var(--red);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">+ Add Risk</button>
+      </div>
+      ${_rpRiskForm ? riskFormHtml : ''}
+      ${risksHtml}
+    </div>
+
   </div>`;
 }
 
@@ -3643,12 +3836,9 @@ function renderReportPage() {
 // PDF EXPORT
 // ══════════════════════════════════════════
 function generateCyclePDF() {
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('PDF library loading — please try again in a moment.');
-    return;
-  }
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDF library loading — please try again in a moment.'); return; }
   const { jsPDF } = window.jspdf;
-  const W = 297, H = 210;
+  const W = 297, H = 210, CY = 42; // CY = content start Y after header
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
   // ── data ───────────────────────────────────────────────────────────────
@@ -3698,14 +3888,14 @@ function generateCyclePDF() {
   function hdr(title, sub) {
     BG();
     F('#4a90d9'); doc.rect(0,0,4,H,'F');
-    F('#171c24'); doc.rect(4,0,W-4,30,'F');
-    P('#2a3140'); doc.setLineWidth(0.3); doc.line(4,30,W,30);
-    doc.setFont('helvetica','bold');   doc.setFontSize(7);  C('#4a90d9'); doc.text('NEXUS TRANSFORMATION BOARD', 12, 9);
-    doc.setFont('helvetica','bold');   doc.setFontSize(15); C('#e8ecf1'); doc.text(title, 12, 20);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694'); doc.text(sub, 12, 27);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694');
-    doc.text(`Cycle ${cycleNumber}  ·  ${monthYear}`, W-8, 14, { align:'right' });
-    doc.text(`Phase ${cyclePhase+1}/5  ·  ${ph.n}`, W-8, 21, { align:'right' });
+    F('#171c24'); doc.rect(4,0,W-4,36,'F');
+    P('#2a3140'); doc.setLineWidth(0.3); doc.line(4,36,W,36);
+    doc.setFont('helvetica','bold');   doc.setFontSize(8);  C('#4a90d9'); doc.text('NEXUS TRANSFORMATION BOARD', 12, 10);
+    doc.setFont('helvetica','bold');   doc.setFontSize(18); C('#e8ecf1'); doc.text(title, 12, 23);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);  C('#7d8694'); doc.text(sub, 12, 32);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);  C('#7d8694');
+    doc.text(`Cycle ${cycleNumber}  ·  ${monthYear}`, W-8, 16, { align:'right' });
+    doc.text(`Phase ${cyclePhase+1}/5  ·  ${ph.n}`, W-8, 26, { align:'right' });
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -3742,26 +3932,26 @@ function generateCyclePDF() {
     { l:'Agents & Drivers',   v:`${agTotal+drTotal}`,d:`${agTotal} agents  ·  ${drTotal} drivers`,    c:'#7b5ea7' },
   ];
   kpis.forEach((k,i) => {
-    const x = 6+i*57, y = 34, kW = 53, kH = 58;
+    const x = 6+i*57, y = CY, kW = 53, kH = 62;
     card(x,y,kW,kH);
     F(k.c); doc.rect(x,y,kW,1.5,'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);  C('#7d8694'); doc.text(k.l, x+kW/2, y+10, { align:'center' });
-    doc.setFont('helvetica','bold');   doc.setFontSize(20);   C(k.c);      doc.text(k.v, x+kW/2, y+30, { align:'center' });
-    doc.setFont('helvetica','normal'); doc.setFontSize(6.5);  C('#7d8694');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);    C('#7d8694'); doc.text(k.l, x+kW/2, y+11, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(22);   C(k.c);      doc.text(k.v, x+kW/2, y+33, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);    C('#7d8694');
     const dl = doc.splitTextToSize(k.d, kW-6);
-    doc.text(dl[0]||k.d, x+kW/2, y+40, { align:'center' });
-    if (dl[1]) doc.text(dl[1], x+kW/2, y+47, { align:'center' });
+    doc.text(dl[0]||k.d, x+kW/2, y+44, { align:'center' });
+    if (dl[1]) doc.text(dl[1], x+kW/2, y+51, { align:'center' });
   });
-  card(6,100,285,92,'#171c24');
-  doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#e8ecf1'); doc.text('Board Composition', 14, 111);
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text('Hex types distribution across the Nexus board', 14, 118);
+  card(6,112,285,88,'#171c24');
+  doc.setFont('helvetica','bold');   doc.setFontSize(11); C('#e8ecf1'); doc.text('Board Composition', 14, 123);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694'); doc.text('Hex types distribution across the Nexus board', 14, 131);
   const total = pCount+aCount+tCount||1;
   [{ l:'Patterns', n:pCount, c:'#2c3e6b' }, { l:'Anti-Patterns', n:aCount, c:'#ff0066' }, { l:'Transitions', n:tCount, c:'#7b8794' }].forEach((b,i) => {
-    const by = 126+i*21;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#e8ecf1'); doc.text(b.l, 14, by+5);
-    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(String(b.n), 65, by+5, { align:'right' });
-    bar(68, by, 200, 8, (b.n/total)*100, b.c);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); C('#7d8694'); doc.text(`${Math.round(b.n/total*100)}%`, 272, by+5);
+    const by = 138+i*20;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); C('#e8ecf1'); doc.text(b.l, 14, by+5);
+    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#e8ecf1'); doc.text(String(b.n), 65, by+5, { align:'right' });
+    bar(68, by, 200, 9, (b.n/total)*100, b.c);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(`${Math.round(b.n/total*100)}%`, 272, by+5);
   });
 
   // ══════════════════════════════════════════════════════════════════════
@@ -3769,37 +3959,37 @@ function generateCyclePDF() {
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   hdr('Organizational Fitness Score', `Score components and tier progress — Cycle ${cycleNumber}`);
-  card(6,34,138,162);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Score Components', 14, 45);
+  card(6,CY,138,162);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#e8ecf1'); doc.text('Score Components', 14, CY+12);
   const comps = [
     { l:'S2F Experiments Run',  d:`${bd.expRan} x 5 pts`,         s:bd.expRan*5,      max:40 },
     { l:'Experiments Adopted',  d:`${bd.expAdopted} x 10 pts`,    s:bd.expAdopted*10, max:50 },
     { l:'Practice Repetitions', d:`${bd.totalReps} reps x 2 pts`, s:bd.repScore,      max:30 },
   ];
-  let sy = 54;
+  let sy = CY+22;
   comps.forEach(r => {
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C('#e8ecf1'); doc.text(r.l, 14, sy+5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7);   C('#7d8694'); doc.text(r.d, 14, sy+12);
-    bar(14, sy+14, 116, 5, r.max ? Math.round(r.s/r.max*100) : 0, '#4a90d9');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#4a90d9'); doc.text(`+${r.s}`, 130, sy+11, { align:'right' });
-    sy += 30;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); C('#e8ecf1'); doc.text(r.l, 14, sy+5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(r.d, 14, sy+13);
+    bar(14, sy+15, 116, 6, r.max ? Math.round(r.s/r.max*100) : 0, '#4a90d9');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#4a90d9'); doc.text(`+${r.s}`, 130, sy+12, { align:'right' });
+    sy += 34;
   });
   P('#2a3140'); doc.setLineWidth(0.3); doc.line(14, sy, 134, sy);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Total Fitness Score', 14, sy+9);
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); C(fitHex); doc.text(`${f} pts`, 134, sy+11, { align:'right' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#e8ecf1'); doc.text('Total Fitness Score', 14, sy+10);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); C(fitHex); doc.text(`${f} pts`, 134, sy+12, { align:'right' });
 
-  card(150,34,141,162);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Fitness Tier Progress', 158, 45);
-  doc.setFont('helvetica','bold'); doc.setFontSize(36); C(fitHex); doc.text(String(f), 158, 76);
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); C(fitHex); doc.text(fitTier, 158, 86);
-  bar(158, 92, 125, 10, f, fitHex);
+  card(150,CY,141,162);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#e8ecf1'); doc.text('Fitness Tier Progress', 158, CY+12);
+  doc.setFont('helvetica','bold'); doc.setFontSize(40); C(fitHex); doc.text(String(f), 158, CY+44);
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); C(fitHex); doc.text(fitTier, 158, CY+56);
+  bar(158, CY+62, 125, 11, f, fitHex);
   ['Fragile','Emerging','Stable','Resilient','Antifragile'].forEach((t,i) => {
-    doc.setFont('helvetica','normal'); doc.setFontSize(6); C('#7d8694'); doc.text(t, 158+i*25, 109);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); C('#7d8694'); doc.text(t, 158+i*25, CY+82);
   });
   [{ k:'Experiments run', v:bd.expRan }, { k:'Experiments adopted', v:bd.expAdopted }, { k:'Practice reps', v:bd.totalReps }, { k:'Nexus lines', v:nexusL }].forEach((s,i) => {
-    const sy2 = 120+i*11;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#7d8694'); doc.text(s.k, 158, sy2);
-    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(String(s.v), 283, sy2, { align:'right' });
+    const sy2 = CY+96+i*12;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); C('#7d8694'); doc.text(s.k, 158, sy2);
+    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#e8ecf1'); doc.text(String(s.v), 283, sy2, { align:'right' });
   });
 
   // ══════════════════════════════════════════════════════════════════════
@@ -3807,7 +3997,7 @@ function generateCyclePDF() {
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   hdr(`Mobius Cycle Status — Cycle ${cycleNumber}`, `Five-phase transformation loop  ·  Phase ${cyclePhase+1} (${ph.n}) active`);
-  const phW = 54, phH = 152, phY = 34;
+  const phW = 54, phH = 158, phY = CY;
   PHASES.forEach((p,i) => {
     const isDone = completedPhases.has(i) || cyclePhase > i;
     const isAct  = i === cyclePhase;
@@ -3817,15 +4007,15 @@ function generateCyclePDF() {
     const x = 6+i*56;
     F(bg2); doc.roundedRect(x,phY,phW,phH,2,2,'F');
     F(bdr); doc.rect(x,phY,phW,2,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(9);  C('#7d8694'); doc.text(String(i+1), x+phW/2, phY+10, { align:'center' });
-    doc.setFont('helvetica','bold'); doc.setFontSize(22); C(tc); doc.text(['S','F','E','St','D'][i], x+phW/2, phY+32, { align:'center' });
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text(p.n, x+phW/2, phY+45, { align:'center' });
-    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); C('#7d8694');
-    doc.splitTextToSize(p.d, phW-8).slice(0,4).forEach((line,li) => { doc.text(line, x+phW/2, phY+56+li*8, { align:'center' }); });
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#7d8694'); doc.text(String(i+1), x+phW/2, phY+12, { align:'center' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); C(tc); doc.text(['S','F','E','St','D'][i], x+phW/2, phY+36, { align:'center' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#e8ecf1'); doc.text(p.n, x+phW/2, phY+50, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694');
+    doc.splitTextToSize(p.d, phW-8).slice(0,4).forEach((line,li) => { doc.text(line, x+phW/2, phY+62+li*9, { align:'center' }); });
     const bt = isDone ? 'Done' : isAct ? 'Active' : 'Next';
     const bc = isDone ? '#2d9d5e' : isAct ? '#4a90d9' : '#2a3140';
-    F(bc); doc.roundedRect(x+10, phY+phH-16, phW-20, 10, 1.5,1.5,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); C('#ffffff'); doc.text(bt, x+phW/2, phY+phH-9, { align:'center' });
+    F(bc); doc.roundedRect(x+10, phY+phH-16, phW-20, 11, 1.5,1.5,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); C('#ffffff'); doc.text(bt, x+phW/2, phY+phH-9, { align:'center' });
   });
 
   // ══════════════════════════════════════════════════════════════════════
@@ -3833,33 +4023,33 @@ function generateCyclePDF() {
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   hdr('Nexus Board Snapshot', 'Active patterns, transitions, and anti-patterns across all five transformation domains');
-  const tX = 6, tY = 34, cW = [82,36,36,36,30,58], rH = 12;
+  const tX = 6, tY = CY, cW = [82,36,36,36,30,58], rH = 14;
   const cX = []; let cx2 = tX; cW.forEach(w => { cX.push(cx2); cx2 += w; });
   F('#1e2430'); doc.rect(tX,tY,cx2-tX,rH,'F');
   ['Domain','Anti-Patterns','Transitions','Patterns','Exp.','Status'].forEach((l,i) => {
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); C('#7d8694'); doc.text(l, cX[i]+3, tY+8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); C('#7d8694'); doc.text(l, cX[i]+3, tY+9.5);
   });
   domRows.forEach(({ name,dp,da,dt,de },ri) => {
     const ry = tY+rH*(ri+1);
     F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(tX,ry,cx2-tX,rH,'F');
-    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(name.length>30 ? name.substring(0,28)+'..' : name, cX[0]+3, ry+8);
-    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#ff0066'); doc.text(String(da), cX[1]+18, ry+8, { align:'center' });
-    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#4a90d9'); doc.text(String(dt), cX[2]+18, ry+8, { align:'center' });
-    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#2d9d5e'); doc.text(String(dp), cX[3]+18, ry+8, { align:'center' });
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#e8ecf1'); doc.text(String(de), cX[4]+15, ry+8, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(9);  C('#e8ecf1'); doc.text(name.length>30 ? name.substring(0,28)+'..' : name, cX[0]+3, ry+9.5);
+    doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#ff0066'); doc.text(String(da), cX[1]+18, ry+9.5, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#4a90d9'); doc.text(String(dt), cX[2]+18, ry+9.5, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#2d9d5e'); doc.text(String(dp), cX[3]+18, ry+9.5, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);  C('#e8ecf1'); doc.text(String(de), cX[4]+15, ry+9.5, { align:'center' });
     const stl = da>dp ? 'At Risk' : dp>0 ? 'Active' : 'Not Started';
     const sc  = da>dp ? '#d94a4a' : dp>0 ? '#2d9d5e' : '#2a3140';
-    F(sc); doc.roundedRect(cX[5]+4, ry+2, 50, 8, 1,1,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); C('#ffffff'); doc.text(stl, cX[5]+29, ry+7.5, { align:'center' });
+    F(sc); doc.roundedRect(cX[5]+4, ry+3, 50, 9, 1,1,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); C('#ffffff'); doc.text(stl, cX[5]+29, ry+8.8, { align:'center' });
   });
   const totY = tY+rH*(domRows.length+1);
   F('#232940'); doc.rect(tX,totY,cx2-tX,rH,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); C('#e8ecf1'); doc.text('TOTAL', cX[0]+3, totY+8);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  C('#ff0066'); doc.text(String(aCount), cX[1]+18, totY+8, { align:'center' });
-  C('#4a90d9'); doc.text(String(tCount), cX[2]+18, totY+8, { align:'center' });
-  C('#2d9d5e'); doc.text(String(pCount), cX[3]+18, totY+8, { align:'center' });
-  C('#e8ecf1'); doc.text(String(expE.length), cX[4]+15, totY+8, { align:'center' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); C('#e8ecf1'); doc.text('TOTAL', cX[0]+3, totY+9.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  C('#ff0066'); doc.text(String(aCount), cX[1]+18, totY+9.5, { align:'center' });
+  C('#4a90d9'); doc.text(String(tCount), cX[2]+18, totY+9.5, { align:'center' });
+  C('#2d9d5e'); doc.text(String(pCount), cX[3]+18, totY+9.5, { align:'center' });
+  C('#e8ecf1'); doc.text(String(expE.length), cX[4]+15, totY+9.5, { align:'center' });
 
   // ══════════════════════════════════════════════════════════════════════
   // PAGE 6 — S2F EXPERIMENTS
@@ -3869,12 +4059,12 @@ function generateCyclePDF() {
   if (expE.length === 0) {
     doc.setFont('helvetica','normal'); doc.setFontSize(11); C('#7d8694'); doc.text('No experiments registered yet.', W/2, H/2, { align:'center' });
   } else {
-    const eY = 34, eCW = [18,95,65,30,22]; const eCX = []; let ex2 = 6; eCW.forEach(w => { eCX.push(ex2); ex2 += w; });
-    F('#1e2430'); doc.rect(6,eY,ex2-6,10,'F');
-    ['ID','Hypothesis','Domain','Status','Pts'].forEach((l,i) => { doc.setFont('helvetica','bold'); doc.setFontSize(7.5); C('#7d8694'); doc.text(l, eCX[i]+2, eY+7); });
-    const eRH = 13, maxR = Math.floor((H-58)/eRH);
+    const eY = CY, eCW = [18,95,65,30,22]; const eCX = []; let ex2 = 6; eCW.forEach(w => { eCX.push(ex2); ex2 += w; });
+    F('#1e2430'); doc.rect(6,eY,ex2-6,12,'F');
+    ['ID','Hypothesis','Domain','Status','Pts'].forEach((l,i) => { doc.setFont('helvetica','bold'); doc.setFontSize(8.5); C('#7d8694'); doc.text(l, eCX[i]+2, eY+8.5); });
+    const eRH = 15, maxR = Math.floor((H-62)/eRH);
     expE.slice(0,maxR).forEach(([k,e],ri) => {
-      const ery = eY+10+ri*eRH;
+      const ery = eY+12+ri*eRH;
       F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(6,ery,ex2-6,eRH,'F');
       const hi  = allItems.find(i => i.id===k||i.id===k.split('::')[0]);
       const st  = e.stage||e.status||'pending';
@@ -3885,15 +4075,15 @@ function generateCyclePDF() {
       const pts = iP ? '+10' : iR ? '+5' : '0';
       const hyp = String(e.hypothesis||e.notes||hi?.signal||'—').substring(0,60);
       const dom = String(hi?.domain||'—').substring(0,32);
-      doc.setFont('helvetica','bold');   doc.setFontSize(7);   C('#7d8694'); doc.text(`EXP-${String(ri+1).padStart(2,'0')}`, eCX[0]+2, ery+8.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#e8ecf1'); doc.text(hyp, eCX[1]+2, ery+8.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7);   C('#7d8694'); doc.text(dom, eCX[2]+2, ery+8.5);
-      F(sc2); doc.roundedRect(eCX[3]+2, ery+2, 24, 8, 1,1,'F');
-      doc.setFont('helvetica','bold');   doc.setFontSize(6.5); C('#ffffff'); doc.text(sl, eCX[3]+14, ery+7.5, { align:'center' });
-      doc.setFont('helvetica','bold');   doc.setFontSize(8);   C('#4a90d9'); doc.text(pts, eCX[4]+11, ery+8.5, { align:'center' });
+      doc.setFont('helvetica','bold');   doc.setFontSize(8);   C('#7d8694'); doc.text(`EXP-${String(ri+1).padStart(2,'0')}`, eCX[0]+2, ery+10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C('#e8ecf1'); doc.text(hyp, eCX[1]+2, ery+10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);   C('#7d8694'); doc.text(dom, eCX[2]+2, ery+10);
+      F(sc2); doc.roundedRect(eCX[3]+2, ery+3, 24, 9, 1,1,'F');
+      doc.setFont('helvetica','bold');   doc.setFontSize(7.5); C('#ffffff'); doc.text(sl, eCX[3]+14, ery+9, { align:'center' });
+      doc.setFont('helvetica','bold');   doc.setFontSize(9);   C('#4a90d9'); doc.text(pts, eCX[4]+11, ery+10, { align:'center' });
     });
-    const sfY = eY+10+Math.min(maxR,expE.length)*eRH+5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694');
+    const sfY = eY+12+Math.min(maxR,expE.length)*eRH+6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C('#7d8694');
     doc.text(`${expPassed} passed (+${expPassed*10} pts)  ·  ${expRunning} running (+${expRunning*5} pts)  ·  ${expPending} pending  ·  Total: ${bd.expScore} pts`, 6, sfY);
   }
 
@@ -3905,18 +4095,102 @@ function generateCyclePDF() {
   if (!logEntries || logEntries.length === 0) {
     doc.setFont('helvetica','normal'); doc.setFontSize(11); C('#7d8694'); doc.text('No activity recorded yet.', W/2, H/2, { align:'center' });
   } else {
-    const lRH = 11, maxL = Math.floor((H-44)/lRH);
+    const lRH = 13, maxL = Math.floor((H-50)/lRH);
     logEntries.slice(0,maxL).forEach((e,ri) => {
-      const ly = 34+ri*lRH;
+      const ly = CY+ri*lRH;
       F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(6,ly,285,lRH,'F');
       const mc = e.type==='success' ? '#2d9d5e' : e.type==='warning' ? '#e8943a' : '#7d8694';
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(String(e.time||''), 10, ly+7.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C(mc); doc.text(String(e.message||'').substring(0,110), 38, ly+7.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C('#7d8694'); doc.text(String(e.time||''), 10, ly+9);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C(mc); doc.text(String(e.message||'').substring(0,110), 40, ly+9);
     });
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PAGE 8 — CLOSING
+  // PAGE 8 — MILESTONES & TIMELINE
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr('Milestones & Timeline', `Key transformation milestones and cycle timeline — Cycle ${cycleNumber}`);
+  // Cycle timeline strip
+  const tlY = CY+2, tlH = 26, tlW = W-12;
+  card(6, tlY, tlW, tlH, '#171c24');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); C('#7d8694'); doc.text('TRANSFORMATION CYCLE TIMELINE', 14, tlY+8);
+  const phStep = (tlW-16)/(PHASES.length);
+  PHASES.forEach((p,i) => {
+    const isDone = completedPhases.has(i) || cyclePhase > i;
+    const isAct  = i === cyclePhase;
+    const tc2 = isAct ? '#4a90d9' : isDone ? '#2d9d5e' : '#2a3140';
+    const px = 14 + i*phStep + phStep/2;
+    F(tc2); doc.circle(px, tlY+18, 4, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); C('#ffffff'); doc.text(String(i+1), px, tlY+19.5, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(6); C(isAct ? '#4a90d9' : '#7d8694');
+    doc.text(p.n.substring(0,10), px, tlY+26, { align:'center' });
+    if (i < PHASES.length-1) { P(isDone ? '#2d9d5e' : '#2a3140'); doc.setLineWidth(0.4); doc.line(px+4, tlY+18, px+phStep-4, tlY+18); }
+  });
+  // Milestones grid
+  const msY = tlY+tlH+6;
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); C('#e8ecf1'); doc.text('Milestones', 8, msY+8);
+  if (!boardMilestones || boardMilestones.length === 0) {
+    card(6, msY+12, W-12, 22, '#171c24');
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); C('#7d8694'); doc.text('No milestones recorded for this cycle.', W/2, msY+26, { align:'center' });
+  } else {
+    const msColW = (W-16)/2, msRH = 28;
+    boardMilestones.slice(0, 8).forEach((m, mi) => {
+      const mcol = mi % 2, mrow = Math.floor(mi/2);
+      const mx = 6 + mcol*(msColW+4), my = msY+14 + mrow*(msRH+4);
+      card(mx, my, msColW, msRH, '#1e2430');
+      F('#4a90d9'); doc.rect(mx, my, msColW, 1.5, 'F');
+      doc.setFont('helvetica','bold');   doc.setFontSize(9);   C('#e8ecf1'); doc.text(String(m.title||'Untitled').substring(0,38), mx+4, my+10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#4a90d9'); doc.text(String(m.date||''), mx+4, my+18);
+      if (m.description) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); C('#7d8694');
+        doc.text(String(m.description).substring(0,55), mx+4, my+25);
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 9 — RISKS & BLOCKERS
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr('Risks & Blockers', `Identified risks, severity, and mitigation strategies — Cycle ${cycleNumber}`);
+  const sevColor = s => s==='critical'||s==='high' ? '#d94a4a' : s==='medium' ? '#e8943a' : '#2d9d5e';
+  if (!boardRisks || boardRisks.length === 0) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); C('#7d8694'); doc.text('No risks or blockers recorded for this cycle.', W/2, H/2, { align:'center' });
+  } else {
+    const rkRH = 38, rkW = W-12;
+    boardRisks.slice(0, 4).forEach((r, ri) => {
+      const ry = CY + ri*(rkRH+4);
+      card(6, ry, rkW, rkRH, '#171c24');
+      const sc3 = sevColor(r.severity||'low');
+      F(sc3); doc.rect(6, ry, 3, rkRH, 'F');
+      // severity badge
+      F(sc3); doc.roundedRect(12, ry+4, 28, 9, 1.5,1.5,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); C('#ffffff'); doc.text(String(r.severity||'low').toUpperCase(), 26, ry+10, { align:'center' });
+      // title + domain
+      doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#e8ecf1'); doc.text(String(r.title||'Untitled').substring(0,50), 44, ry+10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(String(r.domain||''), 44, ry+18);
+      // description
+      if (r.description) {
+        const dl2 = doc.splitTextToSize(String(r.description).substring(0,120), rkW/2-10);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#aab0bc');
+        dl2.slice(0,2).forEach((ln,li) => doc.text(ln, 44, ry+26+li*8));
+      }
+      // mitigation
+      if (r.mitigation) {
+        doc.setFont('helvetica','bold');   doc.setFontSize(7.5); C('#4a90d9'); doc.text('MITIGATION:', rkW/2+10, ry+18);
+        const ml = doc.splitTextToSize(String(r.mitigation).substring(0,120), rkW/2-14);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#aab0bc');
+        ml.slice(0,2).forEach((ln,li) => doc.text(ln, rkW/2+10, ry+26+li*8));
+      }
+      // owner
+      if (r.owner) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(`Owner: ${String(r.owner)}`, W-10, ry+34, { align:'right' });
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 10 — CLOSING
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   BG();
