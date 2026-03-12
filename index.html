@@ -3466,6 +3466,7 @@ function renderReportPage() {
       <div><strong>Cycle ${cycleNumber}</strong> · ${monthYear}</div>
       <div>Phase ${cyclePhase+1}/5 · ${phase.n}</div>
       <span class="rp-refresh-badge">⟳ Live</span>
+      <button onclick="generateCyclePDF()" style="margin-top:8px;background:#4a90d9;color:#fff;border:none;padding:5px 14px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.3px;white-space:nowrap;">⬇ Download PDF</button>
     </div>
   </div>
 
@@ -3639,6 +3640,306 @@ function renderReportPage() {
 }
 
 // ══════════════════════════════════════════
+// PDF EXPORT
+// ══════════════════════════════════════════
+function generateCyclePDF() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF library loading — please try again in a moment.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const W = 297, H = 210;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // ── data ───────────────────────────────────────────────────────────────
+  const bd = calcFitnessBreakdown();
+  const f  = bd.total;
+  const ph = PHASES[cyclePhase];
+  const now = new Date();
+  const dateStr  = now.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  const monthYear = now.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  const fitTier = f>=80?'Antifragile':f>=60?'Resilient':f>=40?'Stable':f>=20?'Emerging':'Fragile';
+  const fitHex  = f>=80?'#38b2a0':f>=60?'#2d9d5e':f>=40?'#e8943a':f>=20?'#e8943a':'#d94a4a';
+
+  const boardItems = Object.values(gridState).map(id => allItems.find(i => i.id===id)).filter(Boolean);
+  const pCount = boardItems.filter(i => i.type==='pattern').length;
+  const aCount = boardItems.filter(i => i.type==='antipattern').length;
+  const tCount = boardItems.filter(i => i.type==='transition').length;
+  const agTotal = Object.values(agentAssignments).reduce((s,a) => s+a.length, 0);
+  const drTotal = Object.values(driverAssignments).reduce((s,a) => s+a.length, 0);
+  const nexusL  = connections.filter(c => c.type==='nexus').length;
+
+  const expE       = Object.entries(experimentResults);
+  const expPassed  = expE.filter(([,e]) => e.stage==='adopted'||e.status==='passed').length;
+  const expRunning = expE.filter(([,e]) => e.stage==='running'||e.stage==='testing'||e.status==='running').length;
+  const expPending = expE.filter(([,e]) => !e.stage||e.stage==='pending'||e.status===''||e.status==='pending').length;
+
+  const STD = [
+    {name:'Strategy & Portfolio'},
+    {name:'Product & Delivery'},
+    {name:'Technology & Architecture'},
+    {name:'People, Culture & Governance'},
+    {name:'Operations'},
+  ];
+  const domRows = STD.map(d => {
+    const di   = boardItems.filter(i => i.domain===d.name);
+    const dHex = Object.entries(gridState).filter(([,id]) => boardItems.find(i => i.id===id&&i.domain===d.name)).map(([,id]) => id);
+    return { name:d.name, dp:di.filter(i=>i.type==='pattern').length, da:di.filter(i=>i.type==='antipattern').length, dt:di.filter(i=>i.type==='transition').length, de:expE.filter(([k]) => dHex.some(h=>k===h||k.startsWith(h))).length };
+  });
+
+  // ── helpers ─────────────────────────────────────────────────────────────
+  const F = h => doc.setFillColor(h);
+  const C = h => doc.setTextColor(h);
+  const P = h => doc.setDrawColor(h);
+  const BG = () => { F('#0f1218'); doc.rect(0,0,W,H,'F'); };
+  const card = (x,y,w,h,c='#171c24') => { F(c); doc.roundedRect(x,y,w,h,2,2,'F'); };
+  const bar  = (x,y,w,h,pct,c) => { F('#2a3140'); doc.rect(x,y,w,h,'F'); if(pct>0){ F(c); doc.rect(x,y,w*Math.min(1,pct/100),h,'F'); } };
+
+  function hdr(title, sub) {
+    BG();
+    F('#4a90d9'); doc.rect(0,0,4,H,'F');
+    F('#171c24'); doc.rect(4,0,W-4,30,'F');
+    P('#2a3140'); doc.setLineWidth(0.3); doc.line(4,30,W,30);
+    doc.setFont('helvetica','bold');   doc.setFontSize(7);  C('#4a90d9'); doc.text('NEXUS TRANSFORMATION BOARD', 12, 9);
+    doc.setFont('helvetica','bold');   doc.setFontSize(15); C('#e8ecf1'); doc.text(title, 12, 20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694'); doc.text(sub, 12, 27);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694');
+    doc.text(`Cycle ${cycleNumber}  ·  ${monthYear}`, W-8, 14, { align:'right' });
+    doc.text(`Phase ${cyclePhase+1}/5  ·  ${ph.n}`, W-8, 21, { align:'right' });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 1 — COVER
+  // ══════════════════════════════════════════════════════════════════════
+  BG();
+  F('#4a90d9'); doc.rect(0,0,4,H,'F');
+  F('#171c24'); doc.rect(4,55,W-4,100,'F');
+  P('#4a90d9'); doc.setLineWidth(0.4); doc.line(4,55,W,55); doc.line(4,155,W,155);
+  doc.setFont('helvetica','bold');   doc.setFontSize(9);  C('#4a90d9'); doc.text('NEXUS TRANSFORMATION BOARD', W/2, 48, { align:'center' });
+  doc.setFont('helvetica','bold');   doc.setFontSize(32); C('#e8ecf1'); doc.text('Cycle Report', W/2, 82, { align:'center' });
+  F('#4a90d9'); doc.roundedRect(W/2-22,90,44,14,3,3,'F');
+  doc.setFont('helvetica','bold');   doc.setFontSize(11); C('#ffffff'); doc.text(`Cycle ${cycleNumber}`, W/2, 99, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); C('#7d8694'); doc.text(dateStr, W/2, 112, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);  C('#7d8694'); doc.text(`Phase ${cyclePhase+1}/5 — ${ph.n}`, W/2, 121, { align:'center' });
+  [{ l:'Fitness', v:`${f} pts`, c:fitHex }, { l:'Status', v:fitTier, c:fitHex }, { l:'Phase', v:ph.n, c:'#4a90d9' }].forEach((k,i) => {
+    const x = 50+i*70;
+    card(x,168,60,28,'#1e2430');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);  C('#7d8694'); doc.text(k.l, x+30, 177, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(13); C(k.c);     doc.text(k.v, x+30, 189, { align:'center' });
+  });
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); C('#7d8694'); doc.text('Nexus Transformation Board — Confidential', W/2, H-5, { align:'center' });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 2 — AT A GLANCE
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr(`Cycle ${cycleNumber} — At a Glance`, 'Executive dashboard: fitness, phase, experiments, board composition');
+  const kpis = [
+    { l:'Org Fitness Score',  v:`${f}`,              d:`/ 100 pts · ${fitTier}`,                      c:fitHex    },
+    { l:'Mobius Phase',       v:ph.n,                d:ph.d.substring(0,42),                          c:'#4a90d9' },
+    { l:'S2F Experiments',    v:`${expE.length}`,    d:`${expPassed} passed  ·  ${expRunning} running`,c:'#e8943a' },
+    { l:'Patterns on Board',  v:`${pCount}`,         d:`${aCount} anti  ·  ${tCount} transitions`,    c:'#2d9d5e' },
+    { l:'Agents & Drivers',   v:`${agTotal+drTotal}`,d:`${agTotal} agents  ·  ${drTotal} drivers`,    c:'#7b5ea7' },
+  ];
+  kpis.forEach((k,i) => {
+    const x = 6+i*57, y = 34, kW = 53, kH = 58;
+    card(x,y,kW,kH);
+    F(k.c); doc.rect(x,y,kW,1.5,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);  C('#7d8694'); doc.text(k.l, x+kW/2, y+10, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(20);   C(k.c);      doc.text(k.v, x+kW/2, y+30, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5);  C('#7d8694');
+    const dl = doc.splitTextToSize(k.d, kW-6);
+    doc.text(dl[0]||k.d, x+kW/2, y+40, { align:'center' });
+    if (dl[1]) doc.text(dl[1], x+kW/2, y+47, { align:'center' });
+  });
+  card(6,100,285,92,'#171c24');
+  doc.setFont('helvetica','bold');   doc.setFontSize(10); C('#e8ecf1'); doc.text('Board Composition', 14, 111);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text('Hex types distribution across the Nexus board', 14, 118);
+  const total = pCount+aCount+tCount||1;
+  [{ l:'Patterns', n:pCount, c:'#2c3e6b' }, { l:'Anti-Patterns', n:aCount, c:'#ff0066' }, { l:'Transitions', n:tCount, c:'#7b8794' }].forEach((b,i) => {
+    const by = 126+i*21;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#e8ecf1'); doc.text(b.l, 14, by+5);
+    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(String(b.n), 65, by+5, { align:'right' });
+    bar(68, by, 200, 8, (b.n/total)*100, b.c);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); C('#7d8694'); doc.text(`${Math.round(b.n/total*100)}%`, 272, by+5);
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 3 — FITNESS SCORE BREAKDOWN
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr('Organizational Fitness Score', `Score components and tier progress — Cycle ${cycleNumber}`);
+  card(6,34,138,162);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Score Components', 14, 45);
+  const comps = [
+    { l:'S2F Experiments Run',  d:`${bd.expRan} x 5 pts`,         s:bd.expRan*5,      max:40 },
+    { l:'Experiments Adopted',  d:`${bd.expAdopted} x 10 pts`,    s:bd.expAdopted*10, max:50 },
+    { l:'Practice Repetitions', d:`${bd.totalReps} reps x 2 pts`, s:bd.repScore,      max:30 },
+  ];
+  let sy = 54;
+  comps.forEach(r => {
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C('#e8ecf1'); doc.text(r.l, 14, sy+5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);   C('#7d8694'); doc.text(r.d, 14, sy+12);
+    bar(14, sy+14, 116, 5, r.max ? Math.round(r.s/r.max*100) : 0, '#4a90d9');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#4a90d9'); doc.text(`+${r.s}`, 130, sy+11, { align:'right' });
+    sy += 30;
+  });
+  P('#2a3140'); doc.setLineWidth(0.3); doc.line(14, sy, 134, sy);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Total Fitness Score', 14, sy+9);
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); C(fitHex); doc.text(`${f} pts`, 134, sy+11, { align:'right' });
+
+  card(150,34,141,162);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text('Fitness Tier Progress', 158, 45);
+  doc.setFont('helvetica','bold'); doc.setFontSize(36); C(fitHex); doc.text(String(f), 158, 76);
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); C(fitHex); doc.text(fitTier, 158, 86);
+  bar(158, 92, 125, 10, f, fitHex);
+  ['Fragile','Emerging','Stable','Resilient','Antifragile'].forEach((t,i) => {
+    doc.setFont('helvetica','normal'); doc.setFontSize(6); C('#7d8694'); doc.text(t, 158+i*25, 109);
+  });
+  [{ k:'Experiments run', v:bd.expRan }, { k:'Experiments adopted', v:bd.expAdopted }, { k:'Practice reps', v:bd.totalReps }, { k:'Nexus lines', v:nexusL }].forEach((s,i) => {
+    const sy2 = 120+i*11;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#7d8694'); doc.text(s.k, 158, sy2);
+    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(String(s.v), 283, sy2, { align:'right' });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 4 — MOBIUS CYCLE STATUS
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr(`Mobius Cycle Status — Cycle ${cycleNumber}`, `Five-phase transformation loop  ·  Phase ${cyclePhase+1} (${ph.n}) active`);
+  const phW = 54, phH = 152, phY = 34;
+  PHASES.forEach((p,i) => {
+    const isDone = completedPhases.has(i) || cyclePhase > i;
+    const isAct  = i === cyclePhase;
+    const bg2 = isAct ? '#1e3050' : isDone ? '#162a1e' : '#171c24';
+    const bdr = isAct ? '#4a90d9' : isDone ? '#2d9d5e' : '#2a3140';
+    const tc  = isAct ? '#4a90d9' : isDone ? '#2d9d5e' : '#7d8694';
+    const x = 6+i*56;
+    F(bg2); doc.roundedRect(x,phY,phW,phH,2,2,'F');
+    F(bdr); doc.rect(x,phY,phW,2,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);  C('#7d8694'); doc.text(String(i+1), x+phW/2, phY+10, { align:'center' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(22); C(tc); doc.text(['S','F','E','St','D'][i], x+phW/2, phY+32, { align:'center' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); C('#e8ecf1'); doc.text(p.n, x+phW/2, phY+45, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); C('#7d8694');
+    doc.splitTextToSize(p.d, phW-8).slice(0,4).forEach((line,li) => { doc.text(line, x+phW/2, phY+56+li*8, { align:'center' }); });
+    const bt = isDone ? 'Done' : isAct ? 'Active' : 'Next';
+    const bc = isDone ? '#2d9d5e' : isAct ? '#4a90d9' : '#2a3140';
+    F(bc); doc.roundedRect(x+10, phY+phH-16, phW-20, 10, 1.5,1.5,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); C('#ffffff'); doc.text(bt, x+phW/2, phY+phH-9, { align:'center' });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 5 — BOARD SNAPSHOT
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr('Nexus Board Snapshot', 'Active patterns, transitions, and anti-patterns across all five transformation domains');
+  const tX = 6, tY = 34, cW = [82,36,36,36,30,58], rH = 12;
+  const cX = []; let cx2 = tX; cW.forEach(w => { cX.push(cx2); cx2 += w; });
+  F('#1e2430'); doc.rect(tX,tY,cx2-tX,rH,'F');
+  ['Domain','Anti-Patterns','Transitions','Patterns','Exp.','Status'].forEach((l,i) => {
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); C('#7d8694'); doc.text(l, cX[i]+3, tY+8);
+  });
+  domRows.forEach(({ name,dp,da,dt,de },ri) => {
+    const ry = tY+rH*(ri+1);
+    F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(tX,ry,cx2-tX,rH,'F');
+    doc.setFont('helvetica','bold');   doc.setFontSize(8); C('#e8ecf1'); doc.text(name.length>30 ? name.substring(0,28)+'..' : name, cX[0]+3, ry+8);
+    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#ff0066'); doc.text(String(da), cX[1]+18, ry+8, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#4a90d9'); doc.text(String(dt), cX[2]+18, ry+8, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#2d9d5e'); doc.text(String(dp), cX[3]+18, ry+8, { align:'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); C('#e8ecf1'); doc.text(String(de), cX[4]+15, ry+8, { align:'center' });
+    const stl = da>dp ? 'At Risk' : dp>0 ? 'Active' : 'Not Started';
+    const sc  = da>dp ? '#d94a4a' : dp>0 ? '#2d9d5e' : '#2a3140';
+    F(sc); doc.roundedRect(cX[5]+4, ry+2, 50, 8, 1,1,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); C('#ffffff'); doc.text(stl, cX[5]+29, ry+7.5, { align:'center' });
+  });
+  const totY = tY+rH*(domRows.length+1);
+  F('#232940'); doc.rect(tX,totY,cx2-tX,rH,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); C('#e8ecf1'); doc.text('TOTAL', cX[0]+3, totY+8);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  C('#ff0066'); doc.text(String(aCount), cX[1]+18, totY+8, { align:'center' });
+  C('#4a90d9'); doc.text(String(tCount), cX[2]+18, totY+8, { align:'center' });
+  C('#2d9d5e'); doc.text(String(pCount), cX[3]+18, totY+8, { align:'center' });
+  C('#e8ecf1'); doc.text(String(expE.length), cX[4]+15, totY+8, { align:'center' });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 6 — S2F EXPERIMENTS
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr('Safe-to-Fail Experiment Tracker', 'All S2F experiments this cycle — hypothesis, status, and fitness impact');
+  if (expE.length === 0) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); C('#7d8694'); doc.text('No experiments registered yet.', W/2, H/2, { align:'center' });
+  } else {
+    const eY = 34, eCW = [18,95,65,30,22]; const eCX = []; let ex2 = 6; eCW.forEach(w => { eCX.push(ex2); ex2 += w; });
+    F('#1e2430'); doc.rect(6,eY,ex2-6,10,'F');
+    ['ID','Hypothesis','Domain','Status','Pts'].forEach((l,i) => { doc.setFont('helvetica','bold'); doc.setFontSize(7.5); C('#7d8694'); doc.text(l, eCX[i]+2, eY+7); });
+    const eRH = 13, maxR = Math.floor((H-58)/eRH);
+    expE.slice(0,maxR).forEach(([k,e],ri) => {
+      const ery = eY+10+ri*eRH;
+      F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(6,ery,ex2-6,eRH,'F');
+      const hi  = allItems.find(i => i.id===k||i.id===k.split('::')[0]);
+      const st  = e.stage||e.status||'pending';
+      const iP  = st==='adopted'||st==='passed';
+      const iR  = st==='running'||st==='testing';
+      const sc2 = iP ? '#2d9d5e' : iR ? '#4a90d9' : '#2a3140';
+      const sl  = iP ? 'Passed' : iR ? 'Running' : 'Pending';
+      const pts = iP ? '+10' : iR ? '+5' : '0';
+      const hyp = String(e.hypothesis||e.notes||hi?.signal||'—').substring(0,60);
+      const dom = String(hi?.domain||'—').substring(0,32);
+      doc.setFont('helvetica','bold');   doc.setFontSize(7);   C('#7d8694'); doc.text(`EXP-${String(ri+1).padStart(2,'0')}`, eCX[0]+2, ery+8.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#e8ecf1'); doc.text(hyp, eCX[1]+2, ery+8.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);   C('#7d8694'); doc.text(dom, eCX[2]+2, ery+8.5);
+      F(sc2); doc.roundedRect(eCX[3]+2, ery+2, 24, 8, 1,1,'F');
+      doc.setFont('helvetica','bold');   doc.setFontSize(6.5); C('#ffffff'); doc.text(sl, eCX[3]+14, ery+7.5, { align:'center' });
+      doc.setFont('helvetica','bold');   doc.setFontSize(8);   C('#4a90d9'); doc.text(pts, eCX[4]+11, ery+8.5, { align:'center' });
+    });
+    const sfY = eY+10+Math.min(maxR,expE.length)*eRH+5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694');
+    doc.text(`${expPassed} passed (+${expPassed*10} pts)  ·  ${expRunning} running (+${expRunning*5} pts)  ·  ${expPending} pending  ·  Total: ${bd.expScore} pts`, 6, sfY);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 7 — ACTIVITY LOG
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  hdr(`Activity Log — Cycle ${cycleNumber}`, 'Recent board actions and state changes');
+  if (!logEntries || logEntries.length === 0) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); C('#7d8694'); doc.text('No activity recorded yet.', W/2, H/2, { align:'center' });
+  } else {
+    const lRH = 11, maxL = Math.floor((H-44)/lRH);
+    logEntries.slice(0,maxL).forEach((e,ri) => {
+      const ly = 34+ri*lRH;
+      F(ri%2 ? '#1a1f2a' : '#171c24'); doc.rect(6,ly,285,lRH,'F');
+      const mc = e.type==='success' ? '#2d9d5e' : e.type==='warning' ? '#e8943a' : '#7d8694';
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C('#7d8694'); doc.text(String(e.time||''), 10, ly+7.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); C(mc); doc.text(String(e.message||'').substring(0,110), 38, ly+7.5);
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PAGE 8 — CLOSING
+  // ══════════════════════════════════════════════════════════════════════
+  doc.addPage();
+  BG();
+  F('#4a90d9'); doc.rect(0,0,4,H,'F');
+  F('#171c24'); doc.rect(4,58,W-4,94,'F');
+  P('#4a90d9'); doc.setLineWidth(0.4); doc.line(4,58,W,58); doc.line(4,152,W,152);
+  doc.setFont('helvetica','bold');   doc.setFontSize(9);  C('#4a90d9'); doc.text('NEXUS TRANSFORMATION BOARD', W/2, 52, { align:'center' });
+  doc.setFont('helvetica','bold');   doc.setFontSize(24); C('#e8ecf1'); doc.text('Transformation in Motion', W/2, 84, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);  C('#7d8694'); doc.text(`Cycle ${cycleNumber} report generated on ${dateStr}`, W/2, 96, { align:'center' });
+  [{ l:'Fitness', v:`${f} pts` }, { l:'Phase', v:ph.n }, { l:'Patterns', v:String(pCount) }, { l:'Experiments', v:String(expE.length) }].forEach((s,i) => {
+    const sx = 38+i*56;
+    card(sx,110,48,28,'#1e2430');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);  C('#7d8694'); doc.text(s.l, sx+24, 119, { align:'center' });
+    doc.setFont('helvetica','bold');   doc.setFontSize(12); C('#e8ecf1'); doc.text(s.v, sx+24, 131, { align:'center' });
+  });
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); C('#7d8694'); doc.text('Nexus Transformation Board — Confidential', W/2, H-5, { align:'center' });
+
+  // save
+  const fn = `NTB-Cycle-${cycleNumber}-Report-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
+  doc.save(fn);
+}
+
+// ══════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════
 function showModal(id){document.getElementById(id).classList.add('show');}
@@ -3758,5 +4059,6 @@ initDomainColorPicker();
   } catch(e) { /* offline or no backend */ }
 })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
