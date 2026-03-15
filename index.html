@@ -711,6 +711,154 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .rp-add-btns { display:flex; gap:6px; }
 .rp-add-btn-save   { background:var(--accent); color:#fff; font-weight:700; font-size:11px; padding:5px 14px; border-radius:4px; border:none; cursor:pointer; }
 .rp-add-btn-cancel { background:rgba(255,255,255,.07); color:var(--text-muted); font-size:11px; padding:5px 12px; border-radius:4px; border:none; cursor:pointer; }
+
+/* ── Möbius Loop Layer ────────────────────────────────────────────── */
+/* Dock */
+.loop-dock { position:fixed; bottom:20px; right:20px; z-index:1100; background:var(--surface); border:1px solid var(--border); border-radius:12px; min-width:52px; max-width:230px; box-shadow:0 4px 20px rgba(0,0,0,.5); overflow:hidden; transition:max-width .25s, box-shadow .25s; }
+.loop-dock-active { border-color:#4a90d9; box-shadow:0 4px 24px rgba(74,144,217,.3); }
+.loop-dock-toggle { display:flex; align-items:center; gap:6px; padding:10px 14px; background:none; border:none; color:var(--text); font-size:12px; font-weight:700; cursor:pointer; width:100%; text-align:left; letter-spacing:.3px; }
+.loop-dock-toggle:hover { background:rgba(255,255,255,.05); }
+.loop-dock-active .loop-dock-toggle { color:#4a90d9; }
+.loop-dock-body { padding:0 12px 12px; }
+.loop-dock-anchor { font-size:11px; font-weight:700; color:var(--text); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.loop-dock-anchor-icon { display:inline-block; background:#4a90d9; color:#fff; border-radius:3px; padding:1px 5px; font-size:9px; font-weight:700; margin-right:5px; }
+.loop-dock-meta { font-size:10px; color:var(--text-muted); margin-bottom:8px; }
+.loop-dock-dots { display:flex; gap:5px; margin-bottom:10px; }
+.loop-dot { width:10px; height:10px; border-radius:50%; background:var(--border); border:1px solid var(--border); transition:background .2s; }
+.loop-dot.active { border-color:#4a90d9; box-shadow:0 0 6px rgba(74,144,217,.6); }
+.loop-dot.done { opacity:.7; }
+.loop-dock-actions { display:flex; gap:6px; }
+.loop-dock-empty { font-size:11px; color:var(--text-muted); margin-bottom:6px; }
+.loop-dock-tip { font-size:10px; color:var(--text-muted); margin-top:8px; line-height:1.4; }
+.loop-dock-btn { padding:5px 10px; border-radius:5px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:10px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.loop-dock-btn:hover { background:rgba(255,255,255,.08); }
+.loop-dock-btn.primary { background:#4a90d9; border-color:#4a90d9; color:#fff; }
+.loop-dock-btn.primary:hover { background:#5a9fe8; }
+.loop-dock-btn.danger { background:rgba(217,74,74,.15); border-color:#d94a4a; color:#d94a4a; }
+.loop-dock-btn.danger:hover { background:rgba(217,74,74,.25); }
+
+/* Modal panel */
+.loop-modal-panel { background:var(--bg); border:1px solid var(--border); border-radius:14px; width:90vw; max-width:940px; max-height:88vh; display:flex; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.7); }
+.loop-phase-sidebar { width:190px; min-width:190px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.loop-modal-header { padding:18px 14px 12px; border-bottom:1px solid var(--border); }
+.loop-modal-title { font-size:13px; font-weight:800; color:var(--text); letter-spacing:.4px; }
+.loop-modal-subtitle { font-size:10px; color:var(--text-muted); margin-top:3px; }
+.loop-phase-steps { padding:12px 10px; flex:1; display:flex; flex-direction:column; gap:6px; }
+.loop-phase-step { display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:8px; cursor:default; transition:background .15s; }
+.loop-phase-step.active { background:rgba(74,144,217,.12); }
+.loop-phase-step.done { opacity:.65; cursor:pointer; }
+.loop-phase-step.done:hover { background:rgba(255,255,255,.05); opacity:.85; }
+.loop-phase-step-dot { width:28px; height:28px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:2px solid transparent; }
+.loop-phase-step.active .loop-phase-step-dot { border-color:currentColor; }
+.loop-phase-step-name { font-size:11px; font-weight:600; color:var(--text); }
+.loop-modal-log-btn { padding:10px; border-top:1px solid var(--border); }
+
+/* Phase content */
+.loop-phase-content { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.loop-phase-header { display:flex; align-items:flex-start; gap:12px; padding:16px 18px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+.loop-phase-icon { font-size:24px; flex-shrink:0; }
+.loop-phase-title { font-size:16px; font-weight:800; letter-spacing:.3px; }
+.loop-phase-hint { font-size:11px; color:var(--text-muted); margin-top:3px; line-height:1.5; }
+.loop-close-btn { margin-left:auto; background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:4px; flex-shrink:0; }
+.loop-close-btn:hover { background:rgba(255,255,255,.08); color:var(--text); }
+.loop-phase-body { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:16px; }
+
+/* Sections + inputs */
+.loop-section { display:flex; flex-direction:column; gap:8px; }
+.loop-section-title { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; display:flex; align-items:center; gap:6px; }
+.loop-section-badge { background:var(--surface2); border:1px solid var(--border); border-radius:3px; padding:1px 6px; font-size:9px; font-weight:700; color:var(--text-muted); text-transform:none; letter-spacing:0; }
+.loop-input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; padding:8px 10px; width:100%; box-sizing:border-box; font-family:inherit; resize:vertical; }
+.loop-input:focus { outline:none; border-color:#4a90d9; }
+.loop-textarea { min-height:56px; }
+.loop-input-hint { font-size:10px; color:var(--text-muted); }
+
+/* Sense phase */
+.loop-prompts { display:flex; flex-direction:column; gap:6px; }
+.loop-prompt { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-size:11px; color:var(--text-muted); line-height:1.5; }
+.loop-signal-card { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:8px 10px; display:flex; align-items:flex-start; gap:8px; }
+.loop-signal-text { flex:1; font-size:12px; color:var(--text); line-height:1.5; }
+.loop-signal-meta { font-size:9px; color:var(--text-muted); white-space:nowrap; flex-shrink:0; }
+.loop-signal-del { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 2px; flex-shrink:0; }
+.loop-signal-del:hover { color:#d94a4a; }
+.loop-add-row { display:flex; flex-direction:column; gap:6px; }
+.loop-sense-tip { font-size:10px; color:var(--orange); background:rgba(232,148,58,.08); border:1px solid rgba(232,148,58,.2); border-radius:5px; padding:5px 8px; }
+.loop-signal-refs { display:flex; flex-direction:column; gap:4px; }
+.loop-signal-ref { font-size:11px; color:var(--text-muted); padding:3px 0; }
+
+/* Focus phase */
+.loop-focus-grid { display:flex; flex-direction:column; gap:6px; }
+.loop-focus-item { display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; cursor:pointer; transition:border-color .15s, background .15s; }
+.loop-focus-item:hover { border-color:#4a90d9; background:rgba(74,144,217,.07); }
+.loop-focus-item.selected { border-color:#4a90d9; background:rgba(74,144,217,.12); }
+.loop-focus-item.disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
+.loop-focus-badge { background:#d94a4a; color:#fff; border-radius:3px; font-size:9px; font-weight:700; padding:2px 6px; flex-shrink:0; }
+.loop-focus-info { flex:1; }
+.loop-focus-name { font-size:12px; font-weight:600; color:var(--text); }
+.loop-focus-signal { font-size:10px; color:var(--text-muted); margin-top:2px; }
+.loop-focus-domain { font-size:9px; color:#4a90d9; margin-top:2px; }
+.loop-focus-check { color:#4a90d9; font-size:16px; font-weight:700; flex-shrink:0; }
+
+/* Experiment phase */
+.loop-exp-tip { font-size:10px; color:var(--purple); background:rgba(123,94,167,.08); border:1px solid rgba(123,94,167,.2); border-radius:5px; padding:5px 8px; margin-bottom:8px; }
+.loop-exp-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:8px; }
+.loop-exp-card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.loop-exp-card-num { background:#7b5ea7; color:#fff; border-radius:3px; font-size:9px; font-weight:700; padding:2px 6px; }
+.loop-exp-signal { font-size:11px; font-weight:600; color:var(--text); }
+.loop-exp-fields { display:flex; flex-direction:column; gap:10px; }
+.loop-exp-field { display:flex; flex-direction:column; gap:4px; }
+.loop-exp-field label { font-size:10px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.3px; }
+.loop-required { color:#d94a4a; }
+
+/* Stabilize phase */
+.loop-mvn-prompt { background:rgba(45,157,94,.08); border:1px solid rgba(45,157,94,.2); border-radius:5px; padding:8px 10px; font-size:11px; color:var(--text-muted); margin-bottom:8px; }
+.loop-mvn-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; }
+
+/* Diffuse phase */
+.loop-story-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:12px; }
+.loop-story-preview { background:rgba(56,178,160,.06); border:1px solid rgba(56,178,160,.25); border-radius:8px; padding:14px; }
+.loop-story-preview-title { font-size:10px; font-weight:700; color:#38b2a0; text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; }
+.loop-story-preview-body { font-size:11px; color:var(--text-muted); line-height:1.7; }
+.loop-story-preview-body p { margin:0 0 4px; }
+.loop-story-preview-body strong { color:var(--text); }
+
+/* Readiness checklist */
+.loop-readiness-panel { background:var(--surface); border-top:1px solid var(--border); padding:10px 18px; flex-shrink:0; }
+.loop-readiness-title { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+.loop-readiness-ok { font-size:11px; color:#2d9d5e; }
+.loop-readiness-item { font-size:11px; line-height:1.5; }
+.loop-readiness-item.fail { color:#d94a4a; }
+
+/* Navigation */
+.loop-nav { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+.loop-nav-btn { padding:7px 18px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; font-weight:700; cursor:pointer; letter-spacing:.3px; }
+.loop-nav-btn.primary { background:#4a90d9; border-color:#4a90d9; color:#fff; }
+.loop-nav-btn.primary:hover { background:#5a9fe8; }
+.loop-nav-btn.secondary:hover { background:rgba(255,255,255,.08); }
+.loop-nav-btn.dimmed { opacity:.45; }
+.loop-nav-btn.shake { animation:loop-shake .4s; }
+@keyframes loop-shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+
+/* Board hex loop overlays */
+.hex-loop-trigger { position:absolute; top:4px; right:4px; z-index:10; background:rgba(74,144,217,.85); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; font-weight:700; line-height:1; padding:0; }
+.board-hex:hover .hex-loop-trigger { display:flex; }
+.board-hex.is-loop-anchor { box-shadow:0 0 0 2px #4a90d9 inset, 0 0 12px rgba(74,144,217,.5); }
+.board-hex.has-loop::after { content:'⟳'; position:absolute; bottom:3px; right:5px; font-size:9px; color:#38b2a0; opacity:.8; z-index:5; pointer-events:none; }
+
+/* Cycle Log */
+.loop-log-header { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.loop-log-list { flex:1; overflow-y:auto; padding:12px 18px; display:flex; flex-direction:column; gap:12px; }
+.loop-log-entry { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+.loop-log-entry-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.loop-log-anchor { font-size:12px; font-weight:700; color:var(--text); flex:1; }
+.loop-log-cycle { font-size:10px; color:#4a90d9; font-weight:600; }
+.loop-log-date { font-size:10px; color:var(--text-muted); }
+.loop-log-phases { display:flex; align-items:center; gap:4px; margin-bottom:6px; }
+.loop-log-phase-tag { font-size:13px; }
+.loop-log-complete { font-size:10px; color:#2d9d5e; font-weight:600; margin-left:4px; }
+.loop-log-norm { font-size:11px; color:var(--text-muted); border-left:2px solid #2d9d5e; padding-left:8px; margin-bottom:4px; }
+.loop-log-changed { font-size:11px; color:var(--text); margin-bottom:4px; }
+.loop-log-next { font-size:10px; color:#38b2a0; }
+.loop-empty-msg { font-size:11px; color:var(--text-muted); padding:10px; background:var(--surface2); border-radius:6px; }
 </style>
 </head>
 <body>
@@ -1304,7 +1452,8 @@ async function saveGame() {
       practice_repetitions: practiceRepetitions,
       transformation_horizons: transformationHorizons,
       board_milestones: boardMilestones,
-      board_risks: boardRisks
+      board_risks: boardRisks,
+      loop_sessions: window.loopSessions || []
     });
     showSave('saved');
   } catch(e) { showSave('error'); console.error('Save failed:',e); }
@@ -1385,6 +1534,8 @@ async function loadGame(gameId) {
   transformationHorizons = g.transformation_horizons || {h3m:'', h1y:'', h2y:'', h5y:''};
   boardMilestones = g.board_milestones || [];
   boardRisks = g.board_risks || [];
+  window.loopSessions = g.loop_sessions || [];
+  window.activeLoop = null;
   const ad = g.active_drivers || {};
   if (Array.isArray(ad)) { driverAssignments = {}; } else { driverAssignments = ad; }
   cycleNumber = g.cycle_number || 1;
@@ -1394,6 +1545,7 @@ async function loadGame(gameId) {
   (g.custom_items||[]).forEach(ci => { if (!allItems.find(i=>i.id===ci.id)) allItems.push(ci); });
   document.getElementById('gameNameTag').textContent = g.name;
   renderAll();
+  if (window.renderLoopDock) window.renderLoopDock();
   addLog('Game loaded: ' + g.name, 'success');
 }
 function renderAll() {
@@ -2688,6 +2840,18 @@ function renderBoard() {
             ${icons?'<div class="bh-bottom">'+icons+'</div>':''}
           </div>
         `;
+        // ── Möbius Loop integration ──
+        const hasCap = boardMarkers.some(m => m.type==='capability' && m.hexId===hexId);
+        if (hasCap) {
+          const loopBtn = document.createElement('button');
+          loopBtn.className = 'hex-loop-trigger';
+          loopBtn.title = 'Start Möbius Loop';
+          loopBtn.textContent = '⟳';
+          loopBtn.addEventListener('click', e => { e.stopPropagation(); if(window.startLoop) window.startLoop(hexId, item.name, key); });
+          el.appendChild(loopBtn);
+        }
+        if ((window.loopSessions||[]).some(s => s.anchorId===hexId && s.completedAt)) el.classList.add('has-loop');
+        if (window.activeLoop && window.activeLoop.anchorId===hexId) el.classList.add('is-loop-anchor');
         el.addEventListener('click',()=>{
           if(connectMode){handleConnectClick(hexId);return;}
           if(selectedDomainId){toggleHexDomain(hexId);return;}
@@ -3242,11 +3406,11 @@ function addCustomPattern(){
 }
 function resetBoard(){
   if(!confirm('Reset the entire board?'))return;
-  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];boardMilestones=[];boardRisks=[];
-  renderAll();addLog('Board reset','warning');scheduleAutoSave();
+  gridState={};agentAssignments={};driverAssignments={};connections=[];boardMarkers=[];domainDefinitions=[];experimentResults={};practiceRepetitions={};selectedDomainId=null;cyclePhase=0;cycleNumber=1;completedPhases.clear();logEntries=[];boardMilestones=[];boardRisks=[];window.loopSessions=[];window.activeLoop=null;
+  renderAll();if(window.renderLoopDock)window.renderLoopDock();addLog('Board reset','warning');scheduleAutoSave();
 }
 function exportSession(){
-  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,boardMilestones,boardRisks,cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
+  const data={timestamp:new Date().toISOString(),gameId:currentGameId,gridState,connections,agentAssignments,driverAssignments,domainDefinitions,experimentResults,practiceRepetitions,boardMilestones,boardRisks,loopSessions:window.loopSessions||[],cycleNumber,cyclePhase,fitness:document.getElementById('fitnessScore').textContent,log:logEntries.slice(0,30),customItems:allItems.filter(i=>i.id.startsWith('custom_'))};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nexus-${new Date().toISOString().slice(0,10)}.json`;a.click();
   addLog('Session exported','success');
@@ -4334,5 +4498,19 @@ initDomainColorPicker();
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Möbius Loop Layer -->
+<div id="loopDock" class="loop-dock">
+  <button class="loop-dock-toggle" onclick="toggleLoopDock()">⟳ Möbius Loop</button>
+  <div id="loopDockBody" class="loop-dock-body"></div>
+</div>
+<div id="loopModal" class="modal-overlay">
+  <div class="loop-modal-panel" onclick="event.stopPropagation()">
+    <div id="loopPhaseSidebar" class="loop-phase-sidebar"></div>
+    <div id="loopPhaseContent" class="loop-phase-content"></div>
+  </div>
+</div>
+<script src="loop-state.js"></script>
+<script src="loop-ui.js"></script>
 </body>
 </html>
