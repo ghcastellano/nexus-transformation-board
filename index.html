@@ -131,6 +131,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .hex-card:active { cursor:grabbing; }
 .hex-card.on-board { opacity:.6; }
 .hex-card.on-board::after { content:'✓'; position:absolute; top:4px; right:6px; font-size:9px; color:var(--cyan); font-weight:700; }
+.hex-card.foundational { border-left:3px solid rgba(255,255,255,.35); }
+.hex-card.foundational .hex-mini { box-shadow:0 0 0 2px rgba(255,255,255,.25); }
 .hex-mini { width:32px; height:28px; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; flex-shrink:0; }
 .hex-mini.pattern { background:var(--pattern-hex); }
 .hex-mini.antipattern { background:var(--anti-hex); }
@@ -258,6 +260,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .color-swatch.selected { border-color:#fff; box-shadow:0 0 8px rgba(255,255,255,.3); }
 /* Hex with domain outline */
 .board-hex.has-domain { outline-offset:-1px; }
+/* Foundational doctrine hexes — thicker, more prominent border */
+.board-hex.foundational { box-shadow:inset 0 0 0 3px rgba(255,255,255,.28), 0 2px 8px rgba(0,0,0,.35); }
+.board-hex.foundational .board-hex-shape { border-width:2px; }
 /* Toast notification */
 .board-toast { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:50; padding:8px 18px; border-radius:8px; font-size:11px; font-weight:500; pointer-events:none; opacity:0; transition:opacity .3s, top .3s; white-space:nowrap; }
 .board-toast.show { opacity:1; top:40px; }
@@ -1242,62 +1247,125 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 // DATA
 // ══════════════════════════════════════════
 const PATTERNS = [
-  {id:'p1',type:'pattern',name:'Focus on User Needs',signal:'Decisions start from user outcomes',impact:'Aligns investment with value',domain:'Strategy & Portfolio'},
-  {id:'p2',type:'pattern',name:'Strategy is Iterative',signal:'Strategy reviews in short cycles',impact:'Faster course correction',domain:'Strategy & Portfolio'},
-  {id:'p3',type:'pattern',name:'Use Common Language',signal:'Shared vocabulary across teams',impact:'Reduces misalignment',domain:'Strategy & Portfolio'},
-  {id:'p4',type:'pattern',name:'Challenge Assumptions',signal:'Safe space to question decisions',impact:'Prevents blind spots',domain:'Strategy & Portfolio'},
-  {id:'p5',type:'pattern',name:'Context Determines Pattern',signal:'No universal best practice',impact:'Right-fit solutions',domain:'Strategy & Portfolio'},
-  {id:'p6',type:'pattern',name:'Portfolio as Value Flow',signal:'Prioritized by value, not project',impact:'Better capital allocation',domain:'Strategy & Portfolio'},
-  {id:'p7',type:'pattern',name:'Think Small',signal:'Small batches, fast iterations',impact:'Reduces risk and waste',domain:'Product & Delivery'},
-  {id:'p8',type:'pattern',name:'Optimize Flow',signal:'WIP limits, queue management',impact:'Faster delivery',domain:'Product & Delivery'},
-  {id:'p9',type:'pattern',name:'Move Fast',signal:'Short cycle times, quick decisions',impact:'Competitive responsiveness',domain:'Product & Delivery'},
-  {id:'p10',type:'pattern',name:'Effectiveness over Efficiency',signal:'Focus on outcomes, not output',impact:'Real value delivered',domain:'Product & Delivery'},
-  {id:'p11',type:'pattern',name:'Manage Failure',signal:'Failures treated as learning',impact:'Psychological safety',domain:'Product & Delivery'},
-  {id:'p12',type:'pattern',name:'Stable Teams',signal:'Teams persist across initiatives',impact:'Trust and deep expertise',domain:'Product & Delivery'},
-  {id:'p13',type:'pattern',name:'Feedback Loops',signal:'Regular retrospectives with action',impact:'Continuous improvement',domain:'Product & Delivery'},
-  {id:'p14',type:'pattern',name:'Use Appropriate Methods',signal:'Tools match problem complexity',impact:'Less over-engineering',domain:'Technology & Architecture'},
-  {id:'p15',type:'pattern',name:'Design for Evolution',signal:'Architecture supports change',impact:'Long-term adaptability',domain:'Technology & Architecture'},
-  {id:'p16',type:'pattern',name:'Set Exceptional Standards',signal:'Quality gates enforced',impact:'Reliability and trust',domain:'Technology & Architecture'},
-  {id:'p17',type:'pattern',name:'Bias Towards Action',signal:'Experiment over analysis paralysis',impact:'Faster learning',domain:'Technology & Architecture'},
-  {id:'p18',type:'pattern',name:'Distribute Power',signal:'Local decision authority',impact:'Speed and ownership',domain:'People, Culture & Governance'},
-  {id:'p19',type:'pattern',name:'Provide Purpose & Autonomy',signal:'Teams understand the "why"',impact:'Intrinsic motivation',domain:'People, Culture & Governance'},
-  {id:'p20',type:'pattern',name:'Be Transparent',signal:'Open information flow',impact:'Trust and alignment',domain:'People, Culture & Governance'},
-  {id:'p21',type:'pattern',name:'No One Culture',signal:'Diverse subcultures accepted',impact:'Contextual adaptation',domain:'People, Culture & Governance'},
-  {id:'p22',type:'pattern',name:'Be Humble',signal:'Leaders admit uncertainty',impact:'Psychological safety',domain:'People, Culture & Governance'},
-  {id:'p23',type:'pattern',name:'Learning as a Habit',signal:'Continuous learning embedded',impact:'Organizational intelligence',domain:'People, Culture & Governance'},
-  {id:'p24',type:'pattern',name:'Meaning Drives Adoption',signal:'Change connected to purpose',impact:'Genuine commitment',domain:'People, Culture & Governance'},
-  {id:'p25',type:'pattern',name:'Transformation = Habit Change',signal:'Focus on behavior, not structure',impact:'Sustainable change',domain:'People, Culture & Governance'},
-  {id:'p26',type:'pattern',name:'Stability Enables Change',signal:'Safe zones preserved',impact:'Immune system respected',domain:'Strategy & Portfolio'},
-  {id:'p27',type:'pattern',name:'Intensity > Speed',signal:'Few changes at a time',impact:'No overload',domain:'Strategy & Portfolio'},
-  {id:'p28',type:'pattern',name:'No End State',signal:'No fixed target declared',impact:'Continuous adaptation',domain:'Strategy & Portfolio'},
-  {id:'p30',type:'pattern',name:'Course Correction',signal:'Regular pivots based on evidence',impact:'Avoids sunk cost traps',domain:'Strategy & Portfolio'},
+  // ── Foundational / Systemic ──────────────────────────────────────────
+  {id:'p3', type:'pattern',foundational:true, name:'Use Common Language',               signal:'Shared vocabulary across teams',              impact:'Reduces misalignment',              domain:'Strategy & Portfolio'},
+  {id:'p4', type:'pattern',foundational:true, name:'Challenge Assumptions',             signal:'Safe space to question decisions',             impact:'Prevents blind spots',              domain:'Strategy & Portfolio'},
+  {id:'p31',type:'pattern',foundational:true, name:'Not Everyone Needs Change',         signal:'Change applied selectively by context',        impact:'Reduces immune rejection',          domain:'People, Culture & Governance'},
+  {id:'p32',type:'pattern',foundational:true, name:'Focus on Situational Awareness',    signal:'Context read before acting',                  impact:'Right moves at the right time',     domain:'Strategy & Portfolio'},
+  {id:'p33',type:'pattern',foundational:true, name:'Organizations Are Living Systems',  signal:'Org treated as adaptive, not a machine',      impact:'Emergent solutions respected',      domain:'People, Culture & Governance'},
+  {id:'p20',type:'pattern',foundational:true, name:'Be Transparent',                    signal:'Open information flow',                       impact:'Trust and alignment',               domain:'People, Culture & Governance'},
+  {id:'p13',type:'pattern',foundational:true, name:'Feedback Loops',                    signal:'Regular retrospectives with action',           impact:'Continuous improvement',            domain:'Product & Delivery'},
+  {id:'p34',type:'pattern',foundational:true, name:'Change Spreads Socially',           signal:'Peers pull adoption horizontally',             impact:'Organic spread, less resistance',   domain:'People, Culture & Governance'},
+  {id:'p24',type:'pattern',foundational:true, name:'Meaning Drives Adoption',           signal:'Change connected to purpose',                 impact:'Genuine commitment',                domain:'People, Culture & Governance'},
+  // ── Change & Adoption ────────────────────────────────────────────────
+  {id:'p35',type:'pattern', name:'Know Your Users',                    signal:'User research drives decisions',               impact:'Solutions fit real needs',          domain:'Product & Delivery'},
+  {id:'p14',type:'pattern', name:'Use Appropriate Methods',            signal:'Tools match problem complexity',               impact:'Less over-engineering',             domain:'Technology & Architecture'},
+  {id:'p1', type:'pattern', name:'Focus on User Needs',                signal:'Decisions start from user outcomes',           impact:'Aligns investment with value',      domain:'Strategy & Portfolio'},
+  {id:'p36',type:'pattern', name:'Be Pragmatic',                       signal:'Practical over ideological',                  impact:'Faster, better results',            domain:'Product & Delivery'},
+  {id:'p37',type:'pattern', name:'Focus on Outcome Not Activity',      signal:'Teams measured by impact, not effort',         impact:'Avoids busy-work',                  domain:'Product & Delivery'},
+  {id:'p38',type:'pattern', name:'Think Fast, Inexpensive and Elegant',signal:'Minimal viable experiments preferred',         impact:'Low waste, high learning',          domain:'Product & Delivery'},
+  {id:'p39',type:'pattern', name:'Use Standards Where Appropriate',    signal:'Standards applied contextually',               impact:'Balances consistency and flexibility',domain:'Technology & Architecture'},
+  {id:'p40',type:'pattern', name:'Use Appropriate Tools',              signal:'Tools match problem, not trend',               impact:'Less tool overload',                domain:'Technology & Architecture'},
+  {id:'p41',type:'pattern', name:'Remove Bias and Duplication',        signal:'Redundancies identified and removed',          impact:'Cleaner, faster value flow',        domain:'Operations'},
+  {id:'p42',type:'pattern', name:'The Law of the Small Team',          signal:'Team size kept minimal',                      impact:'Lower coordination cost',           domain:'People, Culture & Governance'},
+  {id:'p43',type:'pattern', name:'The Law of the Customer',            signal:'Customer outcomes drive priorities',           impact:'Strategic alignment',               domain:'Strategy & Portfolio'},
+  {id:'p12',type:'pattern', name:'Stable Teams',                       signal:'Teams persist across initiatives',             impact:'Trust and deep expertise',          domain:'Product & Delivery'},
+  {id:'p11',type:'pattern', name:'Manage Failure',                     signal:'Failures treated as learning',                impact:'Psychological safety',              domain:'Product & Delivery'},
+  {id:'p44',type:'pattern', name:'Manage Inertia',                     signal:'Existing behaviors acknowledged',              impact:'Change effort calibrated',          domain:'People, Culture & Governance'},
+  // ── Learning ─────────────────────────────────────────────────────────
+  {id:'p27',type:'pattern', name:'Intensity Over Speed',               signal:'Few changes at a time',                       impact:'No overload',                       domain:'Strategy & Portfolio'},
+  {id:'p10',type:'pattern', name:'Effectiveness over Efficiency',      signal:'Focus on outcomes, not output',               impact:'Real value delivered',              domain:'Product & Delivery'},
+  {id:'p16',type:'pattern', name:'Set Exceptional Standards',          signal:'Quality gates enforced',                      impact:'Reliability and trust',             domain:'Technology & Architecture'},
+  {id:'p8', type:'pattern', name:'Optimize Flow',                      signal:'WIP limits, queue management',                impact:'Faster delivery',                   domain:'Product & Delivery'},
+  {id:'p45',type:'pattern', name:'Do Better with Less',                signal:'Constraints used as forcing function',         impact:'Innovation through limits',         domain:'Operations'},
+  {id:'p46',type:'pattern', name:'The Law of the Network',             signal:'Network effects leveraged',                   impact:'Non-linear value growth',           domain:'Strategy & Portfolio'},
+  // ── Technology & Architecture ────────────────────────────────────────
+  {id:'p7', type:'pattern', name:'Think Small',                        signal:'Small batches, fast iterations',               impact:'Reduces risk and waste',            domain:'Product & Delivery'},
+  {id:'p47',type:'pattern', name:'Use Systematic Learning Mechanisms', signal:'Structured learning cycles in place',          impact:'Compound organizational intelligence',domain:'Technology & Architecture'},
+  {id:'p17',type:'pattern', name:'Bias Towards Action',                signal:'Experiment over analysis paralysis',           impact:'Faster learning',                   domain:'Technology & Architecture'},
+  {id:'p48',type:'pattern', name:'Safe-to-Fail Experiments',           signal:'Small probes with clear hypotheses',           impact:'Learning without big risk',         domain:'Technology & Architecture'},
+  {id:'p26',type:'pattern', name:'Stability Enables Change',           signal:'Safe zones preserved',                        impact:'Immune system respected',           domain:'Strategy & Portfolio'},
+  {id:'p5', type:'pattern', name:'Context Determines Pattern',         signal:'No universal best practice',                  impact:'Right-fit solutions',               domain:'Strategy & Portfolio'},
+  {id:'p30',type:'pattern', name:'Course Correction',                  signal:'Regular pivots based on evidence',            impact:'Avoids sunk cost traps',            domain:'Strategy & Portfolio'},
+  {id:'p49',type:'pattern', name:'Adaptability Quotient',              signal:'Org measures adaptability',                   impact:'Resilience over rigidity',          domain:'Technology & Architecture'},
+  {id:'p50',type:'pattern', name:'30 Days Rule',                       signal:'Changes given 30 days before judgment',       impact:'Avoids premature abandonment',      domain:'Product & Delivery'},
+  {id:'p23',type:'pattern', name:'Learning as a Habit',                signal:'Continuous learning embedded',                impact:'Organizational intelligence',       domain:'People, Culture & Governance'},
+  {id:'p51',type:'pattern', name:'A Bias Toward the New',              signal:'New signals welcomed and explored',           impact:'Early adoption advantage',          domain:'Strategy & Portfolio'},
+  {id:'p52',type:'pattern', name:'Listen to Your Ecosystems',          signal:'External signals tracked regularly',          impact:'Early warning of disruption',       domain:'Strategy & Portfolio'},
+  {id:'p53',type:'pattern', name:'There Is No Core',                   signal:'No single source of truth assumed',           impact:'Distributed resilience',            domain:'Technology & Architecture'},
+  // ── Structure & Organization ─────────────────────────────────────────
+  {id:'p9', type:'pattern', name:'Move Fast',                          signal:'Short cycle times, quick decisions',          impact:'Competitive responsiveness',        domain:'Product & Delivery'},
+  {id:'p2', type:'pattern', name:'Strategy is Iterative',              signal:'Strategy reviews in short cycles',            impact:'Faster course correction',          domain:'Strategy & Portfolio'},
+  {id:'p54',type:'pattern', name:'Be the Owner',                       signal:'Clear accountability for outcomes',           impact:'No diffusion of responsibility',    domain:'People, Culture & Governance'},
+  {id:'p25',type:'pattern', name:'Transformation = Habit Change',      signal:'Focus on behavior, not structure',            impact:'Sustainable change',                domain:'People, Culture & Governance'},
+  {id:'p55',type:'pattern', name:'Strategy is Complex',                signal:'Strategy treated as adaptive landscape',      impact:'Avoids oversimplification',         domain:'Strategy & Portfolio'},
+  {id:'p56',type:'pattern', name:'Think Big',                          signal:'Ambition not bounded by current constraints', impact:'Moonshots enabled',                 domain:'Strategy & Portfolio'},
+  {id:'p57',type:'pattern', name:'Power Shapes Outcomes',              signal:'Informal power mapped and addressed',         impact:'Real change, not just formal',      domain:'People, Culture & Governance'},
+  {id:'p22',type:'pattern', name:'Be Humble',                          signal:'Leaders admit uncertainty',                   impact:'Psychological safety',              domain:'People, Culture & Governance'},
+  {id:'p58',type:'pattern', name:'Exploit the Landscape',              signal:'Ecosystem advantages leveraged',              impact:'Asymmetric competitive edge',       domain:'Strategy & Portfolio'},
+  {id:'p15',type:'pattern', name:'Design for Evolution',               signal:'Architecture supports change',                impact:'Long-term adaptability',            domain:'Technology & Architecture'},
+  // ── Strategy, Leadership & Direction ─────────────────────────────────
+  {id:'p59',type:'pattern', name:'The Immune System Always Responds',  signal:'Resistance anticipated and designed for',     impact:'Change survives immune rejection',  domain:'Strategy & Portfolio'},
+  {id:'p60',type:'pattern', name:'Think Aptitude and Attitude',        signal:'Capability and mindset both assessed',        impact:'Right people in right roles',       domain:'People, Culture & Governance'},
+  {id:'p18',type:'pattern', name:'Distribute Power',                   signal:'Local decision authority',                   impact:'Speed and ownership',               domain:'People, Culture & Governance'},
+  {id:'p19',type:'pattern', name:'Provide Purpose & Autonomy',         signal:'Teams understand the "why"',                 impact:'Intrinsic motivation',              domain:'People, Culture & Governance'},
+  {id:'p61',type:'pattern', name:'Seek the Best',                      signal:'Excellence is the standard',                 impact:'High performance culture',          domain:'People, Culture & Governance'},
+  {id:'p28',type:'pattern', name:'No End State',                       signal:'No fixed target declared',                   impact:'Continuous adaptation',             domain:'Strategy & Portfolio'},
+  {id:'p62',type:'pattern', name:'Design for Constant Evolution',      signal:'Systems built to continuously evolve',        impact:'Long-term agility',                 domain:'Strategy & Portfolio'},
+  {id:'p21',type:'pattern', name:'No One Culture',                     signal:'Diverse subcultures accepted',               impact:'Contextual adaptation',             domain:'People, Culture & Governance'},
+  {id:'p6', type:'pattern', name:'Portfolio as Value Flow',            signal:'Prioritized by value, not project',          impact:'Better capital allocation',         domain:'Strategy & Portfolio'},
 ];
 const ANTIPATTERNS = [
-  {id:'a1',type:'antipattern',name:'Big Bang Change',signal:'Massive restructuring at once',impact:'Immune system overreaction',domain:'Strategy & Portfolio'},
-  {id:'a2',type:'antipattern',name:'Ritualistic Agility',signal:'Ceremonies without learning',impact:'Agile theater, no value',domain:'Product & Delivery'},
-  {id:'a3',type:'antipattern',name:'Hero Leadership',signal:'Single leader drives all change',impact:'Single point of failure',domain:'People, Culture & Governance'},
-  {id:'a4',type:'antipattern',name:'Governance Theater',signal:'Approval gates without value',impact:'Slow decisions, false safety',domain:'People, Culture & Governance'},
-  {id:'a5',type:'antipattern',name:'Copy-Paste Transformation',signal:"Importing another company's model",impact:'Context mismatch',domain:'Strategy & Portfolio'},
-  {id:'a6',type:'antipattern',name:'Scaling Before Learning',signal:'Rolling out before validating',impact:'Amplified mistakes',domain:'Product & Delivery'},
-  {id:'a7',type:'antipattern',name:'Universal Change Mandate',signal:'Everyone must change at once',impact:'Resistance and fatigue',domain:'People, Culture & Governance'},
-  {id:'a8',type:'antipattern',name:'Treating Orgs as Machines',signal:'Mechanical restructuring',impact:'Ignores human dynamics',domain:'People, Culture & Governance'},
-  {id:'a9',type:'antipattern',name:'Feedback Without Action',signal:'Retros happen, nothing changes',impact:'Cynicism and disengagement',domain:'Product & Delivery'},
-  {id:'a10',type:'antipattern',name:'Priority Inflation',signal:'Everything is P1',impact:'Nothing gets focus',domain:'Strategy & Portfolio'},
-  {id:'a11',type:'antipattern',name:'Expert Dependency',signal:'Change requires external experts',impact:'No internal capability',domain:'People, Culture & Governance'},
-  {id:'a12',type:'antipattern',name:'Ignoring Power Dynamics',signal:'Informal power not addressed',impact:'Hidden blockers',domain:'People, Culture & Governance'},
-  {id:'a13',type:'antipattern',name:'Speed Over Intensity',signal:'Measuring speed not absorption',impact:'Change overload',domain:'Strategy & Portfolio'},
-  {id:'a14',type:'antipattern',name:'Local Optimization',signal:'Teams optimize in silos',impact:'System-level dysfunction',domain:'Product & Delivery'},
-  {id:'a15',type:'antipattern',name:'Declaring End State',signal:'Fixed target announced',impact:'Rigidity, disillusionment',domain:'Strategy & Portfolio'},
-  {id:'a16',type:'antipattern',name:'Blame-Driven Accountability',signal:'Failures punished, not studied',impact:'Fear-based culture',domain:'People, Culture & Governance'},
-  {id:'a17',type:'antipattern',name:'Cosmetic Empowerment',signal:'Authority without support',impact:'Burnout and confusion',domain:'People, Culture & Governance'},
-  {id:'a18',type:'antipattern',name:'Change Without Meaning',signal:'No narrative for why',impact:'Cynicism and resistance',domain:'People, Culture & Governance'},
-  {id:'a19',type:'antipattern',name:'Portfolio as Inventory',signal:'Projects listed, not governed',impact:'No strategic alignment',domain:'Strategy & Portfolio'},
-  {id:'a20',type:'antipattern',name:'Change Without Anchors',signal:'No stability zones preserved',impact:'Total disorientation',domain:'Strategy & Portfolio'},
-  {id:'a21',type:'antipattern',name:'Unstable Teams',signal:'Frequent team reshuffling',impact:'No trust, no knowledge',domain:'Product & Delivery'},
-  {id:'a22',type:'antipattern',name:'Ignoring Immune System',signal:'Resistance labeled dysfunction',impact:'Escalating conflict',domain:'People, Culture & Governance'},
-  {id:'a23',type:'antipattern',name:'Over-Standardized Teams',signal:'Same structure forced everywhere',impact:'Context ignored',domain:'People, Culture & Governance'},
-  {id:'a24',type:'antipattern',name:'Change Without Arch Readiness',signal:'Process change without tech',impact:'Friction and workarounds',domain:'Technology & Architecture'},
-  {id:'a25',type:'antipattern',name:'Safety Sacrificed for Speed',signal:'Cutting corners for velocity',impact:'Technical and cultural debt',domain:'Technology & Architecture'},
+  // ── Foundational / Systemic ──────────────────────────────────────────
+  {id:'a18',type:'antipattern',foundational:true, name:'Change Without Meaning',        signal:'No narrative for why',                        impact:'Cynicism and resistance',           domain:'People, Culture & Governance'},
+  {id:'a15',type:'antipattern',foundational:true, name:'Declaring an End State',        signal:'Fixed target announced',                      impact:'Rigidity, disillusionment',         domain:'Strategy & Portfolio'},
+  {id:'a9', type:'antipattern',foundational:true, name:'Feedback Without Action',       signal:'Retros happen, nothing changes',              impact:'Cynicism and disengagement',        domain:'Product & Delivery'},
+  {id:'a26',type:'antipattern',foundational:true, name:'Narrative Vacuum',              signal:'Change with no coherent story',               impact:'Confusion and passive resistance',  domain:'People, Culture & Governance'},
+  // ── Change & Adoption ────────────────────────────────────────────────
+  {id:'a27',type:'antipattern', name:'Treating Transformation as Execution', signal:'Transformation managed like a project',    impact:'Misses cultural dimension',         domain:'Strategy & Portfolio'},
+  {id:'a28',type:'antipattern', name:'Output Obsession',                     signal:'Teams measured by deliverables not outcomes',impact:'Busy but not effective',           domain:'Product & Delivery'},
+  {id:'a23',type:'antipattern', name:'Over-Standardized Teams',              signal:'Same structure forced everywhere',            impact:'Context ignored',                  domain:'People, Culture & Governance'},
+  {id:'a14',type:'antipattern', name:'Local Optimization',                   signal:'Teams optimize in silos',                    impact:'System-level dysfunction',         domain:'Product & Delivery'},
+  {id:'a10',type:'antipattern', name:'Priority Inflation',                   signal:'Everything is P1',                           impact:'Nothing gets focus',               domain:'Strategy & Portfolio'},
+  {id:'a4', type:'antipattern', name:'Governance Theater',                   signal:'Approval gates without value',               impact:'Slow decisions, false safety',     domain:'People, Culture & Governance'},
+  {id:'a2', type:'antipattern', name:'Ritualistic Agility',                  signal:'Ceremonies without learning',                impact:'Agile theater, no value',          domain:'Product & Delivery'},
+  {id:'a21',type:'antipattern', name:'Unstable Teams',                       signal:'Frequent team reshuffling',                  impact:'No trust, no knowledge',           domain:'Product & Delivery'},
+  // ── Learning ─────────────────────────────────────────────────────────
+  {id:'a29',type:'antipattern', name:'Fragile Experiments',                  signal:'Experiments designed to succeed, not learn', impact:'False confidence',                 domain:'Product & Delivery'},
+  {id:'a30',type:'antipattern', name:'Learning Theater',                     signal:'Learning events without behaviour change',   impact:'Wasted investment',                domain:'People, Culture & Governance'},
+  {id:'a31',type:'antipattern', name:'Templates Culture',                    signal:'Frameworks applied without context',         impact:'Wrong solutions confidently applied',domain:'Strategy & Portfolio'},
+  {id:'a32',type:'antipattern', name:'Learning As a Phase',                  signal:'Learning treated as front-loaded',           impact:'Stops when "done"',                domain:'People, Culture & Governance'},
+  {id:'a33',type:'antipattern', name:'Learning as Training',                 signal:'Training replaces systemic learning',        impact:'Skills without systems change',    domain:'People, Culture & Governance'},
+  {id:'a34',type:'antipattern', name:'One-Way Learning',                     signal:'Knowledge flows down, not up',               impact:'Frontline signals ignored',        domain:'People, Culture & Governance'},
+  {id:'a35',type:'antipattern', name:"We Don't Need to Learn",               signal:'Learning deprioritized in busy periods',     impact:'Accumulating blindspots',          domain:'People, Culture & Governance'},
+  {id:'a36',type:'antipattern', name:'Knowledge Centralization',             signal:'Knowledge hoarded in silos or experts',     impact:'Fragility and dependency',         domain:'People, Culture & Governance'},
+  {id:'a13',type:'antipattern', name:'Speed Over Intensity',                 signal:'Measuring speed not absorption',             impact:'Change overload',                  domain:'Strategy & Portfolio'},
+  {id:'a19',type:'antipattern', name:'Portfolio as Inventory',               signal:'Projects listed, not governed',              impact:'No strategic alignment',           domain:'Strategy & Portfolio'},
+  {id:'a6', type:'antipattern', name:'Scaling Before Learning',              signal:'Rolling out before validating',              impact:'Amplified mistakes',               domain:'Product & Delivery'},
+  {id:'a37',type:'antipattern', name:'Failure Never',                        signal:'Failures hidden or punished',                impact:'Learning eliminated',              domain:'People, Culture & Governance'},
+  // ── Technology & Architecture ────────────────────────────────────────
+  {id:'a38',type:'antipattern', name:'Architecture as Constraint',           signal:'Tech decisions slow down change',            impact:'Transformation blocked by tech debt',domain:'Technology & Architecture'},
+  {id:'a39',type:'antipattern', name:'Technology as The Change',             signal:'Tool adoption confused with transformation', impact:'Misplaced investment',             domain:'Technology & Architecture'},
+  {id:'a40',type:'antipattern', name:'Tool-First Transformation',            signal:'Technology selected before problem defined', impact:'Solution looking for problem',     domain:'Technology & Architecture'},
+  {id:'a24',type:'antipattern', name:'Change Without Arch Readiness',        signal:'Business change outpaces tech capacity',     impact:'Delivery failure',                 domain:'Technology & Architecture'},
+  {id:'a11',type:'antipattern', name:'Expert Dependency',                    signal:'Change requires external experts',           impact:'No internal capability',           domain:'People, Culture & Governance'},
+  {id:'a25',type:'antipattern', name:'Safety Sacrificed for Performance',    signal:'Shortcuts taken under pressure',             impact:'Fragile systems and burnout',      domain:'Technology & Architecture'},
+  // ── Structure & Organization ─────────────────────────────────────────
+  {id:'a16',type:'antipattern', name:'Blame-Driven Accountability',          signal:'Failures punished, not studied',             impact:'Fear-based culture',               domain:'People, Culture & Governance'},
+  {id:'a17',type:'antipattern', name:'Cosmetic Empowerment',                 signal:'Authority without support',                 impact:'Burnout and confusion',            domain:'People, Culture & Governance'},
+  {id:'a1', type:'antipattern', name:'Big Bang Change',                      signal:'Massive restructuring at once',              impact:'Immune system overreaction',       domain:'Strategy & Portfolio'},
+  {id:'a3', type:'antipattern', name:'Hero Leadership',                      signal:'Single leader drives all change',           impact:'Single point of failure',          domain:'People, Culture & Governance'},
+  {id:'a5', type:'antipattern', name:'Copy-Paste Transformation',            signal:"Importing another company's model",         impact:'Context mismatch',                 domain:'Strategy & Portfolio'},
+  {id:'a7', type:'antipattern', name:'Universal Change Mandate',             signal:'Everyone must change at once',               impact:'Resistance and fatigue',           domain:'People, Culture & Governance'},
+  {id:'a12',type:'antipattern', name:'Ignoring Power Dynamics',              signal:'Informal power not addressed',               impact:'Hidden blockers',                  domain:'People, Culture & Governance'},
+  // ── Strategy, Leadership & Direction ─────────────────────────────────
+  {id:'a41',type:'antipattern', name:'Strategy as Annual Event',             signal:'Strategy reviewed once a year',              impact:'Misaligned execution',             domain:'Strategy & Portfolio'},
+  {id:'a42',type:'antipattern', name:'Treating People as Resources',         signal:'Headcount managed, not developed',           impact:'Disengagement and attrition',      domain:'People, Culture & Governance'},
+  {id:'a43',type:'antipattern', name:'Value Defined Only by Financials',     signal:'ROI is the only success metric',             impact:'Short-term thinking',              domain:'Strategy & Portfolio'},
+  {id:'a8', type:'antipattern', name:'Treating Orgs as Machines',            signal:'Mechanical restructuring',                  impact:'Ignores human dynamics',           domain:'People, Culture & Governance'},
+  {id:'a20',type:'antipattern', name:'Change Without Anchors',               signal:'No stability zones preserved',               impact:'Total disorientation',             domain:'Strategy & Portfolio'},
+  {id:'a44',type:'antipattern', name:'Permanent-Temporary Solution',         signal:'Workarounds become permanent',               impact:'Technical and organisational debt', domain:'Operations'},
+  {id:'a22',type:'antipattern', name:'Ignoring Orgs. Immune System',         signal:'Resistance labeled as dysfunction',          impact:'Escalating conflict and rejection', domain:'People, Culture & Governance'},
 ];
 const TRANSITIONS = [
   {id:'t1',type:'transition',name:'Opt-In Participation',signal:'Voluntary involvement',impact:'Reduces resistance',domain:'People, Culture & Governance'},
@@ -2683,7 +2751,7 @@ function renderLibrary() {
   }).forEach(item => {
     const onBoard = isOnBoard(item.id);
     const card = document.createElement('div');
-    card.className = `hex-card${onBoard?' on-board':''}`;
+    card.className = `hex-card${onBoard?' on-board':''}${item.foundational?' foundational':''}`;
     card.draggable = true;
     card.innerHTML = `
       <div class="hex-mini ${item.type}">${item.type==='pattern'?'P':item.type==='antipattern'?'A':'T'}</div>
@@ -2820,7 +2888,7 @@ function renderBoard() {
         const hexDomain = domainDefinitions.find(d=>d.hexIds.includes(hexId));
         const domCls = hexDomain ? ' has-domain':'';
         const el = document.createElement('div');
-        el.className = `board-hex ${item.type}${dim}${cm}${cs}${domCls}`;
+        el.className = `board-hex ${item.type}${item.foundational?' foundational':''}${dim}${cm}${cs}${domCls}`;
         el.draggable = !connectMode;
         el.setAttribute('data-hex-id', hexId);
         const agents = (agentAssignments[hexId]||[]).map(a=>`<div class="agent-badge ${a.type}" title="${a.type} agent" onclick="event.stopPropagation();assignAgent('${hexId}','${a.type}')">${a.type==='human'?'🧑':a.type==='systemic'?'🏛':'🤖'}</div>`).join('');
