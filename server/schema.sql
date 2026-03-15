@@ -39,6 +39,7 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS transformation_horizons JSONB NOT NUL
 ALTER TABLE games ADD COLUMN IF NOT EXISTS board_milestones JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE games ADD COLUMN IF NOT EXISTS board_risks JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE games ADD COLUMN IF NOT EXISTS loop_sessions JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE games ADD COLUMN IF NOT EXISTS board_instances JSONB NOT NULL DEFAULT '{}';
 
 -- ── Capabilities Library (global, shared across all games) ──
 CREATE TABLE IF NOT EXISTS capabilities (

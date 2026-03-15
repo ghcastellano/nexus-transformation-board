@@ -147,7 +147,7 @@ window.renderLoopModal = function(forceView) {
 // ── Phase 0: Sense ────────────────────────────────────────────────────
 
 function renderSensePhase(loop, ph) {
-  const anchor = window.allItems ? window.allItems.find(i => i.id === loop.anchorId) : null;
+  const anchor = (typeof resolveItem !== 'undefined') ? resolveItem(loop.anchorId) : (window.allItems ? window.allItems.find(i => i.id === loop.anchorId) : null);
   const domain = anchor ? anchor.domain : null;
   const promptSet = (window.LOOP_PROMPTS || {})[domain] || (window.LOOP_PROMPTS || {})._default || [];
 
@@ -197,7 +197,7 @@ window.loopRemoveSignal = function(idx) {
 function renderFocusPhase(loop, ph) {
   // Gather anti-patterns on the board
   const boardAPs = Object.entries(window.gridState || {})
-    .map(([key, id]) => ({ key, item: (window.allItems||[]).find(i=>i.id===id) }))
+    .map(([key, id]) => ({ key, item: (typeof resolveItem !== 'undefined') ? resolveItem(id) : (window.allItems||[]).find(i=>i.id===id) }))
     .filter(({ item }) => item && item.type === 'antipattern');
 
   const apHtml = boardAPs.length === 0

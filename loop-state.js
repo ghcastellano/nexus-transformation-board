@@ -59,7 +59,7 @@ window.LOOP_PROMPTS = {
 function _boardAntipatternCount() {
   if (!window.gridState || !window.allItems) return 0;
   return Object.values(window.gridState).filter(id => {
-    const item = window.allItems.find(i => i.id === id);
+    const item = (typeof resolveItem !== 'undefined') ? resolveItem(id) : window.allItems.find(i => i.id === id);
     return item && item.type === 'antipattern';
   }).length;
 }
@@ -67,7 +67,7 @@ function _boardAntipatternCount() {
 function _boardPatternCount() {
   if (!window.gridState || !window.allItems) return 0;
   return Object.values(window.gridState).filter(id => {
-    const item = window.allItems.find(i => i.id === id);
+    const item = (typeof resolveItem !== 'undefined') ? resolveItem(id) : window.allItems.find(i => i.id === id);
     return item && item.type === 'pattern';
   }).length;
 }
