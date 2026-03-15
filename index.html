@@ -260,9 +260,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .color-swatch.selected { border-color:#fff; box-shadow:0 0 8px rgba(255,255,255,.3); }
 /* Hex with domain outline */
 .board-hex.has-domain { outline-offset:-1px; }
-/* Foundational doctrine hexes — thicker, more prominent border */
-.board-hex.foundational { box-shadow:inset 0 0 0 3px rgba(255,255,255,.28), 0 2px 8px rgba(0,0,0,.35); }
-.board-hex.foundational .board-hex-shape { border-width:2px; }
+/* Foundational doctrine hexes — glow follows hex polygon shape */
+.board-hex.foundational .board-hex-shape { filter: drop-shadow(0 0 4px rgba(255,255,255,.65)) drop-shadow(0 0 1px rgba(255,255,255,.9)); }
 /* Toast notification */
 .board-toast { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:50; padding:8px 18px; border-radius:8px; font-size:11px; font-weight:500; pointer-events:none; opacity:0; transition:opacity .3s, top .3s; white-space:nowrap; }
 .board-toast.show { opacity:1; top:40px; }
