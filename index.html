@@ -24,7 +24,44 @@
   --pattern-hex: #2c3e6b;
   --anti-hex: #ff0066;
   --trans-hex: #7b8794;
+  --cap-hex: #38b2a0;
 }
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface2: #e4e8ef;
+  --border: #c4c9d4;
+  --text: #1a1e26;
+  --text-muted: #5a6370;
+  --accent: #3a7bc8;
+}
+[data-theme="light"] .app-header { background:linear-gradient(135deg,#f5f7fa,#e8ecf2); }
+[data-theme="light"] .hex-cell-bg { background:#d8dce4; }
+[data-theme="light"] .hex-cell[data-parity="1"] .hex-cell-bg { background:#d0d5de; }
+[data-theme="light"] .hex-cell[data-parity="2"] .hex-cell-bg { background:#c8cdd8; }
+[data-theme="light"] .hex-cell.empty .hex-cell-bg::after { color:rgba(0,0,0,.18); }
+[data-theme="light"] .zone-headers { background:var(--surface); border-color:rgba(0,0,0,.08); }
+[data-theme="light"] .zone-headers .zh-spacer { border-color:rgba(0,0,0,.06); }
+[data-theme="light"] .zone-col-header { border-color:rgba(0,0,0,.04); }
+[data-theme="light"] .zone-bg { border-color:rgba(0,0,0,.06); }
+[data-theme="light"] .zone-bg.zb-current { background:linear-gradient(90deg,rgba(217,74,74,.08),rgba(217,74,74,.02)); }
+[data-theme="light"] .zone-bg.zb-desired { background:linear-gradient(270deg,rgba(45,157,94,.08),rgba(45,157,94,.02)); }
+[data-theme="light"] .lane-divider { background:rgba(0,0,0,.08); }
+[data-theme="light"] .lane-label-abs { border-color:rgba(0,0,0,.06); }
+[data-theme="light"] .hex-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.1); }
+[data-theme="light"] .hex-card.foundational { border-left-color:rgba(0,0,0,.25); }
+[data-theme="light"] .hex-card.foundational .hex-mini { box-shadow:0 0 0 2px rgba(0,0,0,.15); }
+[data-theme="light"] .board-hex.foundational .board-hex-shape { filter:drop-shadow(0 0 4px rgba(0,0,0,.35)) drop-shadow(0 0 1px rgba(0,0,0,.5)); }
+[data-theme="light"] .driver-badge { background:rgba(255,255,255,.7); border-color:rgba(0,0,0,.2); color:#1a1e26; }
+[data-theme="light"] .hex-cell.guide-best .hex-cell-bg { background:rgba(45,200,94,.15); }
+[data-theme="light"] .hex-cell.guide-yes .hex-cell-bg { background:rgba(45,157,94,.08); }
+[data-theme="light"] .board-toast.warning { background:rgba(232,148,58,.95); }
+[data-theme="light"] .board-toast.hint { background:rgba(58,123,200,.95); }
+[data-theme="light"] .gs-org-badge { background:rgba(58,123,200,.08); border-color:rgba(58,123,200,.2); }
+[data-theme="light"] #introScreen { background:var(--bg); }
+[data-theme="light"] .conn-nexus { stroke:#3a7bc8; }
+[data-theme="light"] .conn-path { stroke:#7b8794; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
@@ -136,6 +173,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .hex-mini.pattern { background:var(--pattern-hex); }
 .hex-mini.antipattern { background:var(--anti-hex); }
 .hex-mini.transition { background:var(--trans-hex); border:1px dashed rgba(255,255,255,.3); }
+.hex-mini.capability { background:var(--cap-hex); }
 .hex-card .hex-info { flex:1; min-width:0; }
 .hex-card .hex-name { font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hex-card .hex-signal { color:var(--text-muted); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -204,6 +242,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .board-hex.pattern .board-hex-shape { background:var(--pattern-hex); }
 .board-hex.antipattern .board-hex-shape { background:var(--anti-hex); }
 .board-hex.transition .board-hex-shape { background:var(--trans-hex); }
+.board-hex.capability .board-hex-shape { background:var(--cap-hex); }
 
 /* All content centered symmetrically inside the hex safe zone */
 .bh-text { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 18%; }
@@ -1113,6 +1152,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <span class="save-status" id="saveStatus"></span>
     </div>
     <div class="header-actions">
+      <button class="btn btn-sm" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme" style="min-width:70px">☀ Light</button>
       <button class="btn btn-sm" onclick="showModal('howToPlayModal')">? Help</button>
       <button class="btn btn-sm" onclick="showModal('addPatternModal')">+ Pattern</button>
       <button class="btn btn-sm" onclick="switchGame()">Switch Game</button>
@@ -1132,6 +1172,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
         <div class="filter-tab" onclick="setFilter('pattern',this)">Patterns</div>
         <div class="filter-tab" onclick="setFilter('antipattern',this)">Anti</div>
         <div class="filter-tab" onclick="setFilter('transition',this)">Trans</div>
+        <div class="filter-tab" onclick="setFilter('capability',this)">Caps</div>
       </div>
       <div class="hex-list" id="libraryList"></div>
     </div>
@@ -1224,6 +1265,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
           <div class="stat-card"><div class="stat-val" id="sP" style="color:#6b8fd4">0</div><div class="stat-lbl">Patterns</div></div>
           <div class="stat-card"><div class="stat-val" id="sA" style="color:var(--orange)">0</div><div class="stat-lbl">Anti-Patterns</div></div>
           <div class="stat-card"><div class="stat-val" id="sT" style="color:var(--gray)">0</div><div class="stat-lbl">Transitions</div></div>
+          <div class="stat-card"><div class="stat-val" id="sC" style="color:var(--cyan)">0</div><div class="stat-lbl">Capabilities</div></div>
           <div class="stat-card"><div class="stat-val" id="sAg" style="color:var(--purple)">0</div><div class="stat-lbl">Agents</div></div>
         </div>
       </div>
@@ -1488,6 +1530,29 @@ let currentGameId = null, currentCompanyId = null;
 let autoSaveTimer = null;
 
 // ══════════════════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? '' : 'light');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isLight ? '☀ Light' : '☾ Dark';
+  try { localStorage.setItem('nexus-theme', isLight ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('nexus-theme') === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      requestAnimationFrame(() => {
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = '☾ Dark';
+      });
+    }
+  } catch(e) {}
+})();
+
+// ══════════════════════════════════════════
 // API LAYER
 // ══════════════════════════════════════════
 async function api(method, path, body) {
@@ -1632,6 +1697,22 @@ async function loadCapabilities() {
     console.warn('Could not load capabilities library:', e);
     capabilitiesLibrary = [];
   }
+  syncCapabilitiesToItems();
+}
+
+function syncCapabilitiesToItems() {
+  allItems = allItems.filter(i => !i.id.startsWith('cap_hex_'));
+  capabilitiesLibrary.forEach(cap => {
+    allItems.push({
+      id: 'cap_hex_' + cap.id,
+      type: 'capability',
+      name: cap.name,
+      signal: cap.description || 'Organizational capability',
+      impact: (cap.practices||[]).length + ' practices defined',
+      domain: 'People, Culture & Governance',
+      _capRef: cap.id
+    });
+  });
 }
 
 function switchBoardView(view) {
@@ -2730,6 +2811,7 @@ async function enterGame(gameId) {
   cyclePhase=0; cycleNumber=1; completedPhases.clear(); logEntries=[];
   // Ensure capabilities library is loaded
   if (capabilitiesLibrary.length === 0) await loadCapabilities();
+  else syncCapabilitiesToItems();
   await loadGame(gameId);
 }
 function timeAgo(date) {
@@ -2758,7 +2840,7 @@ function renderLibrary() {
     card.className = `hex-card${onBoard?' on-board':''}${item.foundational?' foundational':''}`;
     card.draggable = true;
     card.innerHTML = `
-      <div class="hex-mini ${item.type}">${item.type==='pattern'?'P':item.type==='antipattern'?'A':'T'}</div>
+      <div class="hex-mini ${item.type}">${item.type==='pattern'?'P':item.type==='antipattern'?'A':item.type==='capability'?'C':'T'}</div>
       <div class="hex-info">
         <div class="hex-name">${item.name}</div>
         <div class="hex-signal">${item.signal}</div>
@@ -2881,6 +2963,11 @@ function renderBoard() {
           placeId=draggedId+'_'+Date.now(); boardInstances[placeId]=draggedId;
         }
         gridState[key]=placeId;
+        // Auto-link capability marker for capability-type hexes
+        if (itemObj && itemObj.type === 'capability' && itemObj._capRef) {
+          const alreadyMarked = boardMarkers.some(m => m.hexId === placeId && m.type === 'capability');
+          if (!alreadyMarked) boardMarkers.push({id:'mk_'+Date.now(), hexId:placeId, type:'capability', capabilityIds:[itemObj._capRef]});
+        }
         addLog(`${dragSource==='backlog'?'Moved from backlog':dragSource?'Moved':'Placed'} "${itemObj?.name}" → ${zonePrettyName(zone)}`,'action');
         draggedId=null;dragSource=null;
         renderBoard();renderCurrentBacklog();renderLibrary();updateStats();scheduleAutoSave();
@@ -2911,7 +2998,7 @@ function renderBoard() {
           <button class="remove-hex" onclick="event.stopPropagation();removeHex('${hexId}','${key}')">×</button>
           <div class="board-hex-shape">
             <div class="bh-text">
-              <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':'TRANSITION'}</div>
+              <div class="bh-type">${item.type==='pattern'?'PATTERN':item.type==='antipattern'?'ANTI-PATTERN':item.type==='capability'?'CAPABILITY':'TRANSITION'}</div>
               <div class="bh-name" title="${item.name}">${item.name}</div>
               <div class="bh-signal" title="${item.signal}">${item.signal}</div>
               ${drvs?'<div class="bh-drivers">'+drvs+'</div>':''}
@@ -2920,7 +3007,7 @@ function renderBoard() {
           </div>
         `;
         // ── Möbius Loop integration ──
-        const hasCap = boardMarkers.some(m => m.type==='capability' && m.hexId===hexId);
+        const hasCap = boardMarkers.some(m => m.type==='capability' && m.hexId===hexId) || item.type === 'capability';
         if (hasCap) {
           const loopBtn = document.createElement('button');
           loopBtn.className = 'hex-loop-trigger';
@@ -2989,6 +3076,12 @@ const GUIDANCE = {
     ok:   ['current_strategic','desired_operational'],
     label: 'Transformation Path (diagonally)',
     tip:   'Transitions sit between anti-patterns and patterns. Place diagonally — they are safe bridges.'
+  },
+  capability: {
+    best: ['path_strategic','path_operational'],
+    ok:   ['current_strategic','current_operational'],
+    label: 'Anywhere on the board',
+    tip:   'Capabilities represent maturity areas. Place them where you want to assess and grow practice adoption.'
   }
 };
 function showZoneGuidance(itemType) {
@@ -3442,10 +3535,12 @@ function updateStats(){
   const p=all.filter(id=>resolveItem(id)?.type==='pattern').length;
   const a=all.filter(id=>resolveItem(id)?.type==='antipattern').length;
   const t=all.filter(id=>resolveItem(id)?.type==='transition').length;
+  const c=all.filter(id=>resolveItem(id)?.type==='capability').length;
   const ag=Object.values(agentAssignments).reduce((s,arr)=>s+arr.length,0);
   document.getElementById('sP').textContent=p;
   document.getElementById('sA').textContent=a;
   document.getElementById('sT').textContent=t;
+  document.getElementById('sC').textContent=c;
   document.getElementById('sAg').textContent=ag;
   lastBreakdown=calcFitnessBreakdown();
   const f=lastBreakdown.total;
@@ -3685,6 +3780,7 @@ function renderReportPage() {
   const pCount = boardItems.filter(i => i.type==='pattern').length;
   const aCount = boardItems.filter(i => i.type==='antipattern').length;
   const tCount = boardItems.filter(i => i.type==='transition').length;
+  const cCount = boardItems.filter(i => i.type==='capability').length;
 
   // Agents
   const agVals = Object.values(agentAssignments);
@@ -3913,7 +4009,7 @@ function renderReportPage() {
         <div class="rp-kpi" style="--kpi-color:var(--green)">
           <div class="rp-kpi-label">Patterns on Board</div>
           <div class="rp-kpi-value">${pCount}</div>
-          <div class="rp-kpi-detail">${aCount} anti-patterns · ${tCount} transitions</div>
+          <div class="rp-kpi-detail">${aCount} anti-patterns · ${tCount} transitions · ${cCount} capabilities</div>
         </div>
         <div class="rp-kpi" style="--kpi-color:var(--purple)">
           <div class="rp-kpi-label">Agents & Drivers</div>
@@ -4099,6 +4195,7 @@ function generateCyclePDF() {
   const pCount = boardItems.filter(i => i.type==='pattern').length;
   const aCount = boardItems.filter(i => i.type==='antipattern').length;
   const tCount = boardItems.filter(i => i.type==='transition').length;
+  const cCount = boardItems.filter(i => i.type==='capability').length;
   const agTotal = Object.values(agentAssignments).reduce((s,a) => s+a.length, 0);
   const drTotal = Object.values(driverAssignments).reduce((s,a) => s+a.length, 0);
   const nexusL  = connections.filter(c => c.type==='nexus').length;
@@ -4172,7 +4269,7 @@ function generateCyclePDF() {
     { l:'Org Fitness Score',  v:`${f}`,              d:`/ 100 pts · ${fitTier}`,                      c:fitHex    },
     { l:'Mobius Phase',       v:ph.n,                d:ph.d.substring(0,42),                          c:'#4a90d9' },
     { l:'S2F Experiments',    v:`${expE.length}`,    d:`${expPassed} passed  ·  ${expRunning} running`,c:'#e8943a' },
-    { l:'Patterns on Board',  v:`${pCount}`,         d:`${aCount} anti  ·  ${tCount} transitions`,    c:'#2d9d5e' },
+    { l:'Patterns on Board',  v:`${pCount}`,         d:`${aCount} anti  ·  ${tCount} trans  ·  ${cCount} caps`,    c:'#2d9d5e' },
     { l:'Agents & Drivers',   v:`${agTotal+drTotal}`,d:`${agTotal} agents  ·  ${drTotal} drivers`,    c:'#7b5ea7' },
   ];
   kpis.forEach((k,i) => {
@@ -4189,8 +4286,8 @@ function generateCyclePDF() {
   card(6,112,285,88,'#171c24');
   doc.setFont('helvetica','bold');   doc.setFontSize(11); C('#e8ecf1'); doc.text('Board Composition', 14, 123);
   doc.setFont('helvetica','normal'); doc.setFontSize(8);  C('#7d8694'); doc.text('Hex types distribution across the Nexus board', 14, 131);
-  const total = pCount+aCount+tCount||1;
-  [{ l:'Patterns', n:pCount, c:'#2c3e6b' }, { l:'Anti-Patterns', n:aCount, c:'#ff0066' }, { l:'Transitions', n:tCount, c:'#7b8794' }].forEach((b,i) => {
+  const total = pCount+aCount+tCount+cCount||1;
+  [{ l:'Patterns', n:pCount, c:'#2c3e6b' }, { l:'Anti-Patterns', n:aCount, c:'#ff0066' }, { l:'Transitions', n:tCount, c:'#7b8794' }, { l:'Capabilities', n:cCount, c:'#38b2a0' }].forEach((b,i) => {
     const by = 138+i*20;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); C('#e8ecf1'); doc.text(b.l, 14, by+5);
     doc.setFont('helvetica','bold');   doc.setFontSize(9); C('#e8ecf1'); doc.text(String(b.n), 65, by+5, { align:'right' });

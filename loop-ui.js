@@ -44,7 +44,7 @@ window.renderLoopDock = function() {
         <div class="loop-dock-empty">No active loop session.</div>
         <div class="loop-dock-meta">${done} cycle${done!==1?'s':''} completed</div>
         ${done ? `<button class="loop-dock-btn" onclick="openLoopLog()">View Cycle Log</button>` : ''}
-        <div class="loop-dock-tip">Drag a <strong>C marker</strong> onto a hex, then hover it to start a loop.</div>`;
+        <div class="loop-dock-tip">Place a <strong>Capability hex</strong> on the board, or drag a <strong>C marker</strong> onto any hex, then hover to start a loop.</div>`;
     }
   }
 
