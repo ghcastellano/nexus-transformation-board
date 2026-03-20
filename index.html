@@ -475,19 +475,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 /* Fitness Breakdown Modal */
 #fitnessBreakdownModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; align-items:center; justify-content:center; }
 #fitnessBreakdownModal.open { display:flex; }
-.fbm-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px 24px; min-width:340px; max-width:500px; max-height:80vh; overflow-y:auto; }
-.fbm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.fbm-header h2 { font-size:14px; font-weight:700; margin:0; }
-.fbm-close { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); padding:3px 9px; cursor:pointer; font-size:12px; }
+.fbm-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:36px 40px; min-width:520px; max-width:680px; max-height:85vh; overflow-y:auto; }
+.fbm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.fbm-header h2 { font-size:20px; font-weight:700; margin:0; }
+.fbm-close { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); padding:5px 12px; cursor:pointer; font-size:14px; }
 .fbm-close:hover { border-color:var(--accent); color:var(--accent); }
-.fbm-total { text-align:center; margin-bottom:18px; }
-.fbm-total-score { font-size:52px; font-weight:800; line-height:1; }
-.fbm-total-label { font-size:11px; color:var(--text-muted); margin-top:4px; }
-.fbm-table { width:100%; border-collapse:collapse; font-size:11px; }
-.fbm-table th { text-align:left; padding:5px 6px; border-bottom:1px solid var(--border); color:var(--text-muted); font-size:9px; text-transform:uppercase; letter-spacing:.4px; }
-.fbm-table td { padding:5px 6px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; }
+.fbm-total { text-align:center; margin-bottom:24px; }
+.fbm-total-score { font-size:72px; font-weight:800; line-height:1; }
+.fbm-total-label { font-size:14px; color:var(--text-muted); margin-top:6px; }
+.fbm-table { width:100%; border-collapse:collapse; font-size:14px; }
+.fbm-table th { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+.fbm-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; }
 .fbm-table td:last-child { text-align:right; font-weight:600; white-space:nowrap; }
-.fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:13px; font-weight:700; padding-top:9px; }
+.fbm-table tr.fbm-total-row td { border-top:1px solid var(--border); border-bottom:none; font-size:16px; font-weight:700; padding-top:12px; }
 .fbm-table tr.fbm-zero td { opacity:.35; }
 
 /* ══ CAPABILITIES LIBRARY PAGE ══ */
