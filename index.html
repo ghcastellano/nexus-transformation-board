@@ -133,6 +133,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .gs-form .btn { width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:10px; }
 .gs-empty { text-align:center; color:var(--text-muted); padding:40px; font-size:14px; border:1px dashed var(--border); border-radius:14px; }
 .gs-org-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:8px; background:rgba(74,144,217,.1); border:1px solid rgba(74,144,217,.2); font-size:12px; color:var(--accent); font-weight:500; }
+.gs-card-actions { display:flex; align-items:center; gap:8px; }
+.gs-delete-btn { background:none; border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text-muted); font-size:12px; cursor:pointer; transition:all .2s; z-index:2; }
+.gs-delete-btn:hover { border-color:#d94a4a; color:#d94a4a; background:rgba(217,74,74,.08); }
+.gs-lock-icon { font-size:13px; color:var(--text-muted); margin-left:6px; }
+.gs-pw-modal { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:300; display:flex; align-items:center; justify-content:center; }
+.gs-pw-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; max-width:380px; width:90%; animation:gsFadeIn .3s ease-out; }
+.gs-pw-box h3 { margin:0 0 6px; font-size:16px; }
+.gs-pw-box p { color:var(--text-muted); font-size:13px; margin:0 0 16px; }
+.gs-pw-box input { width:100%; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; margin-bottom:12px; }
+.gs-pw-box input:focus { outline:none; border-color:var(--accent); }
+.gs-pw-box .gs-pw-btns { display:flex; gap:8px; }
+.gs-pw-box .gs-pw-btns button { flex:1; padding:10px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border); }
+.gs-pw-box .gs-pw-cancel { background:var(--surface2); color:var(--text); }
+.gs-pw-box .gs-pw-confirm { background:var(--accent); color:#fff; border-color:var(--accent); }
+.gs-pw-box .gs-pw-delete { background:#d94a4a; color:#fff; border-color:#d94a4a; }
+.gs-pw-error { color:#d94a4a; font-size:12px; margin-bottom:8px; display:none; }
 
 /* ══ HEADER ══ */
 .app-header { background:linear-gradient(135deg,#171c24,#1c2233); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
@@ -2734,6 +2750,7 @@ async function newGameForCompany(id, name) {
       <div class="gs-form-title">🎮 Create Game</div>
       <input id="newGameName" placeholder="Game name (e.g., Q1 2026 Transformation Sprint)" autofocus>
       <textarea id="newGameDesc" placeholder="Description — what transformation are you exploring? (optional)"></textarea>
+      <input id="newGamePassword" type="password" placeholder="Password (optional — protects access and deletion)">
       <button class="btn btn-primary" onclick="createGame('${id}')">Start Game →</button>
     </div>
   `;
@@ -2773,13 +2790,17 @@ async function renderContinueFlow() {
     ${allGames.length ? allGames.map(g => {
       const d = new Date(g.updated_at);
       const ago = timeAgo(d);
-      return `<div class="gs-card" onclick="enterGame('${g.id}')">
+      const lock = g.has_password ? '<span class="gs-lock-icon" title="Password protected">🔒</span>' : '';
+      return `<div class="gs-card" onclick="tryEnterGame('${g.id}',${!!g.has_password})">
         <div>
-          <div class="gs-name">${g.name}</div>
+          <div class="gs-name">${g.name}${lock}</div>
           <div class="gs-meta">🏢 ${g._companyName} · Cycle ${g.cycle_number} · ${PHASES[g.cycle_phase]?.n||'—'} · ${ago}</div>
         </div>
-        <div class="gs-fitness">
-          <div><div class="gs-fitness-score">${g.fitness_score}</div><div class="gs-fitness-label">fitness</div></div>
+        <div class="gs-card-actions">
+          <div class="gs-fitness">
+            <div><div class="gs-fitness-score">${g.fitness_score}</div><div class="gs-fitness-label">fitness</div></div>
+          </div>
+          <button class="gs-delete-btn" onclick="event.stopPropagation();tryDeleteGame('${g.id}','${g.name.replace(/'/g,"\\'")}',${!!g.has_password})" title="Delete game">🗑</button>
           <div class="gs-arrow">→</div>
         </div>
       </div>`;
@@ -2789,9 +2810,10 @@ async function renderContinueFlow() {
 async function createGame(companyId) {
   const name = document.getElementById('newGameName').value.trim();
   const desc = document.getElementById('newGameDesc').value.trim();
+  const pw = document.getElementById('newGamePassword').value;
   if (!name) { showToast('Enter a game name','warning'); return; }
   try {
-    const g = await api('POST',`/companies/${companyId}/games`,{name,description:desc||null});
+    const g = await api('POST',`/companies/${companyId}/games`,{name,description:desc||null,password:pw||null});
     enterGame(g.id);
   } catch(e) { alert(e.message); }
 }
@@ -2820,6 +2842,80 @@ function timeAgo(date) {
   if (s<3600) return Math.floor(s/60)+'m ago';
   if (s<86400) return Math.floor(s/3600)+'h ago';
   return Math.floor(s/86400)+'d ago';
+}
+
+// ── Password prompt modal ──
+function showPasswordPrompt(title, message, onConfirm, opts={}) {
+  const existing = document.getElementById('gsPwModal');
+  if (existing) existing.remove();
+  const btnClass = opts.danger ? 'gs-pw-delete' : 'gs-pw-confirm';
+  const btnLabel = opts.btnLabel || 'Confirm';
+  const div = document.createElement('div');
+  div.id = 'gsPwModal';
+  div.className = 'gs-pw-modal';
+  div.innerHTML = `<div class="gs-pw-box">
+    <h3>${title}</h3>
+    <p>${message}</p>
+    <input id="gsPwInput" type="password" placeholder="Enter password" autofocus>
+    <div class="gs-pw-error" id="gsPwError"></div>
+    <div class="gs-pw-btns">
+      <button class="gs-pw-cancel" onclick="document.getElementById('gsPwModal').remove()">Cancel</button>
+      <button class="${btnClass}" id="gsPwSubmit">${btnLabel}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  div.querySelector('.gs-pw-modal').addEventListener('click', e => { if (e.target === div) div.remove(); });
+  const inp = document.getElementById('gsPwInput');
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gsPwSubmit').click(); });
+  document.getElementById('gsPwSubmit').addEventListener('click', () => {
+    const pw = inp.value;
+    if (!pw) { const err = document.getElementById('gsPwError'); err.textContent = 'Please enter the password'; err.style.display = 'block'; return; }
+    onConfirm(pw);
+  });
+  setTimeout(() => inp.focus(), 100);
+}
+
+// ── Enter game with password check ──
+async function tryEnterGame(gameId, hasPassword) {
+  if (!hasPassword) { enterGame(gameId); return; }
+  showPasswordPrompt('🔒 Password Required', 'This game is password protected.', async (pw) => {
+    try {
+      await api('POST', `/games/${gameId}/verify`, { password: pw });
+      document.getElementById('gsPwModal').remove();
+      enterGame(gameId);
+    } catch(e) {
+      const err = document.getElementById('gsPwError');
+      err.textContent = 'Wrong password — try again';
+      err.style.display = 'block';
+    }
+  }, { btnLabel: 'Enter Game' });
+}
+
+// ── Delete game with confirmation and password ──
+async function tryDeleteGame(gameId, gameName, hasPassword) {
+  if (hasPassword) {
+    showPasswordPrompt('🗑 Delete "' + gameName + '"', 'Enter the game password to confirm deletion. This cannot be undone.', async (pw) => {
+      try {
+        const opts = { method:'DELETE', headers:{'Content-Type':'application/json','X-Game-Password':pw} };
+        const r = await fetch('/api/games/' + gameId, opts);
+        if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error || r.statusText); }
+        document.getElementById('gsPwModal').remove();
+        showToast('Game deleted','success');
+        renderContinueFlow();
+      } catch(e) {
+        const err = document.getElementById('gsPwError');
+        err.textContent = e.message === 'Wrong password' ? 'Wrong password — try again' : e.message;
+        err.style.display = 'block';
+      }
+    }, { danger: true, btnLabel: 'Delete Game' });
+  } else {
+    if (!confirm('Delete "' + gameName + '"? This cannot be undone.')) return;
+    try {
+      await api('DELETE', `/games/${gameId}`);
+      showToast('Game deleted','success');
+      renderContinueFlow();
+    } catch(e) { alert(e.message); }
+  }
 }
 
 // ══════════════════════════════════════════

@@ -2,7 +2,12 @@ if (!process.env.VERCEL) require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const db = require('./db');
+
+function hashPassword(pw) {
+  return crypto.createHash('sha256').update(pw).digest('hex');
+}
 
 const app = express();
 app.use(cors());
@@ -55,7 +60,8 @@ app.get('/api/companies/:companyId/games', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT id, company_id, name, description, fitness_score,
-             cycle_number, cycle_phase, created_at, updated_at
+             cycle_number, cycle_phase, created_at, updated_at,
+             (password_hash IS NOT NULL) AS has_password
       FROM games
       WHERE company_id = $1
       ORDER BY updated_at DESC
@@ -67,14 +73,19 @@ app.get('/api/companies/:companyId/games', async (req, res) => {
 });
 
 app.post('/api/companies/:companyId/games', async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, password } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
   try {
+    await db.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS password_hash TEXT');
+    const pwHash = password ? hashPassword(password) : null;
     const { rows } = await db.query(
-      'INSERT INTO games (company_id, name, description) VALUES ($1, $2, $3) RETURNING *',
-      [req.params.companyId, name, description || null]
+      'INSERT INTO games (company_id, name, description, password_hash) VALUES ($1, $2, $3, $4) RETURNING *',
+      [req.params.companyId, name, description || null, pwHash]
     );
-    res.status(201).json(rows[0]);
+    const row = rows[0];
+    row.has_password = !!pwHash;
+    delete row.password_hash;
+    res.status(201).json(row);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -84,7 +95,26 @@ app.get('/api/games/:gameId', async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM games WHERE id = $1', [req.params.gameId]);
     if (!rows.length) return res.status(404).json({ error: 'Game not found' });
-    res.json(rows[0]);
+    const row = rows[0];
+    row.has_password = !!row.password_hash;
+    delete row.password_hash;
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify game password before entering
+app.post('/api/games/:gameId/verify', async (req, res) => {
+  const { password } = req.body;
+  try {
+    const { rows } = await db.query('SELECT password_hash FROM games WHERE id = $1', [req.params.gameId]);
+    if (!rows.length) return res.status(404).json({ error: 'Game not found' });
+    const game = rows[0];
+    if (!game.password_hash) return res.json({ ok: true });
+    if (!password) return res.status(401).json({ error: 'Password required' });
+    if (hashPassword(password) !== game.password_hash) return res.status(401).json({ error: 'Wrong password' });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -138,8 +168,14 @@ app.put('/api/games/:gameId', async (req, res) => {
 
 app.delete('/api/games/:gameId', async (req, res) => {
   try {
-    const { rowCount } = await db.query('DELETE FROM games WHERE id = $1', [req.params.gameId]);
-    if (!rowCount) return res.status(404).json({ error: 'Game not found' });
+    // Check password if game has one
+    const { rows } = await db.query('SELECT password_hash FROM games WHERE id = $1', [req.params.gameId]);
+    if (!rows.length) return res.status(404).json({ error: 'Game not found' });
+    if (rows[0].password_hash) {
+      const pw = req.headers['x-game-password'] || '';
+      if (hashPassword(pw) !== rows[0].password_hash) return res.status(401).json({ error: 'Wrong password' });
+    }
+    await db.query('DELETE FROM games WHERE id = $1', [req.params.gameId]);
     res.json({ deleted: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
