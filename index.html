@@ -4587,28 +4587,10 @@ function generateCyclePDF() {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PAGE 7 — ACTIVITY LOG
+  // PAGE 7 — MILESTONES & TIMELINE
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
-  hdr(`Activity Log \u2014 Cycle ${cycleNumber}`, 'Recent board actions and state changes');
-  if (!logEntries || logEntries.length === 0) {
-    doc.setFont('helvetica','normal'); doc.setFontSize(11); C(T.textMuted); doc.text('No activity recorded yet.', W/2, H/2, { align:'center' });
-  } else {
-    const lRH = 12, maxL = Math.floor((H-50)/lRH);
-    logEntries.slice(0,maxL).forEach((e,ri) => {
-      const ly = CY+ri*lRH;
-      F(ri%2 ? T.rowOdd : T.rowEven); doc.rect(10, ly, W-20, lRH, 'F');
-      const mc = e.type==='success' ? '#2d9d5e' : e.type==='warning' ? '#e8943a' : T.textMuted;
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C(T.textMuted); doc.text(String(e.time||''), 14, ly+8.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); C(mc); doc.text(String(e.message||'').substring(0,105), 44, ly+8.5);
-    });
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // PAGE 8 — MILESTONES & TIMELINE
-  // ══════════════════════════════════════════════════════════════════════
-  doc.addPage();
-  hdr('Milestones & Timeline', `Key transformation milestones and cycle timeline \u2014 Cycle ${cycleNumber}`);
+  hdr('Milestones & Timeline', `Key transformation milestones and cycle timeline — Cycle ${cycleNumber}`);
   // Cycle timeline strip
   const tlY = CY+2, tlH = 28, tlW = W-20;
   cardTop(10, tlY, tlW, tlH, '#38b2a0');
@@ -4647,7 +4629,7 @@ function generateCyclePDF() {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PAGE 9 — RISKS & BLOCKERS
+  // PAGE 8 — RISKS & BLOCKERS
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   hdr('Risks & Blockers', `Identified risks, severity, and mitigation strategies \u2014 Cycle ${cycleNumber}`);
@@ -4689,7 +4671,7 @@ function generateCyclePDF() {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PAGE 10 — CLOSING (PPTX Slide 15 style)
+  // PAGE 9 — CLOSING (PPTX Slide 15 style)
   // ══════════════════════════════════════════════════════════════════════
   doc.addPage();
   BG();
